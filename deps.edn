@@ -20,10 +20,15 @@
 
 
            :native-image
-           {:jvm-opts ["-Dio.netty.noUnsafe=true"]
-            :extra-deps {cambada {:git/url "https://github.com/HealthSamurai/cambada"
-                                  :sha     "a8ccf922e516e3249e96ae63dadd91d5f01e83f5"}}
-            :main-opts ["-m" "cambada.native-image" "-m" "core"]}
+           {:main-opts ["-m clj.native-image core"
+                        "--initialize-at-build-time"
+                        ;; optional native image name override
+                        "-H:Name=core"]
+            :jvm-opts ["-Dclojure.compiler.direct-linking=true"]
+            :extra-deps
+            {clj.native-image
+             {:git/url "https://github.com/taylorwood/clj.native-image.git"
+              :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}
 
            :build
            {:extra-paths ["build"]
@@ -32,6 +37,6 @@
                                   :sha     "a8ccf922e516e3249e96ae63dadd91d5f01e83f5"}}
             :main-opts  ["-m" "cambada.uberjar"
                          "--main" "core"
-                         "--app-group-id" "aidbox" 
+                         "--app-group-id" "aidbox"
                          "--app-artifact-id" "crm"
                          "--app-version" "1.0.0"]}}}
