@@ -1,0 +1,3 @@
+export PATH="$HOME/graalvm/Contents/Home/bin:$PATH"
+export GRAALVM_HOME=$HOME/graalvm/Contents/Home
+export JAVA_HOME=~/graalvm

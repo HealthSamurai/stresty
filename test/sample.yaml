@@ -1,0 +1,79 @@
+desc: Simple CRUD tutorial                                                                                                                                                                                                                                                                                                            
+
+steps:
+- id: clean
+  desc: Clear all patients
+  request:
+    method: POST
+    uri: /$sql
+    body: TRUNCATE PATIENT
+  match:
+    status: 200
+    body:
+      id: pt-1
+- id: create
+  desc: Create test patient
+  request:
+    method: POST
+    uri: /Patient
+    body:
+      id: pt-1
+      name: [{given: ['Vladislav']}]
+  match:
+    status: 201
+    body:
+      id: pt-1
+- id: read
+  desc: Read our patient
+  request:
+    uri: /Patient/pt-1
+  match:
+    status: 200
+    body:
+      id: pt-1
+      name: [{given: ['Vladislav']}]
+- id: search-by-id
+  request:
+    uri: /Patient?_id=pt-1
+  match:
+    status: 200
+    body:
+      entry:
+      - resource: {resourceType: 'Patient', id: 'pt-1'}
+- id: update
+  desc: Now let's update our patient
+  request:
+    uri: /Patient/pt-1
+    method: PUT
+    body:
+      name: [{given: ['Vlad'], family: 'Ganshin'}]
+  match:
+    status: 200
+    body:
+      name: [{family: 'Ganshin'}]
+
+- id: wrong update
+  desc: If structure is wrong - aidbox will report error and return status 422
+  request:
+    uri: /Patient/pt-1
+    method: PUT
+    body:
+      name: [{given: ['Vlad'], family: 'Ganshin'}]
+      ups: extra
+  match:
+    status: ?> 399
+    body:
+      issue:
+      - expression: '.ups'
+        error: ?string
+- id: delete
+  request:
+    uri: /Patient/pt-1
+    method: DELETE
+  response:
+    status: ?ok
+- id: read-404
+  request:
+    uri: /Patient/pt-1
+  match:
+    status: 404

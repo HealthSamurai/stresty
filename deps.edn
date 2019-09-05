@@ -1,0 +1,37 @@
+{:paths ["src"]
+ :extra-paths ["resources"]
+ :jvm-opts []
+ :deps {org.clojure/clojure               {:mvn/version "1.10.0"}
+        org.martinklepsch/clj-http-lite   {:mvn/version "0.4.1"}
+        cheshire                          {:mvn/version "5.6.3"}
+
+        clj-commons/clj-yaml           {:mvn/version "0.7.0"}
+        com.sun.xml.bind/jaxb-core     {:mvn/version "2.3.0.1"}
+        com.sun.xml.bind/jaxb-impl     {:mvn/version "2.3.2"}
+        javax.xml.bind/jaxb-api        {:mvn/version "2.4.0-b180830.0359"}}
+
+ :aliases {:nrepl
+           {:extra-paths ["dev"]
+            :extra-deps {org.clojure/clojure           {:mvn/version "1.10.0"}
+                         cider/cider-nrepl             {:mvn/version "0.21.0"}
+                         refactor-nrepl/refactor-nrepl {:mvn/version "2.4.0"}
+                         com.cognitect/test-runner     {:git/url "https://github.com/cognitect-labs/test-runner"
+                                                        :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}}
+
+
+           :native-image
+           {:jvm-opts ["-Dio.netty.noUnsafe=true"]
+            :extra-deps {cambada {:git/url "https://github.com/HealthSamurai/cambada"
+                                  :sha     "a8ccf922e516e3249e96ae63dadd91d5f01e83f5"}}
+            :main-opts ["-m" "cambada.native-image" "-m" "core"]}
+
+           :build
+           {:extra-paths ["build"]
+            :jvm-opts ^:replace ["-XX:-OmitStackTraceInFastThrow"]
+            :extra-deps {cambada {:git/url "https://github.com/HealthSamurai/cambada"
+                                  :sha     "a8ccf922e516e3249e96ae63dadd91d5f01e83f5"}}
+            :main-opts  ["-m" "cambada.uberjar"
+                         "--main" "core"
+                         "--app-group-id" "aidbox" 
+                         "--app-artifact-id" "crm"
+                         "--app-version" "1.0.0"]}}}
