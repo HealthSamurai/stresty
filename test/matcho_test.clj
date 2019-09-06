@@ -23,6 +23,11 @@
 
   (is (empty? (sut/match {:a 1} {:a number?})))
 
+  (is (empty? (sut/match {:a 1} {:a "number?"})))
+
+
+  (is (empty? (sut/match {:a "str"} {:a "#str"})))
+
 
 
 

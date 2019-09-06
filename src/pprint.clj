@@ -11,7 +11,7 @@
       (print (apply str (repeat (if (and frst f) 0 ident) "  ")))
       (print (colors/dark ((if (get-in errs (into (:path ctx) [k]))
                              colors/red
-                             colors/white) (str (name k) ":"))) " ")
+                             colors/bold) (str (name k) ":"))) " ")
       (if (or (map? v) (sequential? v)) (print "\n"))
       (pretty (-> (update ctx :ident inc)
                   (update :path into [k])) v)
@@ -26,7 +26,7 @@
       (print (str "-"))
       (print " ")
       (if (sequential? i)
-        (do 
+        (do
           (println)
           (pretty (-> (update ctx :ident inc)
                       (update :path into [idx])) i))
@@ -43,7 +43,6 @@
 
   (println "\n-------------\n")
 
-  
   (println "\n")
   (pretty {:errors {:birthDate {:expected "yyy"}
                     :name {:given {:expected "ups"}}
