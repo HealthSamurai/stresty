@@ -1,40 +1,33 @@
-desc: Simple CRUD tutorial                                                                                                                                                                                                                                                                                                            
+desc: Simple CRUD tutorial
 
 steps:
 - id: clean
   desc: Clear all patients
-  request:
-    method: POST
-    uri: /$sql
-    body: TRUNCATE PATIENT
+  POST: /$sql
+  body: 'TRUNCATE patient'
   match:
     status: 200
-    body:
-      id: pt-1
 - id: create
   desc: Create test patient
-  request:
-    method: POST
-    uri: /Patient
-    body:
-      id: pt-1
-      name: [{given: ['Vladislav']}]
+  POST: /Patient
+  body:
+    id: pt-1
+    name: [{given: ['Vladislav']}]
   match:
     status: 201
     body:
       id: pt-1
+      name: [{given: ['Ivan']}]
 - id: read
   desc: Read our patient
-  request:
-    uri: /Patient/pt-1
+  GET: /Patient/pt-1
   match:
     status: 200
     body:
       id: pt-1
       name: [{given: ['Vladislav']}]
 - id: search-by-id
-  request:
-    uri: /Patient?_id=pt-1
+  GET: /Patient?_id=pt-1
   match:
     status: 200
     body:
@@ -42,11 +35,9 @@ steps:
       - resource: {resourceType: 'Patient', id: 'pt-1'}
 - id: update
   desc: Now let's update our patient
-  request:
-    uri: /Patient/pt-1
-    method: PUT
-    body:
-      name: [{given: ['Vlad'], family: 'Ganshin'}]
+  PUT: /Patient/pt-1
+  body:
+    name: [{given: ['Vlad'], family: 'Ganshin'}]
   match:
     status: 200
     body:
@@ -54,26 +45,21 @@ steps:
 
 - id: wrong update
   desc: If structure is wrong - aidbox will report error and return status 422
-  request:
-    uri: /Patient/pt-1
-    method: PUT
-    body:
-      name: [{given: ['Vlad'], family: 'Ganshin'}]
-      ups: extra
+  PUT: /Patient/pt-1
+  body:
+    name: [{given: ['Vlad'], family: 'Ganshin'}]
+    ups: extra
   match:
     status: ?> 399
     body:
       issue:
       - expression: '.ups'
-        error: ?string
+        error: string?
 - id: delete
-  request:
-    uri: /Patient/pt-1
-    method: DELETE
-  response:
-    status: ?ok
+  DELETE: /Patient/pt-1
+  match:
+    status: ok?
 - id: read-404
-  request:
-    uri: /Patient/pt-1
+  GET: /Patient/pt-1
   match:
     status: 404

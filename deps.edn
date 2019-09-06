@@ -18,13 +18,6 @@
                          com.cognitect/test-runner     {:git/url "https://github.com/cognitect-labs/test-runner"
                                                         :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}}
 
-
-           :native-image
-           {:jvm-opts ["-Dio.netty.noUnsafe=true"]
-            :extra-deps {cambada {:git/url "https://github.com/HealthSamurai/cambada"
-                                  :sha     "a8ccf922e516e3249e96ae63dadd91d5f01e83f5"}}
-            :main-opts ["-m" "cambada.native-image" "-m" "core"]}
-
            :build
            {:extra-paths ["build"]
             :jvm-opts ^:replace ["-XX:-OmitStackTraceInFastThrow"]
@@ -32,6 +25,6 @@
                                   :sha     "a8ccf922e516e3249e96ae63dadd91d5f01e83f5"}}
             :main-opts  ["-m" "cambada.uberjar"
                          "--main" "core"
-                         "--app-group-id" "aidbox" 
-                         "--app-artifact-id" "crm"
+                         "--app-group-id" "hs" 
+                         "--app-artifact-id" "stresty"
                          "--app-version" "1.0.0"]}}}
