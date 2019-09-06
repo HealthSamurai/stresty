@@ -14,4 +14,5 @@ deploy:
   file: 'target/stresty-1.0.0-standalone.jar'
   skip_cleanup: true
   on:
+    tags: true
     repo: Aidbox/stresty
