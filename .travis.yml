@@ -1,3 +1,4 @@
+os: osx
 language: clojure
 before_install: echo $HOME
 install:
@@ -5,8 +6,14 @@ install:
 - chmod +x linux-install-1.10.1.469.sh
 - sudo ./linux-install-1.10.1.469.sh
 - rm linux-install-1.10.1.469.sh
-script: make build
+# download graalvm
+# untar it to $HOME/graalvm
 
+# or see https://sormuras.github.io/blog/2018-06-22-jdk-matrix.html
+script:
+- source graal
+- gu install native-image
+- make build-native
 deploy:
   provider: releases
   api_key:
