@@ -1,2 +1,3 @@
 language: clojure
+install: skip
 script: make build
