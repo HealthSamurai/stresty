@@ -11,8 +11,7 @@ deploy:
   provider: releases
   api_key:
     secure: xzmqk2h5bzgoZSfJY64rrAxTZ6C6mg4FC1B+a217c6uhK7VHbQM85B6y6GZN6MesW9FD5l+X3MFmEOX2vELGuUDL/8VUKaWEnDvSm1xx5AjUraMUtrz3grqfqz68eunu6FLC1uiyqWq5gvjL73xAYtNNdkqDzXfPxHWRLfjZIxHVL2piHHVK8749/pFojO/zLhBov8AwtdOKDk3zh+CSHNfhhzAiaoXYOVJRkR9WFUMbsgHzbslqWLaU0WQlWR9BscIDoLBARbzyz4JO+JUVI8r1s6/ojEtllUA7TlbWatsgaR4qVogiGpRXecB4PXIAJfIszFeNzWStQUu921nQ8CE7T0uPz9D1NzPp3igI2pDHBWZGDpExN/EJjoIiuT7zrU5/9Ca5UQggMe0iKQ6MjDWUYGdBeZste0SCSnJEi5b0jKaMTr1+lmZRN6OypPbTOJhqsqXsIEEoxkwfvyOLGr2MUxiWn80CqT2CypqMWCLzzh3VGmct1LWT26URbeIBQ9jOE5PyM2V4OBzm9hrEWeRxgHI5aL51WVNEvowQBLFi3XA6WFTCf5wJWO1j+lLMn9NnLAsg0H4M4XEhQdMWUpXVytTis0CgSOAHcVGr8tHE+1SICBOXvKP5xCJQryLSrueQWY0KkaiQT3hEVXAaMB1AjIRzmI48Q1x6mRMPHqA=
-  file: 'target/*'
+  file: 'target/stresty-1.0.0-standalone.jar'
   skip_cleanup: true
-  draft: true
   on:
     repo: Aidbox/stresty
