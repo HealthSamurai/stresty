@@ -2,3 +2,4 @@ target
 .cpcache
 core
 classes
+pom.xml
