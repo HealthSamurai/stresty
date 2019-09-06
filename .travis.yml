@@ -4,3 +4,8 @@ install:
 - chmod +x linux-install-1.10.1.469.sh
 - sudo ./linux-install-1.10.1.469.sh
 script: make build
+deploy:
+  provider: releases
+  file: target/stresty-1.0.0-standalone.jar
+  skip_cleanup: true
+  draft: true
