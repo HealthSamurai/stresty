@@ -4,7 +4,8 @@
             [matcho]
             [pprint]
             [colors]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [cheshire.core]))
 
 (defn valid? [ctx script]
   true)
