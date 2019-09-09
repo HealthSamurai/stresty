@@ -39,7 +39,7 @@
                          "--app-group-id" "hs" 
                          "--app-artifact-id" "stresty"
                          "--app-version" "1.0.0"]}
-           :test {:extra-paths ["test"]
+           :run-test {:extra-paths ["test"]
                   :extra-deps {com.cognitect/test-runner     {:git/url "https://github.com/cognitect-labs/test-runner"
                                                               :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}
                   :main-opts ["-m" "cognitect.test-runner"]}}}
