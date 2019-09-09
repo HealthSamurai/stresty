@@ -1,8 +1,16 @@
-## REST cases runner
+# REST cases runner
 
 CLI tool for REST tests.
 
 Download [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
+
+## Configuration properties
+
+| VAR_NAME   | Description |
+| AIDBOX_URL | URL (ex. http://box.aidbox.app) |
+| AIDBOX_BASIC_AUTH | Base64 encoded auth token (ex. `dXNlcjpwYXNz` for `user:pass`). See more in [aidbox.doc](https://docs.aidbox.app/auth-betta/basic-auth) |
+
+## Ussage
 
 Create file `test.yaml`:
 ```yaml
@@ -55,7 +63,7 @@ steps:
 Run script
 
 ```sh
-$ AIDBOX_URL=http://<box_name>.aidbox.app java -jar stresty-1.0.0-standalone.jar test.yaml 
+$ AIDBOX_URL=http://<box_name>.aidbox.app AIDBOX_BASIC_AUTH=<username:pass encoded with base64> java -jar stresty-1.0.0-standalone.jar test.yaml 
 
 Args: (test/another.yaml)
 Read  test/another.yaml
