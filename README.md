@@ -1,29 +1,12 @@
 # REST cases runner
 
-CLI tool for REST tests. Download [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
+CLI tool for REST tests.
 
-Stresty walks through the steps which are REST calls with corresponding checker. It checks only fields you described in the `match` part. If the response body contains other fields, they will be skipped.
-
-### Step fields
-
-| Field name    | Description                   |
-|---------------|-------------------------------|
-| id            | Step identifier               |
-| desc          | Step description              |
-| <HTTP_METHOD> | GET, POST, PUT, etc. + url    |
-| body          | request body                  |
-| match         | template of expected response |
-| match.status  | expected status code          |
-| match.body    | expected body                 |
-
-## Configuration properties
-
-| VAR_NAME   | Description |
-|------------|-------------|
-| AIDBOX_URL | URL (ex. http://box.aidbox.app) |
-| AIDBOX_BASIC_AUTH | Base64 encoded auth token (ex. `dXNlcjpwYXNz` for `user:pass`). See more in [aidbox.doc](https://docs.aidbox.app/auth-betta/basic-auth) |
+Stresty walks through the steps which are REST calls with matcher (response template). It checks only fields you described in the `match` part. If the response body contains other fields, they will be ignored.
 
 ## Ussage
+
+Download [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
 
 Create file `test.yaml`:
 ```yaml
@@ -196,6 +179,25 @@ body:
 ---------------------------------
 ```
 
+### Step fields
+
+| Field name    | Description                   |
+|---------------|-------------------------------|
+| id            | Step identifier               |
+| desc          | Step description              |
+| <HTTP_METHOD> | GET, POST, PUT, etc. + url    |
+| body          | request body                  |
+| match         | template of expected response |
+| match.status  | expected status code          |
+| match.body    | expected body                 |
+
+## Configuration properties
+
+| VAR_NAME   | Description |
+|------------|-------------|
+| AIDBOX_URL | URL (ex. http://box.aidbox.app) |
+| AIDBOX_BASIC_AUTH | Base64 encoded auth token (ex. `dXNlcjpwYXNz` for `user:pass`). See more in [aidbox.doc](https://docs.aidbox.app/auth-betta/basic-auth) |
+
 # Matcho
 
 Stresty uses [Matcho](https://github.com/niquola/matcho) under the hood.
@@ -239,4 +241,4 @@ String values started with number sign (#) is considered as [regex pattern](http
 ```
 # todo
 
-Auth is not supported.
+1. json schema validation for incoming files.
