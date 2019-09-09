@@ -17,7 +17,7 @@ steps:
     status: 201
     body:
       id: pt-1
-      name: [{given: ['Ivan']}]
+      name: [{given: ['Vladislav']}]
 - id: read
   desc: Read our patient
   GET: /Patient/pt-1
@@ -58,7 +58,7 @@ steps:
 - id: delete
   DELETE: /Patient/pt-1
   match:
-    status: ok?
+    status: 200
 - id: read-404
   GET: /Patient/pt-1
   match:
