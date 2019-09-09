@@ -179,6 +179,16 @@ body:
 ---------------------------------
 ```
 
+You can run several scripts:
+```bash
+java -jar stresty.jar test-1.yaml test-2.yaml
+
+# or use wildcards
+
+java -jar stresty.jar *.yaml
+```
+
+
 ### Step fields
 
 | Field name    | Description                   |
