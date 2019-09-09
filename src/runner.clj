@@ -69,6 +69,11 @@
 
 
 (comment
+
+  (run-file {:base-url "http://ya.ru"} "test/ya.yaml")
+
+  (run-file {:base-url "http://main.aidbox.app"} "test/sample.yaml")
+
   (run-file {:base-url "http://localhost:8765"} "test/sample.yaml")
 
   )

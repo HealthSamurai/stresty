@@ -50,7 +50,7 @@ steps:
     name: [{given: ['Vlad'], family: 'Ganshin'}]
     ups: extra
   match:
-    status: '> 399?'
+    status: 400
     body:
       issue:
       - expression: '.ups'
