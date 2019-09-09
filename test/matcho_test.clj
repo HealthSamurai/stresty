@@ -25,15 +25,9 @@
 
   (is (empty? (sut/match {:a 1} {:a "number?"})))
 
-
   (is (empty? (sut/match {:a "str"} {:a "#str"})))
 
-
-
-
-
-
-
+  (is (empty? (sut/match {:a "string"} {:a "#str\\w+"})))
 
   )
 

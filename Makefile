@@ -9,4 +9,4 @@ build-native:
 	clojure -A:native-image
 
 build:
-	clojure -A:build
+	clojure -A:test && clojure -A:build
