@@ -11,6 +11,12 @@
   true)
 
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
+
+(defn get-auth-headers [ctx]
+  (if-let [basic-auth (:basic-auth ctx)]
+    (do 
+        {"Authorization" (str "Basic " basic-auth)})))
+
 (defn mk-req [ctx step]
   (if-let [method (first (filter meths (keys step)))]
     (let [url (get step method)
@@ -18,8 +24,7 @@
       (merge (cond->
                  {:url (str (:base-url ctx) url)
                   :throw-exceptions false
-                  :headers {"content-type" "application/json"
-                            "Authorization" "Basic d293OnBhc3M="}
+                  :headers (merge {"content-type" "application/json"} (get-auth-headers ctx))
                   :path url
                   :method method}
                (:body step) (assoc :body (cheshire.core/generate-string (:body step)))
