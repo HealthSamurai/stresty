@@ -4,6 +4,20 @@ CLI tool for REST tests.
 
 Download [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
 
+Stresty walks through the steps which are REST calls with corresponding checker.
+
+### Step fields
+
+| Field name    | Description                   |
+|---------------|-------------------------------|
+| id            | Step identifier               |
+| desc          | Step description              |
+| <HTTP_METHOD> | GET, POST, PUT, etc. + url    |
+| body          | request body                  |
+| match         | template of expected response |
+| match.status  | expected status code          |
+| match.body    | expected body                 |
+
 ## Configuration properties
 
 | VAR_NAME   | Description |
