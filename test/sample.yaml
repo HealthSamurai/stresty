@@ -17,7 +17,7 @@ steps:
     status: 201
     body:
       id: pt-1
-      name: [{given: ['Vladislav']}]
+      name: [{given: ['#\w+']}]
 - id: read
   desc: Read our patient
   GET: /Patient/pt-1

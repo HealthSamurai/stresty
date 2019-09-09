@@ -175,6 +175,47 @@ body:
 ---------------------------------
 ```
 
+# Matcho
+
+Stresty uses [Matcho](https://github.com/niquola/matcho) under the hood.
+
+## Predicates
+
+String values ended with question mark (?) is considered as predicate. For now supported only functions from [clojure.core ns](https://clojuredocs.org/clojure.core) like `string?`, `number?`, etc.
+
+Example:
+```yaml
+- id: create
+  desc: Create test patient
+  POST: /Patient
+  body:
+    id: pt-1
+    name: [{given: ['Vladislav']}]
+  match:
+    status: 201
+    body:
+      id: pt-1
+      name: [{given: ['string?']}]
+```
+
+## Regex
+
+String values started with number sign (#) is considered as [regex pattern](https://clojure.org/reference/other_functions#regex).
+
+```yaml
+- id: create
+  desc: Create test patient
+  POST: /Patient
+  body:
+    id: pt-1
+    name: [{given: ['Vladislav']}]
+  match:
+    status: 201
+    body:
+      id: pt-1
+      name: [{given: ['#\w+']}]
+
+```
 # todo
 
 Auth is not supported.

@@ -18,7 +18,8 @@
       (merge (cond->
                  {:url (str (:base-url ctx) url)
                   :throw-exceptions false
-                  :headers {"content-type" "application/json"}
+                  :headers {"content-type" "application/json"
+                            "Authorization" "Basic d293OnBhc3M="}
                   :path url
                   :method method}
                (:body step) (assoc :body (cheshire.core/generate-string (:body step)))
