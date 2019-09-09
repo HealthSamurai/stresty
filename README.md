@@ -1,10 +1,8 @@
 # REST cases runner
 
-CLI tool for REST tests.
+CLI tool for REST tests. Download [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
 
-Download [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
-
-Stresty walks through the steps which are REST calls with corresponding checker.
+Stresty walks through the steps which are REST calls with corresponding checker. It checks only fields you described in the `match` part. If the response body contains other fields, they will be skipped.
 
 ### Step fields
 
