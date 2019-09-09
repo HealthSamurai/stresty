@@ -7,6 +7,7 @@ Download [latest standalone release](https://github.com/Aidbox/stresty/releases/
 ## Configuration properties
 
 | VAR_NAME   | Description |
+|------------|-------------|
 | AIDBOX_URL | URL (ex. http://box.aidbox.app) |
 | AIDBOX_BASIC_AUTH | Base64 encoded auth token (ex. `dXNlcjpwYXNz` for `user:pass`). See more in [aidbox.doc](https://docs.aidbox.app/auth-betta/basic-auth) |
 
