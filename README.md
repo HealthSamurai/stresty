@@ -255,3 +255,5 @@ String values started with number sign (#) is considered as [regex pattern](http
 2. print the conf before run tests
 3. print summary (num of passed, failed tests)
 5. fail fast
+1. Doc for built-in-functions
+1. Generate `stresty.jar` (not `stresty-1.0.0-standalone.jar`).
