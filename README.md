@@ -294,3 +294,4 @@ String values started with number sign (#) is considered as [regex pattern](http
 1. Doc for built-in-functions
 1. Generate `stresty.jar` (not `stresty-1.0.0-standalone.jar`).
 1. step by step run
+1. If there is no expected field in the response, the error is not obvious. 
