@@ -252,3 +252,6 @@ String values started with number sign (#) is considered as [regex pattern](http
 # todo
 
 1. json schema validation for incoming files.
+2. print the conf before run tests
+3. print summary (num of passed, failed tests)
+5. fail fast

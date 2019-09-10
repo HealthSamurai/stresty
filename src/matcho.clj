@@ -2,10 +2,22 @@
 (ns matcho
   (:require [clojure.string :as s]))
 
+(def fns
+  {"ok?" #(and (> % 199) (< % 300))
+   }
+  )
+
+
 (defn built-in-fn [fn-name]
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
     #( func %)
     (throw  (ex-info (str "Unknown function name '" fn-name "'") {:type :unknown-fn-name}))))
+
+(defn str->fn [fn-name]
+  (if-let [fn (get fns fn-name)]
+    fn
+    (built-in-fn fn-name)))
+
 (comment
 
   (match {:a 1} {:a "number?"} )
@@ -17,7 +29,7 @@
   (cond
 
     (and (string? p) (s/ends-with? p "?"))
-    (do (println "fn?")(smart-explain-data (built-in-fn p) x))
+    (do (println "fn?")(smart-explain-data (str->fn p) x))
 
     (and  (string? p) (s/starts-with? p "#"))
     (smart-explain-data (java.util.regex.Pattern/compile (subs p 1)) x)
