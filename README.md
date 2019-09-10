@@ -263,6 +263,9 @@ Example:
 - [zero?](https://clojuredocs.org/clojure.core/zero_q)
 
 
+### Custom predicates
+
+- `ok?` -- `(and (>= % 200) (< % 300))`
 
 ## Regex
 
