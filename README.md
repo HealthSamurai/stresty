@@ -231,6 +231,39 @@ Example:
       name: [{given: ['string?']}]
 ```
 
+### Predicates from clojure.core
+
+- [boolean?](https://clojuredocs.org/clojure.core/boolean_q)
+- [bound?](https://clojuredocs.org/clojure.core/bound_q)
+- [contains?](https://clojuredocs.org/clojure.core/contains_q) -- not supported
+- [decimal?](https://clojuredocs.org/clojure.core/decimal_q)
+- [distinct?](https://clojuredocs.org/clojure.core/distinct_q)
+- [double?](https://clojuredocs.org/clojure.core/double_q)
+- [empty?](https://clojuredocs.org/clojure.core/empty_q)
+- [even?](https://clojuredocs.org/clojure.core/even_q)
+- [false?](https://clojuredocs.org/clojure.core/false_q)
+- [float?](https://clojuredocs.org/clojure.core/float_q)
+- [int?](https://clojuredocs.org/clojure.core/int_q)
+- [integer?](https://clojuredocs.org/clojure.core/integer_q)
+- [list?](https://clojuredocs.org/clojure.core/list_q)
+- [map?](https://clojuredocs.org/clojure.core/map_q)
+- [nat-int?](https://clojuredocs.org/clojure.core/nat-int_q)
+- [neg-int?](https://clojuredocs.org/clojure.core/neg-int_q)
+- [nil?](https://clojuredocs.org/clojure.core/nil_q)
+- [number?](https://clojuredocs.org/clojure.core/number_q)
+- [odd?](https://clojuredocs.org/clojure.core/odd_q)
+- [pos?](https://clojuredocs.org/clojure.core/pos_q)
+- [seq?](https://clojuredocs.org/clojure.core/seq_q)
+- [sequential?](https://clojuredocs.org/clojure.core/sequential_q)
+- [string?](https://clojuredocs.org/clojure.core/string_q)
+- [true?](https://clojuredocs.org/clojure.core/true_q)
+- [uri?](https://clojuredocs.org/clojure.core/uri_q)
+- [uuid?](https://clojuredocs.org/clojure.core/uuid_q)
+- [vector?](https://clojuredocs.org/clojure.core/vector_q)
+- [zero?](https://clojuredocs.org/clojure.core/zero_q)
+
+
+
 ## Regex
 
 String values started with number sign (#) is considered as [regex pattern](https://clojure.org/reference/other_functions#regex).
