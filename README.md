@@ -2,11 +2,11 @@
 
 CLI tool for REST tests.
 
-Stresty walks through the steps which are REST calls with matcher (response template). It checks only fields you described in the `match` part. If the response body contains other fields, they will be ignored.
+Stresty walks through the steps which are REST calls with a matcher (response template). It checks only fields that you described in the `match` part. If the response body contains other fields, they will be ignored.
 
-## Ussage
+## Usage
 
-Download [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
+Download the [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
 
 Create file `test.yaml`:
 ```yaml
@@ -56,7 +56,7 @@ steps:
       name: [{given: ['Petr'], family: 'Pupkin'}]
 ```
 
-Run script
+Run the script:
 
 ```sh
 $ AIDBOX_URL=http://<box_name>.aidbox.app AIDBOX_BASIC_AUTH=<username:pass encoded with base64> java -jar stresty-1.0.0-standalone.jar test.yaml 
@@ -189,7 +189,7 @@ java -jar stresty.jar *.yaml
 ```
 
 
-### Step fields
+### Step Fields
 
 | Field name    | Description                   |
 |---------------|-------------------------------|
@@ -201,7 +201,7 @@ java -jar stresty.jar *.yaml
 | match.status  | expected status code          |
 | match.body    | expected body                 |
 
-## Configuration properties
+## Configuration Properties
 
 | VAR_NAME   | Description |
 |------------|-------------|
@@ -214,7 +214,7 @@ Stresty uses [Matcho](https://github.com/niquola/matcho) under the hood.
 
 ## Predicates
 
-String values ended with question mark (?) is considered as predicate. For now supported only functions from [clojure.core ns](https://clojuredocs.org/clojure.core) like `string?`, `number?`, etc.
+String values ending with the question mark (?) are considered as predicates. For now, only functions from [clojure.core ns](https://clojuredocs.org/clojure.core) like `string?`, `number?`, etc. are supported.
 
 Example:
 ```yaml
@@ -263,13 +263,13 @@ Example:
 - [zero?](https://clojuredocs.org/clojure.core/zero_q)
 
 
-### Custom predicates
+### Custom Predicates
 
 - `ok?` -- `(and (>= % 200) (< % 300))`
 
 ## Regex
 
-String values started with number sign (#) is considered as [regex pattern](https://clojure.org/reference/other_functions#regex).
+String values starting with the number sign (#) are considered as [regex patterns](https://clojure.org/reference/other_functions#regex).
 
 ```yaml
 - id: create
