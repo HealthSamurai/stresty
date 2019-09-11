@@ -113,25 +113,21 @@
         (assoc ctx :failed true :message "Cannot create requrest") 
         ))))
 
-(comment
-
-  (run-step {:verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="}
-            {:id "wow" :GET "/Patient"})
-
-  )
 
 (defn run-test-case [ctx test-case]
   (when (v? ctx)
-    (println "run test case" (:id test-case)))
+    (println "run test case: " (:id test-case)))
   (let [result (reduce #(run-step %1 %2) ctx (:steps test-case))]
+
     (when (:errors result)
       (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
-    result))
+    (assoc result :id (:id test-case))))
 
 
 (defn run-file [ctx f]
-  (let [test-case (assoc (yaml/parse-string (slurp f)) :files f)
-        ctx (assoc ctx :files [])]
+  (let [test-case (assoc (yaml/parse-string (slurp f))
+                         :filename f)
+        ctx (assoc ctx :files [] :filename f)]
     (when (valid? ctx test-case)
       (let [result (run-test-case ctx test-case)]
         (update-in ctx [:files] #(conj % result))))))
@@ -151,21 +147,20 @@
         summary (get-summary result)
         failed? (not (zero? (:count-failed-tests summary)))]
 
-    (println)
+    (when (v? ctx)
+      (println)
+      (println))
     (if failed?
-      (println (:count-passed-tests summary) "passed,"
-               (:count-failed-tests summary) "failed.")
+      (do
+        (println (:count-passed-tests summary) "passed,"
+                 (:count-failed-tests summary) "failed.")
+        (println "Failed tests:")
+        (doseq [test-case (:files result)]
+          (println (:id test-case) (str "(" (:filename result) ")"))))
       (println "All" (:count-all-tests summary) "passed."))
 
-    #_(clojure.pprint/pprint result)
-
     (assoc result :failed failed?))
-  #_(doseq [f files]
-    (println "Configuration:")
-    (clojure.pprint/pprint ctx)
-    (println)
-    (println "Read " f)
-    (run-file ctx f)))
+  )
 
 (comment
 
