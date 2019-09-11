@@ -294,3 +294,5 @@ String values starting with the number sign (#) are considered as [regex pattern
 1. step by step run
 1. If there is no expected field in the response, the error is not obvious. 
 1. add possibility to skip test case
+1. add possibility to clean server after test case run
+1. -vv for step/test-case

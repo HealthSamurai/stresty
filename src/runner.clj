@@ -34,13 +34,6 @@
 
     (println "Warn: step should contain one of methods" meths ", but" (str "\n" (yaml/generate-string step)))))
 
-(comment
-
-  (defn wow [{:keys [h]}] h)
-
-(run-step {} {:h "wow"})
-
-  )
 
 (defn run-test-scenario [ctx script]
   #_(println (or (:id script) (:file script)))
@@ -74,39 +67,51 @@
 (defn verbose-enough? [ctx expected-lvl]
   (>= (or (:verbosity ctx) 0) expected-lvl))
 
+(defn v? [ctx] (verbose-enough? ctx 1))
+
+(defn vv? [ctx] (verbose-enough? ctx 2))
 
 (defn run-step [ctx step]
-  (println "run-step:" (:id step))
   (cond
+    ;; skip next steps if some previous one in the test-case was failed
     (:failed ctx)
-    ctx
+    (do
+      (when (vv? ctx)
+        (println "skip step " (:id step)))
+      ctx)
 
     :else
-    (if-let [req (mk-req ctx step)]
-      (let [{s :status :as resp} (http/request req)
-            b (when-let [b (:body resp)]
-                (cheshire.core/parse-string b keyword))
-            resp (cond-> {:status s} b (assoc :body b))
-            errs (when-let [m (:match step)]
-                   (->> (matcho/match resp m)
-                        (reduce (fn [acc {pth :path exp :expected}]
-                                  (assoc-in acc pth {:expected exp})
-                                  ) {})))]
-        (when (verbose-enough? ctx 2)
-          (when (:desc step)
-            (println (str (or (:desc step) "") "         \n")))
-          (println (colors/yellow (colors/bold (name (:method req)))) (:path req))
-          (println "Response")
-          (println (yaml/generate-string resp)))
+    (do
+      (when (vv? ctx)
+        (println "run step:" (:id step)))
+      (if-let [req (mk-req ctx step)]
+        (let [{s :status :as resp} (http/request req)
+              b (when-let [b (:body resp)]
+                  (cheshire.core/parse-string b keyword))
+              resp (cond-> {:status s} b (assoc :body b))
+              errs (when-let [m (:match step)]
+                     (->> (matcho/match resp m)
+                          (reduce (fn [acc {pth :path exp :expected}]
+                                    (assoc-in acc pth {:expected exp})
+                                    ) {})))]
+          (when (vv? ctx)
+            (when (:desc step)
+              (println (str (or (:desc step) "") "         \n")))
+            (println "Request")
+            (println (colors/yellow (colors/bold (name (:method req)))) (:path req))
+            (when (:body req)
+              (println (yaml/generate-string (:body req))))
+            (println "Response")
+            (println (yaml/generate-string resp)))
 
-        (if (empty? errs)
-          ctx
-          (do
-            (when (verbose-enough? ctx 2)
-              (pprint/pretty {:ident 0 :path [] :errors errs} resp))
-            (assoc ctx :failed true :errors errs))))
-      (assoc ctx :failed true :message "Cannot create requrest") 
-      )))
+          (if (empty? errs)
+            ctx
+            (assoc ctx
+                   :failed true
+                   :errors errs
+                   :resp resp)))
+        (assoc ctx :failed true :message "Cannot create requrest") 
+        ))))
 
 (comment
 
@@ -116,72 +121,45 @@
   )
 
 (defn run-test-case [ctx test-case]
-  (println "run test case")
-  (reduce #(run-step %1 %2) ctx (:steps test-case))
-  )
+  (when (v? ctx)
+    (println "run test case" (:id test-case)))
+  (let [result (reduce #(run-step %1 %2) ctx (:steps test-case))]
+    (when (:errors result)
+      (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
+    result))
 
-
-
-(defn run-script [ctx script]
-  (println (or (:id script) (:file script)))
-  (doseq [step (:steps script)]
-    (when-let [req (mk-req ctx step)]
-      (when (:desc step)
-        (println (str (or (:desc step) "") "         \n")))
-      (println (colors/yellow (colors/bold (name (:method req)))) (:path req))
-      (when (:body step)
-        (pprint/pretty {:ident 0} {:body (:body step)})
-        (println))
-      (println)
-      (let [{s :status :as resp} (http/request req)
-            b (when-let [b (:body resp)]
-                (cheshire.core/parse-string b keyword))
-            resp (cond-> {:status s} b (assoc :body b))
-            errs (when-let [m (:match step)]
-                   (->> (matcho/match resp m)
-                        (reduce (fn [acc {pth :path exp :expected}]
-                                  (assoc-in acc pth {:expected exp})
-                                  ) {})))]
-
-        (pprint/pretty {:ident 0 :path [] :errors errs} resp)
-        (if (empty? errs)
-          (println "\n" (colors/green "OK!"))
-          #_(println "\n" (colors/red (pr-str errs)))))
-      (println (colors/dark (colors/white "\n---------------------------------\n")))
-      )))
-
-(comment
-
-
-  )
 
 (defn run-file [ctx f]
-  (let [ctx (assoc ctx :files [])]
-    (let [script (assoc (yaml/parse-string (slurp f)) :files f)]
-      (when (valid? ctx script)
-        (let [result (run-test-case ctx script)]
-          (update-in ctx [:files] #(conj % result)))))))
+  (let [test-case (assoc (yaml/parse-string (slurp f)) :files f)
+        ctx (assoc ctx :files [])]
+    (when (valid? ctx test-case)
+      (let [result (run-test-case ctx test-case)]
+        (update-in ctx [:files] #(conj % result))))))
 
 (defn get-summary [{tests :files}]
-  {:failed-tests (filter :failed tests)
-         :passed-tests (filter #(-> % :failed not) tests)
-         :count-failed-tests (count failed-tests)
-         :count-all-tests (count tests)
-         :count-passed-tests (count passed-tests)}
-  )
+  (let [failed-tests (filter :failed tests)
+        passed-tests (filter #(-> % :failed not) tests)]
+    {:failed-tests failed-tests
+     :passed-tests passed-tests
+     :count-failed-tests (count failed-tests)
+     :count-all-tests (count tests)
+     :count-passed-tests (count passed-tests)}))
 
 (defn run [ctx files]
 
   (let [result (reduce run-file ctx files)
-        summary (get-summary result)]
+        summary (get-summary result)
+        failed? (not (zero? (:count-failed-tests summary)))]
 
-    (if (zero? (:count-failed-tests summary))
-      (println "All" count-all-tests "passed.")
-      (println "Result:" count-passed-tests "passed," count-failed-tests "failed."))
+    (println)
+    (if failed?
+      (println (:count-passed-tests summary) "passed,"
+               (:count-failed-tests summary) "failed.")
+      (println "All" (:count-all-tests summary) "passed."))
 
-    (clojure.pprint/pprint result)
+    #_(clojure.pprint/pprint result)
 
-    result)
+    (assoc result :failed failed?))
   #_(doseq [f files]
     (println "Configuration:")
     (clojure.pprint/pprint ctx)
