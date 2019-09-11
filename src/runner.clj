@@ -42,63 +42,6 @@
 
   )
 
-(defn verbose-enough? [ctx expected-lvl]
-  (>= (or (:verbosity ctx) 0) expected-lvl))
-
-
-(defn run-step [ctx step]
-  (println "run-step")
-  (cond
-    (:failed ctx)
-    ctx
-
-    :else
-    (if-let [req (mk-req ctx step)]
-      (let [{s :status :as resp} (http/request req)
-            b (when-let [b (:body resp)]
-                (cheshire.core/parse-string b keyword))
-            resp (cond-> {:status s} b (assoc :body b))
-            errs (when-let [m (:match step)]
-                   (->> (matcho/match resp m)
-                        (reduce (fn [acc {pth :path exp :expected}]
-                                  (assoc-in acc pth {:expected exp})
-                                  ) {})))]
-        (when (verbose-enough? ctx 2)
-          (when (:desc step)
-            (println (str (or (:desc step) "") "         \n")))
-          (println (colors/yellow (colors/bold (name (:method req)))) (:path req)))
-
-        (if (empty? errs)
-          nil
-          (do
-            (when (verbose-enough? ctx 2)
-              (pprint/pretty {:ident 0 :path [] :errors errs} resp))
-            (assoc ctx :failed true :errors errs))))
-      (assoc ctx :failed true) 
-      )))
-
-(defn run-test-case [ctx test-case]
-  (println "run test case")
-  (reduce #(run-step %1 %2) ctx (:steps test-case))
-  )
-
-
-(comment
-
-  (def ctx-sample
-    {:url "http://" :basic-auth "l:p"
-     :results 2})
-
-  (reduce + 10 [1 2 3])
-
-
-  (run-step {:failed true} {})
-
-
-  (run-test-case {:ww 42} {:steps [{:wow 42} {}]})
-
-  )
-
 (defn run-test-scenario [ctx script]
   #_(println (or (:id script) (:file script)))
   (doseq [step (:steps script)]
@@ -127,6 +70,56 @@
           #_(println "\n" (colors/red (pr-str errs)))))
       #_(println (colors/dark (colors/white "\n---------------------------------\n")))
       )))
+
+(defn verbose-enough? [ctx expected-lvl]
+  (>= (or (:verbosity ctx) 0) expected-lvl))
+
+
+(defn run-step [ctx step]
+  (println "run-step:" (:id step))
+  (cond
+    (:failed ctx)
+    ctx
+
+    :else
+    (if-let [req (mk-req ctx step)]
+      (let [{s :status :as resp} (http/request req)
+            b (when-let [b (:body resp)]
+                (cheshire.core/parse-string b keyword))
+            resp (cond-> {:status s} b (assoc :body b))
+            errs (when-let [m (:match step)]
+                   (->> (matcho/match resp m)
+                        (reduce (fn [acc {pth :path exp :expected}]
+                                  (assoc-in acc pth {:expected exp})
+                                  ) {})))]
+        (when (verbose-enough? ctx 2)
+          (when (:desc step)
+            (println (str (or (:desc step) "") "         \n")))
+          (println (colors/yellow (colors/bold (name (:method req)))) (:path req))
+          (println "Response")
+          (println (yaml/generate-string resp)))
+
+        (if (empty? errs)
+          ctx
+          (do
+            (when (verbose-enough? ctx 2)
+              (pprint/pretty {:ident 0 :path [] :errors errs} resp))
+            (assoc ctx :failed true :errors errs))))
+      (assoc ctx :failed true :message "Cannot create requrest") 
+      )))
+
+(comment
+
+  (run-step {:verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="}
+            {:id "wow" :GET "/Patient"})
+
+  )
+
+(defn run-test-case [ctx test-case]
+  (println "run test case")
+  (reduce #(run-step %1 %2) ctx (:steps test-case))
+  )
+
 
 
 (defn run-script [ctx script]
@@ -157,47 +150,35 @@
       (println (colors/dark (colors/white "\n---------------------------------\n")))
       )))
 
-(defn run-file [ctx f]
-  (let [ctx (assoc ctx :files [])]
-    (cond
-      :else
-      (let [script (assoc (yaml/parse-string (slurp f)) :files f)]
-        (when (valid? ctx script)
-          (update-in ctx [:files] #(conj % (run-test-case ctx script))))))))
-
 (comment
 
-  (def data {:files
-             [{:failed true}
-              {}
-              {:failed true}]})
-
-  (->> data :files (filter :failed) count)
-
-
-
-  (filter #(-> % :failed not) [{:failed true}
-                {}
-                {:failed true}])
 
   )
 
+(defn run-file [ctx f]
+  (let [ctx (assoc ctx :files [])]
+    (let [script (assoc (yaml/parse-string (slurp f)) :files f)]
+      (when (valid? ctx script)
+        (let [result (run-test-case ctx script)]
+          (update-in ctx [:files] #(conj % result)))))))
 
-(defn print-result [{tests :files}]
-  (let [failed-tests (filter :failed tests)
-        passed-tests (filter #(-> % :failed not) tests)
-        count-failed-tests (count failed-tests)
-        count-all-tests (count tests)
-        count-passed-tests (count passed-tests)]
-    (if (zero? count-failed-tests)
-      (println "All" count-all-tests "passed.")
-      (println "Result:" count-passed-tests "passed," count-failed-tests "failed."))))
+(defn get-summary [{tests :files}]
+  {:failed-tests (filter :failed tests)
+         :passed-tests (filter #(-> % :failed not) tests)
+         :count-failed-tests (count failed-tests)
+         :count-all-tests (count tests)
+         :count-passed-tests (count passed-tests)}
+  )
 
 (defn run [ctx files]
 
-  (let [result (reduce run-file ctx files)]
+  (let [result (reduce run-file ctx files)
+        summary (get-summary result)]
 
-    (print-result result)
+    (if (zero? (:count-failed-tests summary))
+      (println "All" count-all-tests "passed.")
+      (println "Result:" count-passed-tests "passed," count-failed-tests "failed."))
+
     (clojure.pprint/pprint result)
 
     result)
@@ -214,6 +195,7 @@
 
   (run-file {:base-url "http://main.aidbox.app"} "test/sample.yaml")
 
-  (run {:base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="} ["test/w.yaml" "test/w.yaml"])
+  (-> (run {:verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="} [#_"test/w.yaml" "test/w.yaml"])
+      :failed)
 
   )
