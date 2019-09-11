@@ -1,6 +1,6 @@
-# REST cases runner
+# REST Cases Runner
 
-CLI tool for REST tests.
+CLI Tool for REST Tests.
 
 Stresty walks through the steps which are REST calls with a matcher (response template). It checks only fields that you described in the `match` part. If the response body contains other fields, they will be ignored.
 
