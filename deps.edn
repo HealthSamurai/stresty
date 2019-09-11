@@ -5,6 +5,7 @@
         org.martinklepsch/clj-http-lite   {:mvn/version "0.4.1"}
         cheshire                          {:mvn/version "5.6.3"}
 
+        org.clojure/tools.cli          {:mvn/version "0.4.2"}
         clj-commons/clj-yaml           {:mvn/version "0.7.0"}
         com.sun.xml.bind/jaxb-core     {:mvn/version "2.3.0.1"}
         com.sun.xml.bind/jaxb-impl     {:mvn/version "2.3.2"}

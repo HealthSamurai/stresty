@@ -291,7 +291,6 @@ String values starting with the number sign (#) are considered as [regex pattern
 2. print the conf before run tests
 3. print summary (num of passed, failed tests)
 5. fail fast
-1. Doc for built-in-functions
-1. Generate `stresty.jar` (not `stresty-1.0.0-standalone.jar`).
 1. step by step run
 1. If there is no expected field in the response, the error is not obvious. 
+1. add possibility to skip test case

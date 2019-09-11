@@ -9,4 +9,4 @@ build-native:
 	clojure -A:native-image
 
 build:
-	clojure -A:run-test && clojure -A:build
+	clojure -A:run-test && clojure -A:build && mv target/stresty-1.0.0-standalone.jar target/stresty.jar

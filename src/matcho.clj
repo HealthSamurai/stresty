@@ -29,7 +29,7 @@
   (cond
 
     (and (string? p) (s/ends-with? p "?"))
-    (do (println "fn?")(smart-explain-data (str->fn p) x))
+    (smart-explain-data (str->fn p) x)
 
     (and  (string? p) (s/starts-with? p "#"))
     (smart-explain-data (java.util.regex.Pattern/compile (subs p 1)) x)
