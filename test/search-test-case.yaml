@@ -136,8 +136,30 @@ steps:
 
 # https://docs.aidbox.app/basic-concepts/search-1/_ilike
 
-# ...
-
+- id: get-patients-that-contain-Vl+Gan-or-Kol
+  GET: /Patient?_ilike=Vl+Gan,Kol
+  match:
+    status: 200
+    body:
+      entry:
+      - resource:
+          id: pt-1
+          resourceType: Patient
+          name: [{given: [Vlad], family: Ganshin}]
+          birthDate: '1994-09-26'
+          address: [{city: St. Petersburg}]
+          text:
+            status: additional
+            div: Healthy Patient
+      - resource:
+          id: pt-2
+          resourceType: Patient
+          name: [{given: [Anna]}]
+          birthDate: '1994-08-07'
+          address: [{city: Kolpino}]
+          text:
+            status: additional
+            div: Unknown
 
 # https://docs.aidbox.app/basic-concepts/search-1/_elements
 
@@ -174,7 +196,110 @@ steps:
 
 # https://docs.aidbox.app/basic-concepts/search-1/_list
 
-# ...
+- id: create-test-list-with-links-on-patients
+  PUT: /List/list-3
+  body:
+    id: list-3
+    resourceType: List
+    status: "Generated"
+    mode: "changes"
+    subject: 
+      resourceType: "Patient"
+      id: "pt-2"
+    entry:
+    - item:
+        resourceType: "Patient"
+        id: "pt-1"
+    - item:
+        resourceType: "Patient"
+        id: "pt-3"
+  match:
+    status: 200
+
+- id: get-patients-from-list
+  GET: /Patient?_list=list-3
+  match:
+    status: 200
+    body:
+      entry:
+      - resource:
+          id: pt-3
+          resourceType: Patient
+          name: [{given: [Ivan]}]
+          address: [{city: Pushkin}]
+          text:
+            status: additional
+            div: In progress
+      - resource:
+          id: pt-1
+          resourceType: Patient
+          name: [{given: [Vlad], family: Ganshin}]
+          birthDate: '1994-09-26'
+          address: [{city: St. Petersburg}]
+          text:
+            status: additional
+            div: Healthy Patient
+      
+- id: get-patients-with-given-name-from-list
+  GET: /Patient?_list=list-3&name=Ivan
+  match:
+    status: 200
+    body:
+      entry:
+      - resource:
+          id: pt-3
+          resourceType: Patient
+          name: [{given: [Ivan]}]
+          address: [{city: Pushkin}]
+          text:
+            status: additional
+            div: In progress
+
+# - id: create-dataset-for-list-extraction-from-other-resource
+#   PUT: /
+#   body:
+#   - id: critical-pt
+#     resourceType: Patient
+#     name: [{given: [Gavriil], family: Petrov}]
+#     subject:                              #This field doesn't exist yet!
+#     - item:
+#         resourceType: "List"
+#         id: "list-of-donors"
+
+#   - id: list-of-donors
+#     resourceType: List
+#     status: "Generated"
+#     mode: "changes"
+#     subject:
+#       resourceType: "Patient"
+#       id: "critical-pt"
+#     entry:                    
+#     - item:
+#         resourceType: "Patient"
+#         id: "pt-1"
+#     - item:
+#         resourceType: "Patient"
+#         id: "pt-2"
+#     - item:
+#         resourceType: "Patient"
+#         id: "pt-3"
+
+# - id: get-a-list-of-donors-from-patient
+#   GET: /Patient?patient=critical-pt&_list=$list-of-donors&elements=id
+#   match: 200
+#     status: 200
+#     body:
+#       entry:
+#         - resource:
+#             id: pt-3
+#             resourceType: Patient
+#         - resource:
+#             id: pt-2
+#             resourceType: Patient
+#         - resource:
+#             id: pt-1
+#             resourceType: Patient
+
 
 # https://docs.aidbox.app/basic-concepts/search-1/_count-and-_page
 
@@ -225,3 +350,35 @@ steps:
             id: pt-1
             resourceType: Patient
 
+# https://docs.aidbox.app/basic-concepts/search-1/_include-and-_revinclude
+
+- id: get-resource-with-links-included-in-it's-given-field
+  GET: /List?_id=list-3&_include=subject
+  match:
+    status: 200
+    body:
+      entry:
+        - resource:
+            id: pt-2
+            resourceType: Patient
+            name: [given: [Anna]]
+            birthDate: '1994-08-07'
+            address: [{city: Kolpino}]
+            text:
+              status: additional
+              div: Unknown
+        - resource:
+            id: list-3
+            resourceType: List
+            status: "Generated"
+            mode: "changes"
+            subject: 
+              resourceType: "Patient"
+              id: "pt-2"
+            entry:
+            - item:
+                resourceType: "Patient"
+                id: "pt-1"
+            - item:
+                resourceType: "Patient"
+                id: "pt-3"
