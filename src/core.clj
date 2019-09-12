@@ -32,6 +32,9 @@
                (:options opts)
                {:base-url (System/getenv "AIDBOX_URL")
                 :basic-auth (System/getenv "AIDBOX_BASIC_AUTH")})]
+      (println "Configuration:")
+      (clojure.pprint/pprint ctx)
+      (println)
       (if (:failed (runner/run ctx (:arguments opts)))
         (System/exit 1))))
 
