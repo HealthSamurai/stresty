@@ -5,7 +5,9 @@
             [pprint]
             [colors]
             [clojure.java.io :as io]
-            [cheshire.core]))
+            [cheshire.core]
+            [b64]
+            ))
 
 (defn valid? [ctx script]
   true)
@@ -13,9 +15,18 @@
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
 (defn get-auth-headers [ctx]
-  (if-let [basic-auth (:basic-auth ctx)]
-    (do 
-        {"Authorization" (str "Basic " basic-auth)})))
+  (let [auth-type (:authorization-type ctx)]
+    (cond
+      (= auth-type "Basic")
+      {"Authorization" (str "Basic "
+                            (b64/encode
+                             (str (:client-id ctx) ":" (:client-secret ctx))))}
+
+      (nil? auth-type)
+      {}
+
+      :else
+      (throw (ex-info (str "Unknown authorization type " auth-type) {})))))
 
 (defn mk-req [ctx step]
   (if-let [method (first (filter meths (keys step)))]

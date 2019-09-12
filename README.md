@@ -56,10 +56,14 @@ steps:
       name: [{given: ['Petr'], family: 'Pupkin'}]
 ```
 
-Run the script:
+Run the script (we expect that you have box with configured basic auth):
 
-```sh
-$ AIDBOX_URL=http://<box_name>.aidbox.app AIDBOX_BASIC_AUTH=<username:pass encoded with base64> java -jar stresty-1.0.0-standalone.jar test.yaml 
+```bash
+$ export AIDBOX_URL=http://<box_name>.aidbox.app 
+$ export AIDBOX_AUTH_TYPE=Basic
+$ export AIDBOX_CLIENT_ID=<client-id>
+$ export AIDBOX_CLIENT_SECRET=<client-secret>
+$ java -jar stresty-1.0.0-standalone.jar test.yaml 
 
 Args: (test/another.yaml)
 Read  test/another.yaml
@@ -203,10 +207,12 @@ java -jar stresty.jar *.yaml
 
 ## Configuration Properties
 
-| VAR_NAME   | Description |
-|------------|-------------|
-| AIDBOX_URL | URL (ex. http://box.aidbox.app) |
-| AIDBOX_BASIC_AUTH | Base64 encoded auth token (ex. `dXNlcjpwYXNz` for `user:pass`). See more in [aidbox.doc](https://docs.aidbox.app/auth-betta/basic-auth) |
+| VAR_NAME             | Description                                                                                                                             |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| AIDBOX_URL           | URL (ex. http://box.aidbox.app)                                                                                                         |
+| AIDBOX_AUTH_TYPE     | Auth type. `Basic` is supported for now. If absent than stresty doesn't use auth.                                                       |
+| AIDBOX_CLIENT_ID     | client id is used in case auth                                                                                                          |
+| AIDBOX_CLIENT_SECRET | client secret                                                                                                                           |
 
 # Matcho
 
@@ -288,7 +294,6 @@ String values starting with the number sign (#) are considered as [regex pattern
 # todo
 
 1. json schema validation for incoming files.
-5. fail fast
 1. step by step run
 1. If there is no expected field in the response, the error is not obvious. 
 1. add possibility to skip test case

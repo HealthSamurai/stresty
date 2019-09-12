@@ -31,23 +31,14 @@
     (let [ctx (merge
                (:options opts)
                {:base-url (System/getenv "AIDBOX_URL")
-                :basic-auth (System/getenv "AIDBOX_BASIC_AUTH")})]
+                :client-id (System/getenv "AIDBOX_CLIENT_ID")
+                :client-secret (System/getenv "AIDBOX_CLIENT_SECRET")
+                :authorization-type (System/getenv "AIDBOX_AUTH_TYPE")})]
       (println "Configuration:")
       (clojure.pprint/pprint ctx)
       (println)
       (if (:failed (runner/run ctx (:arguments opts)))
-        (System/exit 1))))
-
-  #_(let [ctx {:base-url (System/getenv "AIDBOX_URL")
-             :basic-auth (System/getenv "AIDBOX_BASIC_AUTH")
-             :verbosity 2}]
-
-    (clojure.pprint/pprint (parse-opts args cli-options))
-    (println "Args:" args)
-
-    (if (:failed (runner/run ctx args))
-      (System/exit 1))
-    ))
+        (System/exit 1)))))
 
 (comment
 
