@@ -11,6 +11,8 @@
     :default 0
     ;; :update-fn inc
     :assoc-fn (fn [m k _] (update-in m [k] inc))]
+   ["-i" "--interactive" "Interactive mode"
+    :default false]
    ["-h" "--help"]])
 
 (defn -main [& args]
@@ -28,16 +30,19 @@
       (println "For more info see:")
       (println "https://github.com/Aidbox/stresty")
       (System/exit 0))
+
     (let [ctx (merge
                (:options opts)
                {:base-url (System/getenv "AIDBOX_URL")
                 :client-id (System/getenv "AIDBOX_CLIENT_ID")
                 :client-secret (System/getenv "AIDBOX_CLIENT_SECRET")
                 :authorization-type (System/getenv "AIDBOX_AUTH_TYPE")})]
+      (println "Args:" (:arguments opts))
       (println "Configuration:")
       (clojure.pprint/pprint ctx)
       (println)
-      (if (:failed (runner/run ctx (:arguments opts)))
+      (if (:passed? (runner/run ctx (:arguments opts)))
+        (System/exit 0)
         (System/exit 1)))))
 
 (comment
