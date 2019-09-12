@@ -47,15 +47,11 @@
 
 
 (defn run-test-scenario [ctx script]
-  #_(println (or (:id script) (:file script)))
   (doseq [step (:steps script)]
     (when-let [req (mk-req ctx step)]
       (when (:desc step)
         (println (str (or (:desc step) "") "         \n")))
       (println (colors/yellow (colors/bold (name (:method req)))) (:path req))
-      #_(when (:body step)
-        (pprint/pretty {:ident 0} {:body (:body step)})
-        (println))
       (let [{s :status :as resp} (http/request req)
             b (when-let [b (:body resp)]
                 (cheshire.core/parse-string b keyword))
@@ -66,13 +62,8 @@
                                   (assoc-in acc pth {:expected exp})
                                   ) {})))]
 
-        #_(pprint/pretty {:ident 0 :path [] :errors errs} resp)
         (println errs)
         errs
-        #_(if (empty? errs)
-          (println "\n" (colors/green "OK!"))
-          #_(println "\n" (colors/red (pr-str errs)))))
-      #_(println (colors/dark (colors/white "\n---------------------------------\n")))
       )))
 
 (defn verbose-enough? [ctx expected-lvl]
