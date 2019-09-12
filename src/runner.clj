@@ -12,6 +12,16 @@
 (defn valid? [ctx script]
   true)
 
+(defmacro v [ctx & cmds]
+  (let [do-cmds (conj cmds 'do)]
+    `(when (>= (:verbosity ~ctx) 1)
+        ~do-cmds)))
+
+(defmacro vv [ctx & cmds]
+  (let [do-cmds (conj cmds 'do)]
+    `(when (>= (:verbosity ~ctx) 2)
+        ~do-cmds)))
+
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
 (defn get-auth-headers [ctx]
@@ -46,46 +56,22 @@
     (println "Warn: step should contain one of methods" meths ", but" (str "\n" (yaml/generate-string step)))))
 
 
-(defn run-test-scenario [ctx script]
-  (doseq [step (:steps script)]
-    (when-let [req (mk-req ctx step)]
-      (when (:desc step)
-        (println (str (or (:desc step) "") "         \n")))
-      (println (colors/yellow (colors/bold (name (:method req)))) (:path req))
-      (let [{s :status :as resp} (http/request req)
-            b (when-let [b (:body resp)]
-                (cheshire.core/parse-string b keyword))
-            resp (cond-> {:status s} b (assoc :body b))
-            errs (when-let [m (:match step)]
-                   (->> (matcho/match resp m)
-                        (reduce (fn [acc {pth :path exp :expected}]
-                                  (assoc-in acc pth {:expected exp})
-                                  ) {})))]
-
-        (println errs)
-        errs
-      )))
-
 (defn verbose-enough? [ctx expected-lvl]
   (>= (or (:verbosity ctx) 0) expected-lvl))
-
-(defn v? [ctx] (verbose-enough? ctx 1))
-
-(defn vv? [ctx] (verbose-enough? ctx 2))
 
 (defn run-step [ctx step]
   (cond
     ;; skip next steps if some previous one in the test-case was failed
     (:failed ctx)
     (do
-      (when (vv? ctx)
-        (println "skip step " (:id step)))
+      (vv ctx
+          (println "skip step " (:id step)))
       ctx)
 
     :else
     (do
-      (when (vv? ctx)
-        (println "run step:" (:id step)))
+      (vv ctx
+           (println "run step:" (:id step)))
       (if-let [req (mk-req ctx step)]
         (let [{s :status :as resp} (http/request req)
               b (when-let [b (:body resp)]
@@ -96,15 +82,15 @@
                           (reduce (fn [acc {pth :path exp :expected}]
                                     (assoc-in acc pth {:expected exp})
                                     ) {})))]
-          (when (vv? ctx)
-            (when (:desc step)
-              (println (str (or (:desc step) "") "         \n")))
-            (println "Request")
-            (println (colors/yellow (colors/bold (name (:method req)))) (:path req))
-            (when (:body req)
-              (println (yaml/generate-string (:body req))))
-            (println "Response")
-            (println (yaml/generate-string resp)))
+          (vv ctx
+               (when (:desc step)
+                 (println (str (or (:desc step) "") "         \n")))
+               (println "Request")
+               (println (colors/yellow (colors/bold (name (:method req)))) (:path req))
+               (when (:body req)
+                 (println (yaml/generate-string (:body req))))
+               (println "Response")
+               (println (yaml/generate-string resp)))
 
           (if (empty? errs)
             ctx
@@ -117,8 +103,8 @@
 
 
 (defn run-test-case [ctx test-case]
-  (when (v? ctx)
-    (println "run test case: " (:id test-case)))
+  (v ctx
+     (println "run test case: " (:id test-case)))
   (let [result (reduce #(run-step %1 %2) ctx (:steps test-case))]
 
     (when (:errors result)
@@ -143,15 +129,15 @@
      :count-all-tests (count tests)
      :count-passed-tests (count passed-tests)}))
 
+
 (defn run [ctx files]
 
   (let [result (reduce run-file ctx files)
         summary (get-summary result)
         failed? (not (zero? (:count-failed-tests summary)))]
 
-    (when (v? ctx)
-      (println)
-      (println))
+    (println)
+    (println)
     (if failed?
       (do
         (println (:count-passed-tests summary) "passed,"
