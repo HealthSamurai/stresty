@@ -69,22 +69,21 @@
 (defn verbose-enough? [ctx expected-lvl]
   (>= (or (:verbosity ctx) 0) expected-lvl))
 
-(defn run-step [ctx step]
+(defn exec-step [{:keys [conf steps] :as ctx} step]
   (cond
     ;; skip next steps if some previous one in the test-case was failed
-    (:failed ctx)
+    (or (:failed? ctx) (:skip step))
     (do
-      (i-or-vv ctx
-               (println (colors/yellow "skip step") (:id step)))
-      ctx)
+      (println (colors/yellow "skip step") (:id step))
+      (assoc step :skipped? true))
 
     :else
     (do
-      (i-or-vv ctx
+      (i-or-vv conf
                (print (colors/yellow "run step") (:id step))
                (flush)
-               (if (:interactive ctx) (read-line) (println)))
-      (if-let [req (mk-req ctx step)]
+               (if (:interactive conf) (read-line) (println)))
+      (if-let [req (mk-req conf step)]
         (let [{s :status :as resp} (http/request req)
               b (when-let [b (:body resp)]
                   (cheshire.core/parse-string b keyword))
@@ -93,7 +92,7 @@
                      (->> (matcho/match resp m)
                           (reduce (fn [acc {pth :path exp :expected}]
                                     (assoc-in acc pth {:expected exp})) {})))]
-          (vv ctx
+          (vv conf
               (when (:desc step)
                 (println (str (or (:desc step) ""))))
               (println "Request")
@@ -105,52 +104,75 @@
 
           (if (empty? errs)
             (do
-              (i ctx (println (colors/green "passed")))
-              ctx)
+              (i conf (println (colors/green "passed")))
+              step)
             (do
-              (i ctx (println (colors/red "failed")))
-              (assoc ctx
-                     :failed true
-                     :failed-step (:id step)
+              (i conf (println (colors/red "failed")))
+              (pprint/pretty {:ident 0 :path [] :errors errs} resp)
+              (assoc step
+                     :failed? true
                      :errors errs
                      :resp resp))))
-        (assoc ctx :failed true :message "Cannot create requrest")))))
+        (assoc step :failed? true :message "Cannot create requrest")))))
 
 (defn get-id [test-case]
   (or (:id test-case) (:filename test-case)))
 
-(defn run-test-case [ctx test-case]
-  (i ctx
-     (println "run test case" (:id test-case)))
-  (let [result (reduce #(run-step %1 %2) ctx (:steps test-case))]
 
-    (if (:failed result)
+(defn run-step [{:keys [conf steps] :as ctx} step]
+  (let [result (exec-step ctx step)]
+    (-> ctx
+        (update
+         :steps #(conj % result))
+        (merge (if (:failed? result) {:failed? true
+                                      :failed-step (:id result)
+                                      :resp (:resp result)
+                                      :errors (:errors result)}
+                   nil)))))
+
+(defn- run-steps
+  [conf test-case]
+  (reduce run-step {:conf conf :steps []} (:steps test-case)))
+
+(defn run-test-case [conf test-case]
+  (println "run test case" (:id test-case))
+
+  (let [result (run-steps conf test-case)]
+    (if (:failed? result)
       (println (colors/red "failed") (str (get-id test-case) "." (:failed-step result)))
       (println (colors/green "passed") (:id test-case)))
 
-    (when (:errors result)
+    #_(when (:errors result)
       (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
     (assoc result :id (:id test-case))))
 
-(defn run-file [ctx filename]
-  (let [test-case (update (assoc (yaml/parse-string (slurp filename))
-                                 :filename filename)
-                          :id #(if (nil? %) filename %))]
+(defn- read-test-case
+  [filename]
+  (-> filename
+      slurp
+      yaml/parse-string
+      (assoc
+       :filename filename)
+      (update
+       :id #(if (nil? %) filename %))))
+
+(defn run-file [{conf :conf test-cases :test-cases :as ctx} filename]
+  (let [test-case (read-test-case filename)]
     (when (valid? ctx test-case)
-      (let [result (run-test-case ctx test-case)]
+      (let [result (run-test-case conf test-case)]
         (update-in ctx [:test-cases] #(conj % result))))))
 
-(defn get-summary [{tests :test-cases}]
-  (let [failed-tests (filter :failed tests)
-        passed-tests (filter #(-> % :failed not) tests)]
+(defn get-summary [{test-cases :test-cases}]
+  (let [failed-tests (filter :failed? test-cases)
+        passed-tests (filter #(-> % :failed? not) test-cases)]
     {:failed-tests failed-tests
      :passed-tests passed-tests
      :count-failed-tests (count failed-tests)
-     :count-all-tests (count tests)
+     :count-all-tests (count test-cases)
      :count-passed-tests (count passed-tests)}))
 
-(defn run [ctx files]
-  (let [result (reduce run-file (assoc ctx :test-cases []) files)
+(defn run [conf files]
+  (let [result (reduce run-file {:conf conf :test-cases []} files)
         summary (get-summary result)
         passed? (zero? (:count-failed-tests summary))]
 
@@ -161,9 +183,10 @@
         (println (:count-passed-tests summary) "passed,"
                  (:count-failed-tests summary) "failed.")
         (println "Failed tests:")
-        (doseq [test-case (filter :failed (:test-cases result))]
+        (doseq [test-case (filter :failed? (:test-cases result))]
           (println (:id test-case) (str "(" (:filename result) ")")))))
 
+    #_(clojure.pprint/pprint result)
     (assoc result :passed? passed?)))
 
 (comment
