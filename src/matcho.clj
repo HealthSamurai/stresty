@@ -10,26 +10,20 @@
 
 (defn built-in-fn [fn-name]
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
-    #( func %)
-    (throw  (ex-info (str "Unknown function name '" fn-name "'") {:type :unknown-fn-name}))))
+    #(func %)
+    ))
 
 (defn str->fn [fn-name]
   (if-let [fn (get fns fn-name)]
     fn
     (built-in-fn fn-name)))
 
-(comment
-
-  (match {:a 1} {:a "number?"} )
-
-  (match {:a "hello"} {:a "#he\\w+"} )
-
-  )
 (defn smart-explain-data [p x]
   (cond
-
     (and (string? p) (s/ends-with? p "?"))
-    (smart-explain-data (str->fn p) x)
+    (if-let [f (str->fn p)]
+      (smart-explain-data f x)
+      {:expected (str p " is not a function") :but x})
 
     (and  (string? p) (s/starts-with? p "#"))
     (smart-explain-data (java.util.regex.Pattern/compile (subs p 1)) x)
