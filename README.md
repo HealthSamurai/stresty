@@ -272,6 +272,8 @@ Example:
 ### Custom Predicates
 
 - `ok?` -- `(and (>= % 200) (< % 300))`
+- `4xx?`
+- `5xx?`
 
 ## Regex
 

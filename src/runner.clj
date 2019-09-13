@@ -69,13 +69,19 @@
 (defn verbose-enough? [ctx expected-lvl]
   (>= (or (:verbosity ctx) 0) expected-lvl))
 
+(comment
+
+
+
+  )
+
 (defn exec-step [{:keys [conf steps] :as ctx} step]
   (cond
     ;; skip next steps if some previous one in the test-case was failed
-    (or (:failed? ctx) (:skip step))
+    (or (= (:status ctx) "failed") (:skip step))
     (do
       (println (colors/yellow "skip step") (:id step))
-      (assoc step :skipped? true))
+      (assoc step :status "skipped" :skipped? true))
 
     :else
     (do
@@ -111,13 +117,13 @@
               (pprint/pretty {:ident 0 :path [] :errors errs} resp)
               (assoc step
                      :failed? true
+                     :status "failed"
                      :errors errs
                      :resp resp))))
         (assoc step :failed? true :message "Cannot create requrest")))))
 
 (defn get-id [test-case]
   (or (:id test-case) (:filename test-case)))
-
 
 (defn run-step [{:keys [conf steps] :as ctx} step]
   (let [result (exec-step ctx step)]
@@ -160,7 +166,7 @@
   (let [test-case (read-test-case filename)]
     (when (valid? ctx test-case)
       (let [result (run-test-case conf test-case)]
-        (update-in ctx [:test-cases] #(conj % result))))))
+        (update ctx :test-cases #(conj % result))))))
 
 (defn get-summary [{test-cases :test-cases}]
   (let [failed-tests (filter :failed? test-cases)
