@@ -33,6 +33,7 @@
     `(when (or (>= (:verbosity ~ctx) 2) (:interactive ~ctx))
        ~do-cmds)))
 
+
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
 (defn get-auth-headers [ctx]
@@ -69,16 +70,10 @@
 (defn verbose-enough? [ctx expected-lvl]
   (>= (or (:verbosity ctx) 0) expected-lvl))
 
-(comment
-
-
-
-  )
-
 (defn exec-step [{:keys [conf steps] :as ctx} step]
   (cond
     ;; skip next steps if some previous one in the test-case was failed
-    (or (= (:status ctx) "failed") (:skip step))
+    (or (= (:status ctx) "failed") (:skip step) (and (:only ctx) (not= (:only ctx) (:id step))))
     (do
       (println (colors/yellow "skip step") (:id step))
       (assoc step :status "skipped" :skipped? true))
@@ -136,9 +131,18 @@
                                       :errors (:errors result)}
                    nil)))))
 
+(defn find-only-step [ctx s]
+  (println s)
+  (if (:only s)
+    (:id s)
+    ctx))
+
 (defn- run-steps
   [conf test-case]
-  (reduce run-step {:conf conf :steps []} (:steps test-case)))
+  (let [steps (:steps test-case)
+        only-step (reduce find-only-step nil steps)]
+    (reduce run-step {:conf conf :steps [] :only only-step} steps))
+  )
 
 (defn run-test-case [conf test-case]
   (println "run test case" (:id test-case))
@@ -151,6 +155,12 @@
     #_(when (:errors result)
       (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
     (assoc result :id (:id test-case))))
+
+(comment
+
+  (reduce find-only-step nil (:steps (read-test-case "test/sample.yaml")))
+
+  )
 
 (defn- read-test-case
   [filename]
@@ -199,7 +209,7 @@
 
   (run-file {:base-url "http://ya.ru"} "test/ya.yaml")
 
-  (run-file {:base-url "http://main.aidbox.app"} "test/sample.yaml")
+  (run {:interactive false :verbosity 1 :base-url "http://main.aidbox.app" :client-id "wow" :client-secret "pass"} ["test/sample.yaml"])
 
-  (-> (run {:verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="} [#_"test/w.yaml" "test/w.yaml"])
+  (-> (run {:interactive false :verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="} [#_"test/w.yaml" "test/w.yaml"])
       :failed))
