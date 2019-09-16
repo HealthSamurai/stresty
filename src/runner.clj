@@ -73,7 +73,7 @@
 (defn exec-step [{:keys [conf steps] :as ctx} step]
   (cond
     ;; skip next steps if some previous one in the test-case was failed
-    (or (= (:status ctx) "failed") (:skip step) (and (:only ctx) (not= (:only ctx) (:id step))))
+    (or (:failed? ctx) (:skip step) (and (:only ctx) (not= (:only ctx) (:id step))))
     (do
       (println (colors/yellow "skip step") (:id step))
       (assoc step :status "skipped" :skipped? true))
@@ -108,7 +108,7 @@
               (i conf (println (colors/green "passed")))
               (assoc step :status "passed"))
             (do
-              (i conf (println (colors/red "failed")))
+              (println (colors/red "failed step") (:id step))
               (pprint/pretty {:ident 0 :path [] :errors errs} resp)
               (assoc step
                      :failed? true
@@ -117,11 +117,6 @@
                      :resp resp))))
         (assoc step :failed? true :message "Cannot create requrest")))))
 
-(comment
-
-  (exec-step {:conf {:url "http://ya.ru"} :steps []} {:GET "/"})
-
-)
 (defn get-id [test-case]
   (or (:id test-case) (:filename test-case)))
 
@@ -137,7 +132,6 @@
                    nil)))))
 
 (defn find-only-step [ctx s]
-  (println s)
   (if (:only s)
     (:id s)
     ctx))

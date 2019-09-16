@@ -297,6 +297,9 @@ String values starting with the number sign (#) are considered as [regex pattern
 
 1. json schema validation for incoming files.
 1. If there is no expected field in the response, the error is not obvious. 
-1. add possibility to skip step
 1. add possibility to clean server after test case run
 1. Request body is printed as a string
+1. Conf validation. Unobviuos error if AIDBOX_URL is undefined
+1. ok? is not ok. `404 != #object[matcho$fn__1973 0x113eed88 "matcho$fn__1973@113eed88"]`
+1. readme for skip/only keywords
+
