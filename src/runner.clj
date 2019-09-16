@@ -222,6 +222,11 @@
     (println "             " (:failed-tests sum) "failed,")
     (println "             " (:skipped-tests sum) "skipped.")
 
+    (when (not passed?)
+      (println "Failed tests:")
+      (doseq [test-case (:test-cases result)]
+        (println (:id test-case))))
+
     (vv conf (clojure.pprint/pprint result))
     (assoc result :passed? (zero? (:failed-tests sum)))))
 
@@ -231,15 +236,17 @@
 
   (def r (run {:interactive false :verbosity 1 :base-url "http://main.aidbox.app" :client-id "wow" :client-secret "pass"} ["test/sample.yaml"]))
 
-  (def steps (-> r
+  (def tc (-> r
                  :test-cases
                  first))
-  
-  (clojure.pprint/pprint steps)
+
+
+  (:filename tc)
 
   (sum-for-test-case steps)
 
 
+  (clojure.pprint/pprint r)
 
   (-> (run {:interactive false :verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="} [#_"test/w.yaml" "test/w.yaml"])
       :failed))
