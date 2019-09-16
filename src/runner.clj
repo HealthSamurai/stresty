@@ -106,7 +106,7 @@
           (if (empty? errs)
             (do
               (i conf (println (colors/green "passed")))
-              step)
+              (assoc step :status "passed"))
             (do
               (i conf (println (colors/red "failed")))
               (pprint/pretty {:ident 0 :path [] :errors errs} resp)
@@ -117,6 +117,11 @@
                      :resp resp))))
         (assoc step :failed? true :message "Cannot create requrest")))))
 
+(comment
+
+  (exec-step {:conf {:url "http://ya.ru"} :steps []} {:GET "/"})
+
+)
 (defn get-id [test-case]
   (or (:id test-case) (:filename test-case)))
 
@@ -173,10 +178,29 @@
        :id #(if (nil? %) filename %))))
 
 (defn run-file [{conf :conf test-cases :test-cases :as ctx} filename]
+  (println)
   (let [test-case (read-test-case filename)]
     (when (valid? ctx test-case)
       (let [result (run-test-case conf test-case)]
         (update ctx :test-cases #(conj % result))))))
+
+(comment
+
+)
+
+(defn sum-for-test-case [{:keys [steps]}]
+  {:passed-tests (count (filter #(-> % :status (= "passed")) steps))
+   :failed-tests (count (filter #(-> % :status (= "failed")) steps))
+   :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))
+   })
+
+
+(defn sum-for-test-cases [test-cases]
+  (reduce #(fn [a b] {:passed-tests (+ (:passed-tests a) (:passed-tests b))
+             :failed-tests (+ (:failed-tests a) (:failed-tests b))
+             :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
+          (map sum-for-test-case test-cases)
+  ))
 
 (defn get-summary [{test-cases :test-cases}]
   (let [failed-tests (filter :failed? test-cases)
@@ -189,27 +213,33 @@
 
 (defn run [conf files]
   (let [result (reduce run-file {:conf conf :test-cases []} files)
+        sum (sum-for-test-cases (:test-cases result))
         summary (get-summary result)
         passed? (zero? (:count-failed-tests summary))]
 
     (println)
-    (if passed?
-      (println "All" (:count-all-tests summary) "passed.")
-      (do
-        (println (:count-passed-tests summary) "passed,"
-                 (:count-failed-tests summary) "failed.")
-        (println "Failed tests:")
-        (doseq [test-case (filter :failed? (:test-cases result))]
-          (println (:id test-case) (str "(" (:filename result) ")")))))
+    (println "Test results:" (:passed-tests sum) "passed,")
+    (println "             " (:failed-tests sum) "failed,")
+    (println "             " (:skipped-tests sum) "skipped.")
 
-    #_(clojure.pprint/pprint result)
-    (assoc result :passed? passed?)))
+    (vv conf (clojure.pprint/pprint result))
+    (assoc result :passed? (zero? (:failed-tests sum)))))
 
 (comment
 
   (run-file {:base-url "http://ya.ru"} "test/ya.yaml")
 
-  (run {:interactive false :verbosity 1 :base-url "http://main.aidbox.app" :client-id "wow" :client-secret "pass"} ["test/sample.yaml"])
+  (def r (run {:interactive false :verbosity 1 :base-url "http://main.aidbox.app" :client-id "wow" :client-secret "pass"} ["test/sample.yaml"]))
+
+  (def steps (-> r
+                 :test-cases
+                 first))
+  
+  (clojure.pprint/pprint steps)
+
+  (sum-for-test-case steps)
+
+
 
   (-> (run {:interactive false :verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="} [#_"test/w.yaml" "test/w.yaml"])
       :failed))

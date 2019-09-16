@@ -3,6 +3,7 @@ desc: Simple CRUD tutorial
 steps:
 - id: clean
   desc: Clear all patients
+  only: true
   POST: /$sql
   body: 'TRUNCATE patient'
   match:
@@ -60,6 +61,7 @@ steps:
   match:
     status: 200
 - id: read-404
+  only: true
   GET: /Patient/pt-1
   match:
-    status: 404
+    status: 411
