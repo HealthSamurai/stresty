@@ -63,7 +63,7 @@ $ export AIDBOX_URL=http://<box_name>.aidbox.app
 $ export AIDBOX_AUTH_TYPE=Basic
 $ export AIDBOX_CLIENT_ID=<client-id>
 $ export AIDBOX_CLIENT_SECRET=<client-secret>
-$ java -jar stresty-1.0.0-standalone.jar test.yaml 
+$ java -jar stresty.jar test.yaml 
 
 Args: (test/another.yaml)
 Read  test/another.yaml
