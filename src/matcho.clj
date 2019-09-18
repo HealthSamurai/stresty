@@ -3,13 +3,21 @@
   (:require [clojure.string :as s]))
 
 (def fns
-  {"ok?" #(and (> % 199) (< % 300))
-   "4xx?" #(and (> % 400) (< % 500))
-   "5xx?" #(and (> % 500) (< % 600))
+  {"2xx?" #(and (>= % 200) (< % 300))
+   "4xx?" #(and (>= % 400) (< % 500))
+   "5xx?" #(and (>= % 500) (< % 600))
    }
   )
 
 
+(comment
+
+
+
+  (pr-str (with-meta #(and %1 %2) {:type "wow"}))
+
+
+  )
 (defn built-in-fn [fn-name]
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
     #(func %)

@@ -221,7 +221,6 @@
       (doseq [test-case (:test-cases result)]
         (println (:id test-case))))
 
-    (vv conf (clojure.pprint/pprint result))
     (assoc result :passed? (zero? (:failed-tests sum)))))
 
 (comment

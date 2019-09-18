@@ -27,9 +27,9 @@
 
   (is (empty? (sut/match {:a "str"} {:a "#str"})))
 
-  (is (empty? (sut/match {:a 200} {:a "ok?"})))
+  (is (empty? (sut/match {:a 200} {:a "2xx?"})))
 
-  (is (empty? (sut/match {:a 204} {:a "ok?"})))
+  (is (empty? (sut/match {:a 204} {:a "2xx?"})))
 
   (is (empty? (sut/match {:a "string"} {:a "#str\\w+"})))
 
