@@ -8,6 +8,12 @@ Stresty walks through the steps which are REST calls with a matcher (response te
 
 Download the [latest standalone release](https://github.com/Aidbox/stresty/releases/latest).
 
+```
+$ curl -L -o stresty.jar https://github.com/Aidbox/stresty/releases/latest/download/stresty.jar
+$ # export your configuration properties here
+$ java -jar stresty.jar <test-file>.yaml
+```
+
 Create file `test.yaml`:
 ```yaml
 desc: Create & Read Patient
