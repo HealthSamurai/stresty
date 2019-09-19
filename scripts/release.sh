@@ -2,6 +2,10 @@
 
 # bump version
 
+EXPECTED_GIT_STATUS_MESSAGE="On branch master
+Your branch is up-to-date with 'origin/master'.
+nothing to commit, working tree clean"
+
 RELEASED_VERSION=`curl -w '%{url_effective}\n' -I -L -s -S https://github.com/Aidbox/stresty/releases/latest -o /dev/null | sed 's:.*/::'`
 VERSION=`cat VERSION`
 
@@ -19,6 +23,12 @@ function validate_version() {
         exit 1
     fi
 }
+
+if [[ $EXPECTED_GIT_STATUS_MESSAGE != `git status` ]]
+then
+    echo "Error: firstly commit & push your changes to master."
+    exit 1
+fi
 
 validate_version
 
