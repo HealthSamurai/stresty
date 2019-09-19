@@ -4,3 +4,4 @@ core
 classes
 pom.xml
 .nrepl-port
+resources/VERSION

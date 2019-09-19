@@ -1,5 +1,4 @@
-{:paths ["src"]
- :extra-paths ["resources"]
+{:paths ["src" "resources"]
  :jvm-opts []
  :deps {org.clojure/clojure               {:mvn/version "1.10.0"}
         org.martinklepsch/clj-http-lite   {:mvn/version "0.4.1"}
@@ -39,7 +38,7 @@
                          "--main" "core"
                          "--app-group-id" "hs" 
                          "--app-artifact-id" "stresty"
-                         "--app-version" "1.0.0"]}
+                         #_"--app-version" #_"1.0.0"]}
            :run-test {:extra-paths ["test"]
                   :extra-deps {com.cognitect/test-runner     {:git/url "https://github.com/cognitect-labs/test-runner"
                                                               :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}

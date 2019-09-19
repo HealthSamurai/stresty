@@ -2,7 +2,8 @@
   (:require [cheshire.core :as json]
             [runner]
             [clojure.string :as str]
-            [clojure.tools.cli :refer [parse-opts]])
+            [clojure.tools.cli :refer [parse-opts]]
+            [clojure.java.io :as io])
   (:gen-class))
 
 (def cli-options
@@ -13,8 +14,16 @@
     :assoc-fn (fn [m k _] (update-in m [k] inc))]
    ["-i" "--interactive" "Interactive mode"
     :default false]
-   ["-h" "--help"]])
+   ["-h" "--help"]
+   [nil "--version" "Show version"]])
 
+(comment
+
+
+
+
+
+  )
 
 (defn -main [& args]
   (let [opts (parse-opts args cli-options)]
@@ -23,6 +32,7 @@
       (System/exit 1))
     (when (-> opts :options :help)
       (println "Stresty. CLI Tool for REST Tests.")
+      (println "Version " (slurp (io/resource "VERSION")))
       (println "Usage: java -jar stresty.jar [arg*] file [files*]")
       (println)
       (println "Options:")
@@ -30,6 +40,12 @@
       (println)
       (println "For more info see:")
       (println "https://github.com/Aidbox/stresty")
+      (System/exit 0))
+
+
+    (when (-> opts :options :version)
+      (println "Stresty. CLI Tool for REST Tests.")
+      (println "Version" (slurp (io/resource "VERSION")))
       (System/exit 0))
 
     (let [ctx (merge
