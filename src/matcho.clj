@@ -9,15 +9,6 @@
    }
   )
 
-
-(comment
-
-
-
-  (pr-str (with-meta #(and %1 %2) {:type "wow"}))
-
-
-  )
 (defn built-in-fn [fn-name]
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
     #(func %)
@@ -28,26 +19,30 @@
     fn
     (built-in-fn fn-name)))
 
-(defn smart-explain-data [p x]
-  (cond
-    (and (string? p) (s/ends-with? p "?"))
-    (if-let [f (str->fn p)]
-      (smart-explain-data f x)
-      {:expected (str p " is not a function") :but x})
+(defn smart-explain-data
+  ([p x]
+   (smart-explain-data p x {}))
 
-    (and  (string? p) (s/starts-with? p "#"))
-    (smart-explain-data (java.util.regex.Pattern/compile (subs p 1)) x)
+  ([p x m]
+   (cond
+     (and (string? p) (s/ends-with? p "?"))
+     (if-let [f (str->fn p)]
+       (smart-explain-data f x {:fn-name p})
+       {:expected (str p " is not a function") :but x})
 
-    (and (string? x) (instance? java.util.regex.Pattern p))
-    (when-not (re-find p x)
-      {:expected (str "match regexp: " p) :but x})
+     (and  (string? p) (s/starts-with? p "#"))
+     (smart-explain-data (java.util.regex.Pattern/compile (subs p 1)) x)
 
-    (fn? p)
-    (when-not (p x)
-      {:expected (pr-str p) :but x})
+     (and (string? x) (instance? java.util.regex.Pattern p))
+     (when-not (re-find p x)
+       {:expected (str "match regexp: " p) :but x})
 
-    :else (when-not (= p x)
-            {:expected p :but x})))
+     (fn? p)
+     (when-not (p x)
+       {:expected (or (:fn-name m) (pr-str p)) :but x})
+
+     :else (when-not (= p x)
+             {:expected p :but x}))))
 
 (defn- match-recur [errors path x pattern]
   (cond

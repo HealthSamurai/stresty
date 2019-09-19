@@ -15,6 +15,7 @@
     :default false]
    ["-h" "--help"]])
 
+
 (defn -main [& args]
   (let [opts (parse-opts args cli-options)]
     (when-let [errors (:errors opts)]

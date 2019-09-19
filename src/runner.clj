@@ -155,12 +155,6 @@
       (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
     (assoc result :id (:id test-case))))
 
-(comment
-
-  (reduce find-only-step nil (:steps (read-test-case "test/sample.yaml")))
-
-  )
-
 (defn- read-test-case
   [filename]
   (-> filename

@@ -33,5 +33,10 @@
 
   (is (empty? (sut/match {:a "string"} {:a "#str\\w+"})))
 
-  )
+  (is (= (sut/match {:a 404} {:a "2xx?"}) [{:expected "2xx?" :but 404 :path [:a]}]))
 
+  (is (empty? (sut/match {:a {:b 1}} {:a {:c "nil?"}})))
+
+  (is (empty? (sut/match [{:n "a"} {:n "b"} {:n "c"}] [{:n "a"} "any?" {:n "c"}])))
+
+  )
