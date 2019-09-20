@@ -184,7 +184,7 @@
 
 
 (defn sum-for-test-cases [test-cases]
-  (reduce #(fn [a b] {:passed-tests (+ (:passed-tests a) (:passed-tests b))
+  (reduce (fn [a b] {:passed-tests (+ (:passed-tests a) (:passed-tests b))
              :failed-tests (+ (:failed-tests a) (:failed-tests b))
              :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
           (map sum-for-test-case test-cases)
