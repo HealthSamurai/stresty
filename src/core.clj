@@ -17,14 +17,6 @@
    ["-h" "--help"]
    [nil "--version" "Show version"]])
 
-(comment
-
-
-
-
-
-  )
-
 (defn -main [& args]
   (let [opts (parse-opts args cli-options)]
     (when-let [errors (:errors opts)]
