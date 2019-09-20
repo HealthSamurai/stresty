@@ -13,3 +13,5 @@ new_version=`./scripts/version.sh $current_version $1`
 echo $new_version > VERSION
 echo "Bumped new version $current_version -> $new_version"
 echo "Don't forget to commit & push your changes. ;)"
+echo
+echo "git commit -am \"bump version $current_version -> $new_version\""
