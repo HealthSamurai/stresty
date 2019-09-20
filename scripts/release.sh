@@ -33,6 +33,6 @@ fi
 validate_version
 
 echo "Creating tag $VERSION"
-git tag $VERSION | exit 1
+git tag $VERSION || exit 1
 echo "Pushing to orgin $VERSION"
 git push origin $VERSION
