@@ -84,9 +84,9 @@ Args: [test.yaml]
 Configuration:
 {:verbosity 0,
  :interactive false,
- :base-url "http://main.aidbox.app",
- :client-id "wow",
- :client-secret "pass",
+ :base-url "http://<box_name>.aidbox.app",
+ :client-id "<client-id>,"
+ :client-secret "<client-secret>",
  :authorization-type "Basic"}
 
 
