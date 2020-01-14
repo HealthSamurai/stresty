@@ -1,5 +1,8 @@
 .EXPORT_ALL_VARIABLES:
 
+clean:
+	rm pom.xml && rm -rf .cpcache
+
 repl:
 	clj -A:test:nrepl -e "(-main)" -r
 
