@@ -2,10 +2,6 @@
   (:require [colors]
             [clojure.string :as str]))
 
-
-
-
-
 (defn- -pretty [{ident :ident errs :errors :as ctx} obj &[f]]
   (cond
     (map? obj)

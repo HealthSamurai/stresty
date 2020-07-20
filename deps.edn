@@ -2,6 +2,7 @@
  :jvm-opts []
  :deps {org.clojure/clojure               {:mvn/version "1.10.0"}
         org.martinklepsch/clj-http-lite   {:mvn/version "0.4.1"}
+        clj-http                          {:mvn/version "2.3.0"}
         cheshire                          {:mvn/version "5.6.3"}
 
         org.clojure/tools.cli          {:mvn/version "0.4.2"}
@@ -13,8 +14,9 @@
  :aliases {:nrepl
            {:extra-paths ["dev"]
             :extra-deps {org.clojure/clojure           {:mvn/version "1.10.0"}
-                         cider/cider-nrepl             {:mvn/version "0.21.0"}
+                         cider/cider-nrepl             {:mvn/version "0.25.2"}
                          refactor-nrepl/refactor-nrepl {:mvn/version "2.4.0"}
+                         http-kit                      {:mvn/version "2.3.0"}
                          com.cognitect/test-runner     {:git/url "https://github.com/cognitect-labs/test-runner"
                                                         :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}}
 

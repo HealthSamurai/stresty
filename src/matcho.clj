@@ -1,18 +1,14 @@
-
 (ns matcho
   (:require [clojure.string :as s]))
 
 (def fns
   {"2xx?" #(and (>= % 200) (< % 300))
    "4xx?" #(and (>= % 400) (< % 500))
-   "5xx?" #(and (>= % 500) (< % 600))
-   }
-  )
+   "5xx?" #(and (>= % 500) (< % 600))})
 
 (defn built-in-fn [fn-name]
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
-    #(func %)
-    ))
+    #(func %)))
 
 (defn str->fn [fn-name]
   (if-let [fn (get fns fn-name)]
@@ -103,6 +99,3 @@
   "Match against each pattern"
   [x & patterns]
   (reduce (fn [acc pattern] (match-recur acc [] x pattern)) [] patterns))
-
-
-

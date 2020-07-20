@@ -1,6 +1,6 @@
 (ns runner
   (:require [clj-yaml.core :as yaml]
-            [clj-http.lite.client :as http]
+            [clj-http.client :as http]
             [matcho]
             [pprint]
             [colors]
@@ -8,7 +8,8 @@
             [cheshire.core]
             [b64]
 
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [clojure.string :as str]))
 
 (defn valid? [ctx script]
   true)
@@ -55,17 +56,17 @@
   (if-let [method (first (filter meths (keys step)))]
     (let [url (get step method)
           opts (select-keys step [:headers :auth])]
-      (merge (cond->
-              {:url (str (:base-url ctx) url)
-               :throw-exceptions false
-               :headers (merge {"content-type" "application/json"} (get-auth-headers ctx))
-               :path url
-               :method method}
-               (:body step) (assoc :body (cheshire.core/generate-string (:body step)))
+      (merge (cond-> {:url (str (:base-url ctx) url)
+                      :throw-exceptions false
+                      :headers (merge {"content-type" "application/json"} (get-auth-headers ctx))
+                      :path url
+                      :request-method (keyword (str/lower-case (name method)))}
+               (:body step)
+               (assoc :body (cheshire.core/generate-string (:body step)))
                (and (:client-id ctx) (:client-secret ctx))
                (assoc :basic-auth [(:client-id ctx) (:client-secret ctx)])) opts))
-
     (println "Warn: step should contain one of methods" meths ", but" (str "\n" (yaml/generate-string step)))))
+
 
 (defn verbose-enough? [ctx expected-lvl]
   (>= (or (:verbosity ctx) 0) expected-lvl))
@@ -172,23 +173,17 @@
       (let [result (run-test-case conf test-case)]
         (update ctx :test-cases #(conj % result))))))
 
-(comment
-
-)
-
 (defn sum-for-test-case [{:keys [steps]}]
   {:passed-tests (count (filter #(-> % :status (= "passed")) steps))
    :failed-tests (count (filter #(-> % :status (= "failed")) steps))
-   :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))
-   })
+   :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))})
 
 
 (defn sum-for-test-cases [test-cases]
   (reduce (fn [a b] {:passed-tests (+ (:passed-tests a) (:passed-tests b))
              :failed-tests (+ (:failed-tests a) (:failed-tests b))
              :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
-          (map sum-for-test-case test-cases)
-  ))
+          (map sum-for-test-case test-cases)))
 
 (defn get-summary [{test-cases :test-cases}]
   (let [failed-tests (filter :failed? test-cases)
@@ -219,7 +214,7 @@
 
 (comment
 
-  (run-file {:base-url "http://ya.ru"} "test/ya.yaml")
+  (run-file {:base-url "http://boxik.aidbox.app"} "test/sample.yaml")
 
   (def r (run {:interactive false :verbosity 1 :base-url "http://main.aidbox.app" :client-id "wow" :client-secret "pass"} ["test/sample.yaml"]))
 
@@ -227,11 +222,9 @@
                  :test-cases
                  first))
 
-
   (:filename tc)
 
   (sum-for-test-case steps)
-
 
   (clojure.pprint/pprint r)
 

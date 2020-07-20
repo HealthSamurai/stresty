@@ -3,7 +3,6 @@ desc: Simple CRUD tutorial
 steps:
 - id: clean
   desc: Clear all patients
-  only: true
   POST: /$sql
   body: 'TRUNCATE patient'
   match:
@@ -51,17 +50,17 @@ steps:
     name: [{given: ['Vlad'], family: 'Ganshin'}]
     ups: extra
   match:
-    status: 400
+    status: 422
     body:
       issue:
-      - expression: '.ups'
+      - expression: 'Patient.ups'
         error: string?
+
 - id: delete
   DELETE: /Patient/pt-1
   match:
     status: 200
 - id: read-404
-  only: true
   GET: /Patient/pt-1
   match:
-    status: 411
+    status: 404

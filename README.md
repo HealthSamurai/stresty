@@ -177,7 +177,7 @@ Example:
 
 ### Custom Predicates
 
-- `ok?` -- `(and (>= % 200) (< % 300))`
+- `2xx?` -- `(and (>= % 200) (< % 300))`
 - `4xx?`
 - `5xx?`
 
@@ -206,6 +206,6 @@ String values starting with the number sign (#) are considered as [regex pattern
 1. add possibility to clean server after test case run
 1. Request body is printed as a string
 1. Conf validation. Unobviuos error if AIDBOX_URL is undefined
-1. ok? is not ok. `404 != #object[matcho$fn__1973 0x113eed88 "matcho$fn__1973@113eed88"]`
+1. 2xx? is not ok. `404 != #object[matcho$fn__1973 0x113eed88 "matcho$fn__1973@113eed88"]`
 1. readme for skip/only keywords
 
