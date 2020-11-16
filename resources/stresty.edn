@@ -1,0 +1,68 @@
+{ns stresty
+
+ case {:zen/tags #{zen/schema zen/tag}
+       :zen/desc "Schema for case"
+       :type zen/map
+       :keys {:desc {:type zen/string}
+              :steps {:type zen/vector
+                      :every {:confirms #{step}}}}}
+
+ uri {:zen/tags #{zen/schema}
+      :type zen/string
+      :regex "^/.*"}
+
+ predicate {:zen/tags #{zen/tag}
+            :zen/desc "Register predicate function"}
+
+ boolean?  {:zen/tags #{predicate}}
+ distinct? {:zen/tags #{predicate}}
+ double?   {:zen/tags #{predicate}}
+ empty?    {:zen/tags #{predicate}}
+ even?     {:zen/tags #{predicate}}
+ string?     {:zen/tags #{predicate}}
+ ;; TBD
+
+ matcho {:zen/tags #{zen/schema}
+         :type zen/case
+         :case [{:when {:type zen/map :values {:type zen/any}}
+                 :then {:type zen/map
+                        :key {:type zen/keyword}
+                        :values {:confirms #{matcho}}}}
+                {:when {:type zen/vector}
+                 :then {:type zen/vector
+                        :every {:confirms #{matcho}}}}
+                {:when {:type zen/symbol}
+                 :then {:type zen/symbol :tags #{predicate}}}
+                {:when {:type zen/any}}]}
+
+ response
+ {:zen/tags #{zen/schema}
+  :type zen/map
+  :keys {:status {:type zen/case
+                  :case [{:when {:type zen/integer}}
+                         {:when {:type zen/symbol :tags #{predicate}}}]}
+         :headers {:type zen/map
+                   :key {:type zen/string}
+                   :values {:confirms #{matcho}}}
+         :body {:confirms #{matcho}}}}
+
+ step {:zen/tags #{zen/schema}
+       :type zen/map
+       :exclusive-keys #{:GET :POST :PUT :DELETE :OPTION}
+       :keys {:id {:type zen/keyword
+                   :zen/desc "Remember response into named var"}
+              :GET {:confirms #{uri}}
+              :POST {:confirms #{uri}}
+              :PUT {:confirms #{uri}}
+              :DELETE {:confirms #{uri}}
+              :OPTION {:confirms #{uri}}
+              :desc {:type zen/string}
+              :headers {:type zen/map
+                        :key {:type zen/string}
+                        :values {:type zen/string}}
+              :body {:type zen/any}
+              :match {:confirms #{response}}}}
+
+
+
+ }
