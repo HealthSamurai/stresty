@@ -164,24 +164,41 @@
       (println (colors/green "passed") (:id test-case)))
 
     #_(when (:errors result)
-      (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
+        (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
     (assoc result :id (:id test-case))))
 
-(defn- load-test-case
+(defn- file-extension [s]
+  (->> s
+       (re-find #"\.([a-zA-Z0-9]+)$")
+       last))
+
+(defmulti load-test-case (fn [filename]
+                           (let [extension (file-extension filename)]
+                             (cond
+                               (#{"yaml" "yml"} extension) :yaml
+                               (= "edn" extension)         :zen))))
+
+(defmethod load-test-case
+  :yaml
   [filename]
-  #_(-> filename
+  (-> filename
       slurp
       yaml/parse-string
       (assoc
-       :filename filename)
+        :filename filename)
       (update
-       :id #(if (nil? %) filename %)))
-  (zen/read-ns zen-ctx (symbol filename))
-  )
+        :id #(if (nil? %) filename %))))
+
+(defmethod load-test-case
+  :zen
+  [filename]
+  (->> filename
+       slurp
+       edamame.core/parse-string
+       (zen/load-ns zen-ctx)))
 
 
 (defn run-file [{conf :conf test-cases :test-cases :as ctx} filename]
-  (println)
   (let [test-case (load-test-case filename)]
     (when (valid? @zen-ctx)
       (let [result (run-test-case conf test-case)]
@@ -227,15 +244,15 @@
     (assoc result :passed? (zero? (:failed-tests sum)))))
 
 (comment
-  
+
   (run-file {:base-url "http://boxik.aidbox.app"} "stresty.tests.core")
 
 
   (def r (run {:interactive false :verbosity 1 :base-url "http://main.aidbox.app" :client-id "wow" :client-secret "pass"} ["test/sample.yaml"]))
 
   (def tc (-> r
-                 :test-cases
-                 first))
+              :test-cases
+              first))
 
   (:filename tc)
 

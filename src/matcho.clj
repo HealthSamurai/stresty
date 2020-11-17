@@ -1,6 +1,5 @@
 (ns matcho
-  (:require [clojure.string :as s])
-  (:require [stresty]))
+  (:require [clojure.string :as s]))
 
 (def fns
   {"2xx?" #(and (>= % 200) (< % 300))
@@ -8,10 +7,14 @@
    "5xx?" #(and (>= % 500) (< % 600))})
 
 
-
 (defn built-in-fn [fn-name]
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
     #(func %)))
+
+(defn str->fn [fn-name]
+  (if-let [fn (get fns fn-name)]
+    fn
+    (built-in-fn fn-name)))
 
 (defmulti symbol-fn (fn [tp _] tp))
 
@@ -37,7 +40,7 @@
 
 (defmethod symbol-fn 'stresty/even?
   [_ x]
-  (if (-> x even? not)
+  (if-not (even? x)
     {:expected "even" :but x}))
 
 (defn smart-explain-data
@@ -61,7 +64,7 @@
      (symbol? p)
      (if-let [error (symbol-fn p x)]
        error)
-     
+
      (fn? p)
      (when-not (p x)
        {:expected (or (:fn-name m) (pr-str p)) :but x})
