@@ -1,6 +1,7 @@
 (ns stresty.core
   (:require [zen.core :as zen]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [runner :refer :all]))
 
 
 (def ctx (zen/new-context))
@@ -18,20 +19,25 @@
 
 (no-errors! ctx)
 
-
 (doseq [case-id (zen/get-tag ctx 'stresty/case)]
   (let [case (zen/get-symbol ctx case-id)]
     (println "Run case\n" (:desc case))
     (doseq [stp (:steps case)]
-      (println "* step" stp))))
-
+      (prn (exec-step {:conf {:base-url "http://access-policy-box.aidbox.io"
+                              :client-id "stresty"
+                              :client-secret "stresty"
+                              :authorization-type "Basic"
+                              :interactive false
+                              :verbosity 1}}
+                      stp))
+       )))
 
 (->
  (zen/validate
   ctx #{'stresty/case}
-  {:desco "Wrong name"
+  {:desc "Wrong name"
    :steps
-   [{:GET 1
+   [{:GET "/Patient"
      :headers "string"
      :match {:status "200"
              :body {:id 'stresty/unknown?}}}]})

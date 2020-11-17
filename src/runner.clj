@@ -9,10 +9,21 @@
             [b64]
 
             [clojure.string :as s]
-            [clojure.string :as str]))
+            [clojure.string :as str]
 
-(defn valid? [ctx script]
-  true)
+            [zen.core :as zen]))
+
+(def zen-ctx (zen/new-context))
+
+(defn valid? [ctx]
+  (when-not (empty? (:errors ctx))
+    (println (str/join "\n" (mapv pr-str (:errors ctx))))
+    (assert (empty? (:errors ctx)) "See STDOUT for errors"))
+  (empty? (:errors ctx))
+  )
+
+
+(zen/read-ns zen-ctx 'stresty)
 
 (defmacro v [ctx & cmds]
   (let [do-cmds (conj cmds 'do)]
@@ -156,20 +167,23 @@
       (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
     (assoc result :id (:id test-case))))
 
-(defn- read-test-case
+(defn- load-test-case
   [filename]
-  (-> filename
+  #_(-> filename
       slurp
       yaml/parse-string
       (assoc
        :filename filename)
       (update
-       :id #(if (nil? %) filename %))))
+       :id #(if (nil? %) filename %)))
+  (zen/read-ns zen-ctx (symbol filename))
+  )
+
 
 (defn run-file [{conf :conf test-cases :test-cases :as ctx} filename]
   (println)
-  (let [test-case (read-test-case filename)]
-    (when (valid? ctx test-case)
+  (let [test-case (load-test-case filename)]
+    (when (valid? @zen-ctx)
       (let [result (run-test-case conf test-case)]
         (update ctx :test-cases #(conj % result))))))
 
@@ -213,8 +227,9 @@
     (assoc result :passed? (zero? (:failed-tests sum)))))
 
 (comment
+  
+  (run-file {:base-url "http://boxik.aidbox.app"} "stresty.tests.core")
 
-  (run-file {:base-url "http://boxik.aidbox.app"} "test/sample.yaml")
 
   (def r (run {:interactive false :verbosity 1 :base-url "http://main.aidbox.app" :client-id "wow" :client-secret "pass"} ["test/sample.yaml"]))
 

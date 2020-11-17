@@ -1,19 +1,44 @@
 (ns matcho
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s])
+  (:require [stresty]))
 
 (def fns
   {"2xx?" #(and (>= % 200) (< % 300))
    "4xx?" #(and (>= % 400) (< % 500))
    "5xx?" #(and (>= % 500) (< % 600))})
 
+
+
 (defn built-in-fn [fn-name]
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
     #(func %)))
 
-(defn str->fn [fn-name]
-  (if-let [fn (get fns fn-name)]
-    fn
-    (built-in-fn fn-name)))
+(defmulti symbol-fn (fn [tp _] tp))
+
+(defmethod symbol-fn 'stresty/string?
+  [_ x]
+  (if (-> x string? not)
+    {:expected "string" :but x}))
+
+(defmethod symbol-fn 'stresty/distinct?
+  [_ x]
+  (if (-> x distinct? not)
+    {:expected "distinct" :but x}))
+
+(defmethod symbol-fn 'stresty/double?
+  [_ x]
+  (if (-> x double? not)
+    {:expected "double" :but x}))
+
+(defmethod symbol-fn 'stresty/empty?
+  [_ x]
+  (if (-> x empty? not)
+    {:expected "empty" :but x}))
+
+(defmethod symbol-fn 'stresty/even?
+  [_ x]
+  (if (-> x even? not)
+    {:expected "even" :but x}))
 
 (defn smart-explain-data
   ([p x]
@@ -33,6 +58,10 @@
      (when-not (re-find p x)
        {:expected (str "match regexp: " p) :but x})
 
+     (symbol? p)
+     (if-let [error (symbol-fn p x)]
+       error)
+     
      (fn? p)
      (when-not (p x)
        {:expected (or (:fn-name m) (pr-str p)) :but x})
@@ -99,3 +128,12 @@
   "Match against each pattern"
   [x & patterns]
   (reduce (fn [acc pattern] (match-recur acc [] x pattern)) [] patterns))
+
+(comment
+  (match {:status 201
+          :body {:id "pt-1"
+                 :meta {:versionId "344"}}}
+         {:status 201
+          :body {:id "pt-1"
+                 :meta {:versionId stresty/string?}}})
+  )
