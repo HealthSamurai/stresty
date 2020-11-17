@@ -17,22 +17,22 @@
 
 (defmethod symbol-fn 'stresty/string?
   [_ x]
-  (if (-> x string? not)
+  (if-not (string? x)
     {:expected "string" :but x}))
 
 (defmethod symbol-fn 'stresty/distinct?
   [_ x]
-  (if (-> x distinct? not)
+  (if-not (distinct? x)
     {:expected "distinct" :but x}))
 
 (defmethod symbol-fn 'stresty/double?
   [_ x]
-  (if (-> x double? not)
+  (if-not (double? x)
     {:expected "double" :but x}))
 
 (defmethod symbol-fn 'stresty/empty?
   [_ x]
-  (if (-> x empty? not)
+  (if-not (empty? x)
     {:expected "empty" :but x}))
 
 (defmethod symbol-fn 'stresty/even?
