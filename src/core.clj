@@ -3,7 +3,8 @@
             [runner]
             [clojure.string :as str]
             [clojure.tools.cli :refer [parse-opts]]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [auth])
   (:gen-class))
 
 (def cli-options
@@ -40,17 +41,25 @@
       (println "Version" (slurp (io/resource "VERSION")))
       (System/exit 0))
 
+    {:auth-headers {:admin ""
+               :user ""}}
+    
     (let [ctx (merge
                (:options opts)
                {:base-url (System/getenv "AIDBOX_URL")
                 :client-id (System/getenv "AIDBOX_CLIENT_ID")
                 :client-secret (System/getenv "AIDBOX_CLIENT_SECRET")
-                :authorization-type (System/getenv "AIDBOX_AUTH_TYPE")})]
+                :authorization-type (System/getenv "AIDBOX_AUTH_TYPE")
+                :auth-client-id (System/getenv "AIDBOX_USER_CLIENT_ID")
+                :auth-client-secret (System/getenv "AIDBOX_USER_CLIENT_SECRET")
+                :auth-user (System/getenv "AIDBOX_USER")
+                :auth-user-password (System/getenv "AIDBOX_USER_PASSWORD")})
+          ctx* (merge ctx (auth/get-auth-headers ctx))]
       (println "Args:" (:arguments opts))
       (println "Configuration:")
-      (clojure.pprint/pprint ctx)
+      (clojure.pprint/pprint ctx*)
       (println)
-      (if (:passed? (runner/run ctx (:arguments opts)))
+      (if (:passed? (runner/run ctx* (:arguments opts)))
         (System/exit 0)
         (System/exit 1)))))
 

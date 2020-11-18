@@ -1,11 +1,12 @@
 {ns stresty.tests.core
  import #{stresty}
-
+ 
  simple-crud
  {:zen/tags #{stresty/case}
   :desc "Simple CRUD tutorial"
   :steps
   [{:desc "Clear all patients"
+    :agent :admin
     :POST "/$sql"
     :body "TRUNCATE patient"
     :match {:status 200}}
@@ -19,4 +20,10 @@
    {:id :read
     :GET "/Patient/pt-1"
     :desc "Read patient"
-    :match {:status 200 :body {:id "pt-1"}}}]}}
+    :match {:status 200 :body {:id "pt-1"}}}
+   {:id :read-from-patient
+    :desc "Read patient from user"
+    :GET "/Patient/pt-1"
+    :agent :user
+    :match {:status 403}}
+   ]}}

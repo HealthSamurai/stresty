@@ -19,18 +19,18 @@
 
 (no-errors! ctx)
 
-(doseq [case-id (zen/get-tag ctx 'stresty/case)]
-  (let [case (zen/get-symbol ctx case-id)]
-    (println "Run case\n" (:desc case))
-    (doseq [stp (:steps case)]
-      (prn (exec-step {:conf {:base-url "http://access-policy-box.aidbox.io"
-                              :client-id "stresty"
-                              :client-secret "stresty"
-                              :authorization-type "Basic"
-                              :interactive false
-                              :verbosity 1}}
-                      stp))
-       )))
+;; (doseq [case-id (zen/get-tag ctx 'stresty/case)]
+;;   (let [case (zen/get-symbol ctx case-id)]
+;;     (println "Run case\n" (:desc case))
+;;     (doseq [stp (:steps case)]
+;;       (prn (exec-step {:conf {:base-url "http://access-policy-box.aidbox.io"
+;;                               :client-id "stresty"
+;;                               :client-secret "stresty"
+;;                               :authorization-type "Basic"
+;;                               :interactive false
+;;                               :verbosity 1}}
+;;                       stp))
+;;        )))
 
 (->
  (zen/validate

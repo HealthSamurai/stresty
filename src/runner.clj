@@ -50,36 +50,32 @@
 
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
-(defn get-auth-headers [ctx]
-  (let [auth-type (:authorization-type ctx)]
-    (cond
-      (= auth-type "Basic")
-      {"Authorization"
-       (str "Basic "
-            (b64/encode
-             (str (:client-id ctx) ":" (:client-secret ctx))))}
-
-      (nil? auth-type)
-      {}
-
-      :else
-      (throw (ex-info (str "Unknown authorization type " auth-type) {})))))
+(defn get-auth-headers [ctx agent]
+  (if (= agent nil)
+    (get ctx :admin)
+    (if-let [auth-header (get ctx agent)]
+      auth-header
+      (throw (ex-info (str "Not enough info to authorize " (name agent)
+                           "\nExport AIDBOX_USER_CLIENT_ID, AIDBOX_USER_CLIENT_SECRET, "
+                           "AIDBOX_USER, AIDBOX_USER_PASSWORD to use user agent") {}))
+      )))
 
 (defn mk-req [ctx step]
   (if-let [method (first (filter meths (keys step)))]
     (let [url (get step method)
-          opts (select-keys step [:headers :auth])]
+          opts (select-keys step [:headers :auth])
+          agent (keyword (:agent step))]
       (merge (cond-> {:url (str (:base-url ctx) url)
                       :throw-exceptions false
-                      :headers (merge {"content-type" "application/json"} (get-auth-headers ctx))
+                      :headers (merge {"content-type" "application/json"} (get-auth-headers ctx agent))
                       :path url
                       :request-method (keyword (str/lower-case (name method)))}
                (:body step)
                (assoc :body (cheshire.core/generate-string (:body step)))
-               (and (:client-id ctx) (:client-secret ctx))
+               
+               (and (:client-id ctx) (:client-secret ctx) (= agent :admin))
                (assoc :basic-auth [(:client-id ctx) (:client-secret ctx)])) opts))
     (println "Warn: step should contain one of methods" meths ", but" (str "\n" (yaml/generate-string step)))))
-
 
 (defn verbose-enough? [ctx expected-lvl]
   (>= (or (:verbosity ctx) 0) expected-lvl))
@@ -128,7 +124,8 @@
                      :failed? true
                      :status "failed"
                      :errors errs
-                     :resp resp))))
+                     :resp resp
+                     :req req))))
         (assoc step :failed? true :message "Cannot create requrest")))))
 
 (defn get-id [test-case]
@@ -264,8 +261,31 @@
 
   (run-file {:base-url "http://boxik.aidbox.app"} "stresty.tests.core")
 
+  (def ctx {:interactive false
+            :verbosity 1
+            :base-url "http://access-policy-box.aidbox.io"
+            :client-id "stresty"
+            :client-secret "stresty"
+            :auth-client-id "myapp"
+            :auth-client-secret "verysecret"
+            :auth-user "patient-user"
+            :auth-user-password "admin"
+            })
 
-  (def r (run {:interactive false :verbosity 1 :base-url "http://access-policy-box.aidbox.io" :client-id "myapp" :client-secret "verysecret"} ["test/sample.yaml" "test/sample-1.edn" "test/sample-2.edn"]))
+
+  (def ctx* (merge ctx (auth/get-auth-headers ctx)))
+
+  (prn (exec-step {:conf ctx*}
+                  {:id :read-from-patient
+                   :desc "Read patient from user"
+                   :GET "/Patient/pt-1"
+                   :agent :user
+                   :match {:status 403}}))
+  
+  (prn (get-auth-headers ctx* :user))
+  
+  (def r (run ctx*
+           ["resources/stresty/tests/core.edn"]))
 
   (def tc (-> r
               :test-cases

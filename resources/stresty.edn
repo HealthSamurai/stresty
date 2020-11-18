@@ -57,6 +57,8 @@
               :DELETE {:confirms #{uri}}
               :OPTION {:confirms #{uri}}
               :desc {:type zen/string}
+              :agent {:type zen/keyword
+                      :enum [{:value :admin} {:value :user}]}
               :headers {:type zen/map
                         :key {:type zen/string}
                         :values {:type zen/string}}
