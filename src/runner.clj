@@ -14,8 +14,10 @@
             [zen.core :as zen]))
 
 (def zen-ctx (zen/new-context))
+(zen/read-ns zen-ctx 'stresty)
 
-(defn valid? [ctx]
+
+(defn zen-valid? [ctx]
   (when-not (empty? (:errors ctx))
     (println (str/join "\n" (mapv pr-str (:errors ctx))))
     (assert (empty? (:errors ctx)) "See STDOUT for errors"))
@@ -156,6 +158,7 @@
   )
 
 (defn run-test-case [conf test-case]
+  (clojure.pprint/pprint test-case)
   (println "run test case" (:id test-case))
 
   (let [result (run-steps conf test-case)]
@@ -198,38 +201,52 @@
        (zen/load-ns zen-ctx)))
 
 
-(defn run-file [{conf :conf test-cases :test-cases :as ctx} filename]
-  (let [test-case (load-test-case filename)]
-    (when (valid? @zen-ctx)
-      (let [result (run-test-case conf test-case)]
-        (update ctx :test-cases #(conj % result))))))
+(defn run-case [{conf :conf test-cases :test-cases :as ctx} test-case]
+  (let [result (run-test-case conf test-case)]
+    (update ctx :test-cases #(conj % result))))
 
 (defn sum-for-test-case [{:keys [steps]}]
-  {:passed-tests (count (filter #(-> % :status (= "passed")) steps))
-   :failed-tests (count (filter #(-> % :status (= "failed")) steps))
+  {:passed-tests  (count (filter #(-> % :status (= "passed")) steps))
+   :failed-tests  (count (filter #(-> % :status (= "failed")) steps))
    :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))})
 
 
 (defn sum-for-test-cases [test-cases]
-  (reduce (fn [a b] {:passed-tests (+ (:passed-tests a) (:passed-tests b))
-             :failed-tests (+ (:failed-tests a) (:failed-tests b))
-             :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
+  (reduce (fn [a b] {:passed-tests  (+ (:passed-tests a) (:passed-tests b))
+                     :failed-tests  (+ (:failed-tests a) (:failed-tests b))
+                     :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
           (map sum-for-test-case test-cases)))
 
 (defn get-summary [{test-cases :test-cases}]
   (let [failed-tests (filter :failed? test-cases)
         passed-tests (filter #(-> % :failed? not) test-cases)]
-    {:failed-tests failed-tests
-     :passed-tests passed-tests
+    {:failed-tests       failed-tests
+     :passed-tests       passed-tests
      :count-failed-tests (count failed-tests)
-     :count-all-tests (count test-cases)
+     :count-all-tests    (count test-cases)
      :count-passed-tests (count passed-tests)}))
 
+(defn load-cases [files]
+  (let [yaml-files (filterv #(#{"yaml" "yml"} (file-extension %)) files)
+        zen-files  (filterv #(= "edn" (file-extension %)) files)
+        yaml-cases (mapv load-test-case yaml-files)
+        zen-cases  (do
+                     (doseq [file zen-files] (load-test-case file))
+                     (-> (for [case-id (zen/get-tag zen-ctx 'stresty/case)]
+                           (zen/get-symbol zen-ctx case-id))
+                         vec))]
+    ;;TODO Proper error handling requires proper format of errors generated be zen validation
+    (zen-valid? @zen-ctx)
+    (concat yaml-cases zen-cases)))
+
+[{:case 'case :errors []}]
+
 (defn run [conf files]
-  (let [result (reduce run-file {:conf conf :test-cases []} files)
-        sum (sum-for-test-cases (:test-cases result))
-        summary (get-summary result)
-        passed? (zero? (:count-failed-tests summary))]
+  (let [test-cases (load-cases files)
+        result     (reduce run-case {:conf conf :test-cases []} test-cases)
+        sum        (sum-for-test-cases (:test-cases result))
+        summary    (get-summary result)
+        passed?    (zero? (:count-failed-tests summary))]
 
     (println)
     (println "Test results:" (:passed-tests sum) "passed,")
@@ -248,7 +265,7 @@
   (run-file {:base-url "http://boxik.aidbox.app"} "stresty.tests.core")
 
 
-  (def r (run {:interactive false :verbosity 1 :base-url "http://main.aidbox.app" :client-id "wow" :client-secret "pass"} ["test/sample.yaml"]))
+  (def r (run {:interactive false :verbosity 1 :base-url "http://access-policy-box.aidbox.io" :client-id "myapp" :client-secret "verysecret"} ["test/sample.yaml" "test/sample-1.edn" "test/sample-2.edn"]))
 
   (def tc (-> r
               :test-cases
