@@ -195,7 +195,8 @@
   (->> filename
        slurp
        edamame.core/parse-string
-       (zen/load-ns zen-ctx)))
+       (zen/load-ns zen-ctx))
+  nil)
 
 
 (defn run-case [{conf :conf test-cases :test-cases :as ctx} test-case]
@@ -224,19 +225,13 @@
      :count-passed-tests (count passed-tests)}))
 
 (defn load-cases [files]
-  (let [yaml-files (filterv #(#{"yaml" "yml"} (file-extension %)) files)
-        zen-files  (filterv #(= "edn" (file-extension %)) files)
-        yaml-cases (mapv load-test-case yaml-files)
-        zen-cases  (do
-                     (doseq [file zen-files] (load-test-case file))
-                     (-> (for [case-id (zen/get-tag zen-ctx 'stresty/case)]
-                           (zen/get-symbol zen-ctx case-id))
-                         vec))]
+  (let [yaml-cases (reduce (fn [cases file] (->> file
+                                                 load-test-case
+                                                 (conj cases))) [] files)
+        zen-cases  (mapv #(zen/get-symbol zen-ctx %) (zen/get-tag zen-ctx 'stresty/case))]
     ;;TODO Proper error handling requires proper format of errors generated be zen validation
     (zen-valid? @zen-ctx)
     (concat yaml-cases zen-cases)))
-
-[{:case 'case :errors []}]
 
 (defn run [conf files]
   (let [test-cases (load-cases files)
