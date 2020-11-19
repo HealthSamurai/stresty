@@ -62,8 +62,8 @@
 
 (defn mk-req [ctx step]
   (if-let [method (first (filter meths (keys step)))]
-    (let [url (get step method)
-          opts (select-keys step [:headers :auth])
+    (let [url   (get step method)
+          opts  (select-keys step [:headers :auth])
           agent (keyword (:agent step))]
       (merge (cond-> {:url (str (:base-url ctx) url)
                       :throw-exceptions false
@@ -71,10 +71,7 @@
                       :path url
                       :request-method (keyword (str/lower-case (name method)))}
                (:body step)
-               (assoc :body (cheshire.core/generate-string (:body step)))
-               
-               (and (:client-id ctx) (:client-secret ctx) (= agent :admin))
-               (assoc :basic-auth [(:client-id ctx) (:client-secret ctx)])) opts))
+               (assoc :body (cheshire.core/generate-string (:body step)))) opts))
     (println "Warn: step should contain one of methods" meths ", but" (str "\n" (yaml/generate-string step)))))
 
 (defn verbose-enough? [ctx expected-lvl]
