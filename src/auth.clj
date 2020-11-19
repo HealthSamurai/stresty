@@ -14,8 +14,8 @@
    :method           :post
    :throw-exceptions false
    :headers          {"content-type" "application/json"}
-   :body             (json/generate-string {:username      (:auth-user ctx)
-                                            :password      (:auth-user-password ctx)
+   :body             (json/generate-string {:username      (:user-id ctx)
+                                            :password      (:user-secret ctx)
                                             :client_id     (:auth-client-id ctx)
                                             :client_secret (:auth-client-secret ctx)
                                             :grant_type    "password"})})
