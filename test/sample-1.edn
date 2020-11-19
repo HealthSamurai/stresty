@@ -11,4 +11,4 @@
     :agent :user
     :GET   "/Patient/{user.data.patient_id}"
     :match {:status 200
-            :body   { :id "new-patient"}}}]}}
+            :body   { :id "{user.data.patient_id}"}}}]}}

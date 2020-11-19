@@ -98,14 +98,14 @@
                                      (cheshire.core/parse-string b keyword))
               resp                 (cond-> {:status s} b (assoc :body b))
               errs                 (when-let [m (:match step)]
-                                     (->> (matcho/match resp m)
+                                     (->> (matcho/match conf resp m)
                                           (reduce (fn [acc {pth :path exp :expected}]
                                                     (assoc-in acc pth {:expected exp})) {})))]
           (vv conf
               (when (:desc step)
                 (println (str (or (:desc step) ""))))
               (println "Request")
-              (println (colors/bold (name (:method req))) (:path req))
+              (println (colors/bold (name (:request-method req))) (:path req))
               (when (:body req)
                 (println (yaml/generate-string (:body req))))
               (println "Response")
@@ -142,8 +142,10 @@
 (defn parse-uri [conf step]
   (let [method     (first (filter meths (keys step)))
         uri        (get step method)
-        parsed-uri (parse-templated-string uri)]
+        parsed-uri (parse-templated-string conf uri)]
     (assoc step method parsed-uri)))
+
+(parse-uri ctx* {:GET "/Patient/{user.data.patient_id}"})
 
 (defn run-step [{:keys [conf steps] :as ctx} step]
   (let [step   (parse-uri conf step)
@@ -169,7 +171,6 @@
     (reduce run-step {:conf conf :steps [] :only only-step} steps)))
 
 (defn run-test-case [conf test-case]
-  (clojure.pprint/pprint test-case)
   (println "run test case" (:id test-case))
 
   (let [result (run-steps conf test-case)]
@@ -244,6 +245,7 @@
                                                  (conj cases))) [] files)
         zen-cases  (mapv #(zen/get-symbol zen-ctx %) (zen/get-tag zen-ctx 'stresty/case))]
     ;;TODO Proper error handling requires proper format of errors generated be zen validation
+
     (zen-valid? @zen-ctx)
     (concat yaml-cases zen-cases)))
 
@@ -282,16 +284,9 @@
             })
 
 
-  (def ctx* (merge ctx (auth/get-auth-headers ctx)))
+  (def ctx* (merge ctx (auth/add-auth-data ctx)))
 
-  (prn (exec-step {:conf ctx*}
-                  {:id    :read-from-patient
-                   :desc  "Read patient from user"
-                   :GET   "/Patient/pt-1"
-                   :agent :user
-                   :match {:status 403}}))
-  
-  (prn (get-auth-headers ctx* :user))
+  (clojure.pprint/pprint (run ctx* ["test/sample-1.edn"]))
   
   (def r (run ctx*
            ["resources/stresty/tests/core.edn"]))
