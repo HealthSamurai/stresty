@@ -1,5 +1,6 @@
 (ns matcho
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s]
+            [template]))
 
 (def fns
   {"2xx?" #(and (>= % 200) (< % 300))
@@ -7,11 +8,11 @@
    "5xx?" #(and (>= % 500) (< % 600))})
 
 
-(defn built-in-fn [fn-name]
+(defn- built-in-fn [fn-name]
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
     #(func %)))
 
-(defn str->fn [fn-name]
+(defn- str->fn [fn-name]
   (if-let [fn (get fns fn-name)]
     fn
     (built-in-fn fn-name)))
@@ -43,17 +44,7 @@
   (if-not (even? x)
     {:expected "even" :but x}))
 
-(defn parse-templated-string [conf template]
-  (s/replace
-    template
-    #"\{([a-zA-Z0-9-_\.]+)\}"
-    #(let [template-segments (-> % second (s/split #"\."))]
-       (->> template-segments
-            (mapv keyword)
-            (get-in conf)
-            str))))
-
-(defn smart-explain-data
+(defn- smart-explain-data
   ([ctx p x]
    (smart-explain-data ctx p x {}))
 
@@ -72,9 +63,9 @@
        {:expected (str "match regexp: " p) :but x})
 
      (string? x)
-     (let [parsed-pattern (parse-templated-string ctx p)]
-       (when-not (= parsed-pattern x)
-         {:expected parsed-pattern :but x}))
+     (let [p* (template/render ctx p)]
+       (when-not (= p* x)
+         {:expected p* :but x}))
      
      (symbol? p)
      (if-let [error (symbol-fn p x)]

@@ -7,6 +7,7 @@
             [clojure.java.io :as io]
             [cheshire.core]
             [b64]
+            [template]
 
             [clojure.string :as s]
             [clojure.string :as str]
@@ -21,9 +22,7 @@
   (when-not (empty? (:errors ctx))
     (println (str/join "\n" (mapv pr-str (:errors ctx))))
     (assert (empty? (:errors ctx)) "See STDOUT for errors"))
-  (empty? (:errors ctx))
-  )
-
+  (empty? (:errors ctx)))
 
 (zen/read-ns zen-ctx 'stresty)
 
@@ -74,11 +73,7 @@
                (assoc :body (cheshire.core/generate-string (:body step)))) opts))
     (println "Warn: step should contain one of methods" meths ", but" (str "\n" (yaml/generate-string step)))))
 
-(defn verbose-enough? [ctx expected-lvl]
-  (>= (or (:verbosity ctx) 0) expected-lvl))
-
 (defn exec-step [{:keys [conf steps] :as ctx} step]
-
   (cond
     ;; skip next steps if some previous one in the test-case was failed
     (or (:failed? ctx) (:skip step) (and (:only ctx) (not= (:only ctx) (:id step))))
@@ -129,23 +124,11 @@
 (defn get-id [test-case]
   (or (:id test-case) (:filename test-case)))
 
-(defn parse-templated-string [conf template]
-  (str/replace
-    template
-    #"\{([a-zA-Z0-9-_\.]+)\}"
-    #(let [template-segments (-> % second (str/split #"\."))]
-       (->> template-segments
-            (mapv keyword)
-            (get-in conf)
-            str))))
-
 (defn parse-uri [conf step]
-  (let [method     (first (filter meths (keys step)))
-        uri        (get step method)
-        parsed-uri (parse-templated-string conf uri)]
-    (assoc step method parsed-uri)))
-
-(parse-uri ctx* {:GET "/Patient/{user.data.patient_id}"})
+  (let [method (reduce (fn [_ method]
+                         (when (get step method)
+                           (reduced method))) nil meths)]
+    (update step method #(template/render conf %))))
 
 (defn run-step [{:keys [conf steps] :as ctx} step]
   (let [step   (parse-uri conf step)
@@ -160,9 +143,9 @@
                    nil)))))
 
 (defn find-only-step [ctx s]
-(if (:only s)
-  (:id s)
-  ctx))
+  (if (:only s)
+    (:id s)
+    ctx))
 
 (defn- run-steps
   [conf test-case]
@@ -214,9 +197,9 @@
   nil)
 
 
-(defn run-case [{conf :conf test-cases :test-cases :as ctx} test-case]
-(let [result (run-test-case conf test-case)]
-  (update ctx :test-cases #(conj % result))))
+(defn run-test-case [{conf :conf test-cases :test-cases :as ctx} test-case]
+  (let [result (run-test-case conf test-case)]
+    (update ctx :test-cases #(conj % result))))
 
 (defn sum-for-test-case [{:keys [steps]}]
 {:passed-tests  (count (filter #(-> % :status (= "passed")) steps))
@@ -245,13 +228,12 @@
                                                  (conj cases))) [] files)
         zen-cases  (mapv #(zen/get-symbol zen-ctx %) (zen/get-tag zen-ctx 'stresty/case))]
     ;;TODO Proper error handling requires proper format of errors generated be zen validation
-
     (zen-valid? @zen-ctx)
-    (concat yaml-cases zen-cases)))
+    (into yaml-cases zen-cases)))
 
 (defn run [conf files]
   (let [test-cases (load-cases files)
-        result     (reduce run-case {:conf conf :test-cases []} test-cases)
+        result     (reduce run-test-case {:conf conf :test-cases []} test-cases)
         sum        (sum-for-test-cases (:test-cases result))
         summary    (get-summary result)
         passed?    (zero? (:count-failed-tests summary))]
