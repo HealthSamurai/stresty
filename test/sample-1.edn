@@ -1,22 +1,14 @@
-{ns stresty.tests.core
+{ns     stresty.tests.core
  import #{stresty}
 
  simple-crud-1
  {:zen/tags #{stresty/case}
-  :desc "Simple CRUD tutorial"
+  :desc     "Simple CRUD tutorial"
   :steps
-  [{:desc "Clear all patients"
-    :POST "/$sql"
-    :body "TRUNCATE patient"
-    :match {:status 200}}
-   {:id :create
-    :desc "Create test pt"
-    :POST "/Patient"
-    :body {:id "pt-1" :name [{:given ["Vladislav"]}]}
-    :match {:status 201
-            :body {:id "pt-1"
-                   :meta {:versionId stresty/string?}}}}
-   {:id :read
-    :GET "/Patient/pt-1"
-    :desc "Read patient"
-    :match {:status 200 :body {:id "pt-1"}}}]}}
+  [
+   {:desc  "Get patient"
+    :id    :acces-patient
+    :agent :user
+    :GET   "/Patient/{user.data.patient_id}"
+    :match {:status 200
+            :body   { :id "new-patient"}}}]}}

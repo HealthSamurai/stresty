@@ -53,7 +53,7 @@
 (defn get-auth-headers [ctx agent]
   (if (= agent nil)
     (get ctx :admin)
-    (if-let [auth-header (get ctx agent)]
+    (if-let [auth-header (get-in ctx [agent :headers])]
       auth-header
       (throw (ex-info (str "Not enough info to authorize " (name agent)
                            "\nExport AIDBOX_USER_CLIENT_ID, AIDBOX_USER_CLIENT_SECRET, "
@@ -78,6 +78,7 @@
   (>= (or (:verbosity ctx) 0) expected-lvl))
 
 (defn exec-step [{:keys [conf steps] :as ctx} step]
+
   (cond
     ;; skip next steps if some previous one in the test-case was failed
     (or (:failed? ctx) (:skip step) (and (:only ctx) (not= (:only ctx) (:id step))))
@@ -93,13 +94,13 @@
                (if (:interactive conf) (read-line) (println)))
       (if-let [req (mk-req conf step)]
         (let [{s :status :as resp} (http/request req)
-              b (when-let [b (:body resp)]
-                  (cheshire.core/parse-string b keyword))
-              resp (cond-> {:status s} b (assoc :body b))
-              errs (when-let [m (:match step)]
-                     (->> (matcho/match resp m)
-                          (reduce (fn [acc {pth :path exp :expected}]
-                                    (assoc-in acc pth {:expected exp})) {})))]
+              b                    (when-let [b (:body resp)]
+                                     (cheshire.core/parse-string b keyword))
+              resp                 (cond-> {:status s} b (assoc :body b))
+              errs                 (when-let [m (:match step)]
+                                     (->> (matcho/match resp m)
+                                          (reduce (fn [acc {pth :path exp :expected}]
+                                                    (assoc-in acc pth {:expected exp})) {})))]
           (vv conf
               (when (:desc step)
                 (println (str (or (:desc step) ""))))
@@ -128,28 +129,44 @@
 (defn get-id [test-case]
   (or (:id test-case) (:filename test-case)))
 
+(defn parse-templated-string [conf template]
+  (str/replace
+    template
+    #"\{([a-zA-Z0-9-_\.]+)\}"
+    #(let [template-segments (-> % second (str/split #"\."))]
+       (->> template-segments
+            (mapv keyword)
+            (get-in conf)
+            str))))
+
+(defn parse-uri [conf step]
+  (let [method     (first (filter meths (keys step)))
+        uri        (get step method)
+        parsed-uri (parse-templated-string uri)]
+    (assoc step method parsed-uri)))
+
 (defn run-step [{:keys [conf steps] :as ctx} step]
-  (let [result (exec-step ctx step)]
+  (let [step   (parse-uri conf step)
+        result (exec-step ctx step)]
     (-> ctx
         (update
-         :steps #(conj % result))
-        (merge (if (:failed? result) {:failed? true
+          :steps #(conj % result))
+        (merge (if (:failed? result) {:failed?     true
                                       :failed-step (:id result)
-                                      :resp (:resp result)
-                                      :errors (:errors result)}
+                                      :resp        (:resp result)
+                                      :errors      (:errors result)}
                    nil)))))
 
 (defn find-only-step [ctx s]
-  (if (:only s)
-    (:id s)
-    ctx))
+(if (:only s)
+  (:id s)
+  ctx))
 
 (defn- run-steps
   [conf test-case]
-  (let [steps (:steps test-case)
+  (let [steps     (:steps test-case)
         only-step (reduce find-only-step nil steps)]
-    (reduce run-step {:conf conf :steps [] :only only-step} steps))
-  )
+    (reduce run-step {:conf conf :steps [] :only only-step} steps)))
 
 (defn run-test-case [conf test-case]
   (clojure.pprint/pprint test-case)
@@ -165,9 +182,9 @@
     (assoc result :id (:id test-case))))
 
 (defn- file-extension [s]
-  (->> s
-       (re-find #"\.([a-zA-Z0-9]+)$")
-       last))
+(->> s
+     (re-find #"\.([a-zA-Z0-9]+)$")
+     last))
 
 (defmulti load-test-case (fn [filename]
                            (let [extension (file-extension filename)]
@@ -197,20 +214,20 @@
 
 
 (defn run-case [{conf :conf test-cases :test-cases :as ctx} test-case]
-  (let [result (run-test-case conf test-case)]
-    (update ctx :test-cases #(conj % result))))
+(let [result (run-test-case conf test-case)]
+  (update ctx :test-cases #(conj % result))))
 
 (defn sum-for-test-case [{:keys [steps]}]
-  {:passed-tests  (count (filter #(-> % :status (= "passed")) steps))
-   :failed-tests  (count (filter #(-> % :status (= "failed")) steps))
-   :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))})
+{:passed-tests  (count (filter #(-> % :status (= "passed")) steps))
+ :failed-tests  (count (filter #(-> % :status (= "failed")) steps))
+ :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))})
 
 
 (defn sum-for-test-cases [test-cases]
-  (reduce (fn [a b] {:passed-tests  (+ (:passed-tests a) (:passed-tests b))
-                     :failed-tests  (+ (:failed-tests a) (:failed-tests b))
-                     :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
-          (map sum-for-test-case test-cases)))
+(reduce (fn [a b] {:passed-tests  (+ (:passed-tests a) (:passed-tests b))
+                   :failed-tests  (+ (:failed-tests a) (:failed-tests b))
+                   :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
+        (map sum-for-test-case test-cases)))
 
 (defn get-summary [{test-cases :test-cases}]
   (let [failed-tests (filter :failed? test-cases)
@@ -253,14 +270,14 @@
 
   (run-file {:base-url "http://boxik.aidbox.app"} "stresty.tests.core")
 
-  (def ctx {:interactive false
-            :verbosity 1
-            :base-url "http://access-policy-box.aidbox.io"
-            :client-id "stresty"
-            :client-secret "stresty"
-            :auth-client-id "myapp"
+  (def ctx {:interactive        false
+            :verbosity          1
+            :base-url           "http://access-policy-box.aidbox.io"
+            :client-id          "stresty"
+            :client-secret      "stresty"
+            :auth-client-id     "myapp"
             :auth-client-secret "verysecret"
-            :auth-user "patient-user"
+            :auth-user          "patient-user"
             :auth-user-password "admin"
             })
 
@@ -268,9 +285,9 @@
   (def ctx* (merge ctx (auth/get-auth-headers ctx)))
 
   (prn (exec-step {:conf ctx*}
-                  {:id :read-from-patient
-                   :desc "Read patient from user"
-                   :GET "/Patient/pt-1"
+                  {:id    :read-from-patient
+                   :desc  "Read patient from user"
+                   :GET   "/Patient/pt-1"
                    :agent :user
                    :match {:status 403}}))
   

@@ -51,7 +51,7 @@
                      :auth-client-secret (System/getenv "AIDBOX_USER_CLIENT_SECRET")
                      :auth-user          (System/getenv "AIDBOX_USER")
                      :auth-user-password (System/getenv "AIDBOX_USER_PASSWORD")})
-                  auth/add-auth-headers)]
+                  auth/add-auth-data)]
       (println "Args:" (:arguments opts))
       (println "Configuration:")
       (println)
