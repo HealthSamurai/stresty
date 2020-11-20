@@ -279,6 +279,8 @@
 
   (def ctx* (merge ctx (auth/add-auth-data ctx)))
 
+  (prn ctx*)
+  
   (clojure.pprint/pprint (run ctx* ["test/sample-1.edn"]))
   
   (def r (run ctx*

@@ -29,15 +29,9 @@
     (merge {:headers {"Authorization" (str "Bearer " access-token)}}
            (:userinfo json-resp))))
 
-(defn- get-auth-headers [ctx]
-  (let [headers {:admin (get-admin-data ctx)}]
-    (cond-> headers
-      (every? ctx [:auth-client-id :auth-client-secret :auth-user :auth-user-password])
-      (assoc :user (get-user-data ctx)))))
-
 (defn add-auth-data [ctx]
   (cond-> ctx
-    (every? ctx [:auth-client-id :auth-client-secret :auth-user :auth-user-password])
+    (every? ctx [:auth-client-id :auth-client-secret :user-id :user-secret])
     (assoc :user (get-user-data ctx))
 
     true
@@ -49,13 +43,13 @@
                      :client-id     "postman"
                      :client-secret "postman"})
 
-  (get-auth-headers {:base-url           "http://access-policy-box.aidbox.io"
+  (add-auth-data {:base-url           "http://access-policy-box.aidbox.io"
                      :client-id          "postman"
                      :client-secret      "postman"
                      :auth-client-id     "myapp"
                      :auth-client-secret "verysecret"
-                     :auth-user          "patient-user"
-                     :auth-user-password "admin"})
+                     :user-id         "patient-user"
+                     :user-secret "admin"})
   (clojure.pprint/pprint
     (add-auth-headers {:base-url           "http://access-policy-box.aidbox.io"
                        :client-id          "postman"

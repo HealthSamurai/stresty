@@ -10,5 +10,18 @@
     :id    :acces-patient
     :agent :user
     :GET   "/Patient/{user.data.patient_id}"
-    :match {:status 200
-            :body   { :id "{user.data.patient_id}"}}}]}}
+    :match { :status 403 }}
+   {:desc "Add access policy"
+    :id :add-access-policy
+    :POST "/AccessPolicy"
+    :body {:id "patient-access-new"
+           :engine "matcho"
+           :matcho {:uri "#/Patient/.*"
+                    :user {:data {:patient_id ".params.resource/id"}}}}}
+   {:desc  "Get patient"
+    :id    :acces-patient
+    :agent :user
+    :GET   "/Patient/{user.data.patient_id}"
+    :match { :status 200
+            :body { :id "{user.data.patient_id}"}}}
+   ]}}
