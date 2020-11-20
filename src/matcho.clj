@@ -62,7 +62,7 @@
      (when-not (re-find p x)
        {:expected (str "match regexp: " p) :but x})
 
-     (string? x)
+     (string? p)
      (let [p* (template/render ctx p)]
        (when-not (= p* x)
          {:expected p* :but x}))
@@ -116,14 +116,14 @@
   (match {:user {:data {:patient_id "new-patient"}}}
          {:status 200,
           :body
-          {:id "new-patient",
+          {:id           "new-patient",
            :resourceType "Patient",
            :meta
            {:lastUpdated "2020-11-19T10:15:36.124398Z",
-            :createdAt "2020-11-19T10:15:36.124398Z",
-            :versionId "483"}}}
+            :createdAt   "2020-11-19T10:15:36.124398Z",
+            :versionId   "483"}}}
          {:status 200
-          :body {:id "{user.data.patient_id}"}}
+          :body   {:id 'stresty/string?}}
          )
   
   )

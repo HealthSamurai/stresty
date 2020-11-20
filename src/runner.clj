@@ -50,14 +50,29 @@
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
 (defn get-auth-headers [ctx agent]
-  (if (= agent nil)
-    (get ctx :admin)
+  (if (nil? agent)
+    (get-in ctx [:admin :headers])
     (if-let [auth-header (get-in ctx [agent :headers])]
       auth-header
       (throw (ex-info (str "Not enough info to authorize " (name agent)
                            "\nExport AIDBOX_USER_CLIENT_ID, AIDBOX_USER_CLIENT_SECRET, "
-                           "AIDBOX_USER, AIDBOX_USER_PASSWORD to use user agent") {}))
-      )))
+                           "AIDBOX_USER, AIDBOX_USER_PASSWORD to use user agent") {})))))
+
+(get-in {:conf
+         {:interactive   false,
+          :verbosity     1,
+          :base-url      "http://access-policy-box.aidbox.io",
+          :client-id     "stresty",
+          :client-secret "stresty",
+          :admin         {:headers {"Authorization" "Basic c3RyZXN0eTpzdHJlc3R5"}}},
+         :steps
+         [{:desc   "Clear all patients",
+           :agent  :admin,
+           :status "passed",
+           :POST   "/$sql",
+           :body   "TRUNCATE patient",
+           :match  {:status 200}}],
+         :only nil} [:conf :admin :headers])
 
 (defn mk-req [ctx step]
   (if-let [method (first (filter meths (keys step)))]
@@ -150,10 +165,11 @@
 (defn- run-steps
   [conf test-case]
   (let [steps     (:steps test-case)
-        only-step (reduce find-only-step nil steps)]
-    (reduce run-step {:conf conf :steps [] :only only-step} steps)))
+        only-step (reduce find-only-step nil steps)
+        result    (reduce run-step {:conf conf :steps [] :only only-step} steps)]
+    (assoc result :id (:id test-case))))
 
-(defn run-test-case [conf test-case]
+(defn run-test-case [{conf :conf test-cases :test-cases :as ctx} test-case]
   (println "run test case" (:id test-case))
 
   (let [result (run-steps conf test-case)]
@@ -161,14 +177,12 @@
       (println (colors/red "failed") (str (get-id test-case) "." (:failed-step result)))
       (println (colors/green "passed") (:id test-case)))
 
-    #_(when (:errors result)
-        (pprint/pretty {:ident 0 :path [] :errors (:errors result)} (:resp result)))
-    (assoc result :id (:id test-case))))
+    (update ctx :test-cases #(conj % result))))
 
 (defn- file-extension [s]
-(->> s
-     (re-find #"\.([a-zA-Z0-9]+)$")
-     last))
+  (->> s
+       (re-find #"\.([a-zA-Z0-9]+)$")
+       last))
 
 (defmulti load-test-case (fn [filename]
                            (let [extension (file-extension filename)]
@@ -196,15 +210,10 @@
        (zen/load-ns zen-ctx))
   nil)
 
-
-(defn run-test-case [{conf :conf test-cases :test-cases :as ctx} test-case]
-  (let [result (run-test-case conf test-case)]
-    (update ctx :test-cases #(conj % result))))
-
 (defn sum-for-test-case [{:keys [steps]}]
-{:passed-tests  (count (filter #(-> % :status (= "passed")) steps))
- :failed-tests  (count (filter #(-> % :status (= "failed")) steps))
- :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))})
+  {:passed-tests  (count (filter #(-> % :status (= "passed")) steps))
+   :failed-tests  (count (filter #(-> % :status (= "failed")) steps))
+   :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))})
 
 
 (defn sum-for-test-cases [test-cases]
@@ -223,9 +232,9 @@
      :count-passed-tests (count passed-tests)}))
 
 (defn load-cases [files]
-  (let [yaml-cases (reduce (fn [cases file] (->> file
-                                                 load-test-case
-                                                 (conj cases))) [] files)
+  (let [yaml-cases (reduce (fn [cases file]
+                             (when-let [test-case (load-test-case file)]
+                               (conj cases test-case))) [] files)
         zen-cases  (mapv #(zen/get-symbol zen-ctx %) (zen/get-tag zen-ctx 'stresty/case))]
     ;;TODO Proper error handling requires proper format of errors generated be zen validation
     (zen-valid? @zen-ctx)
@@ -237,6 +246,8 @@
         sum        (sum-for-test-cases (:test-cases result))
         summary    (get-summary result)
         passed?    (zero? (:count-failed-tests summary))]
+
+    
 
     (println)
     (println "Test results:" (:passed-tests sum) "passed,")
@@ -255,14 +266,14 @@
   (run-file {:base-url "http://boxik.aidbox.app"} "stresty.tests.core")
 
   (def ctx {:interactive        false
-            :verbosity          1
+            :verbosity          2
             :base-url           "http://access-policy-box.aidbox.io"
             :client-id          "stresty"
             :client-secret      "stresty"
             :auth-client-id     "myapp"
             :auth-client-secret "verysecret"
-            :auth-user          "patient-user"
-            :auth-user-password "admin"
+            :user-id            "patient-user"
+            :user-secret        "admin"
             })
 
 
