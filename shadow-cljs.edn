@@ -1,0 +1,12 @@
+{:deps   {:aliases [:nrepl :ui]}
+ :builds {:app {:asset-path  "/static/js"
+                :target      :browser
+                :build-hooks [(stylo.shadow/reload "target/stylo/dev/public/css/stylo.css")]
+                :devtools    {:preloads   [re-frisk.preload]
+                              :watch-dir  "target/stylo/dev/public/css/"
+                              :watch-path "/static/css"}
+                :dev         {:modules    {:main {:entries [app.dev]}}
+                              :output-dir "target/shadow/dev/public/js"}
+                :release     {:modules    {:main {:entries [app.prod]}}
+                              :output-dir "target/shadow/release/public/js"
+                              :compiler-options {:optimizations :advanced}}}}}

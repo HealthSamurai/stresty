@@ -12,7 +12,8 @@
             [clojure.string :as s]
             [clojure.string :as str]
 
-            [zen.core :as zen]))
+            [zen.core :as zen]
+            [auth]))
 
 (def zen-ctx (zen/new-context))
 (zen/read-ns zen-ctx 'stresty)
@@ -266,7 +267,7 @@
   (run-file {:base-url "http://boxik.aidbox.app"} "stresty.tests.core")
 
   (def ctx {:interactive        false
-            :verbosity          2
+            :verbosity          0
             :base-url           "http://access-policy-box.aidbox.io"
             :client-id          "stresty"
             :client-secret      "stresty"

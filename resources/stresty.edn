@@ -48,12 +48,13 @@
 
  step {:zen/tags #{zen/schema}
        :type zen/map
-       :exclusive-keys #{:GET :POST :PUT :DELETE :OPTION}
+       :exclusive-keys #{:GET :POST :PUT :PATCH :DELETE :OPTION}
        :keys {:id {:type zen/keyword
                    :zen/desc "Remember response into named var"}
               :GET {:confirms #{uri}}
               :POST {:confirms #{uri}}
               :PUT {:confirms #{uri}}
+              :PATCH {:confirms #{uri}}
               :DELETE {:confirms #{uri}}
               :OPTION {:confirms #{uri}}
               :desc {:type zen/string}

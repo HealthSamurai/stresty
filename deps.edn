@@ -13,17 +13,31 @@
             com.sun.xml.bind/jaxb-core {:mvn/version "2.3.0.1"}
             com.sun.xml.bind/jaxb-impl {:mvn/version "2.3.2"}
             javax.xml.bind/jaxb-api    {:mvn/version "2.4.0-b180830.0359"}
-            borkdude/edamame           {:mvn/version "0.0.11-alpha.16"}}
+            borkdude/edamame           {:mvn/version "0.0.11-alpha.16"}
+            http-kit {:mvn/version "2.5.0"}
+            route-map {:mvn/version "0.0.7"}
+            ring/ring {:mvn/version "1.7.1"}}
 
  :aliases {:nrepl
-           {:extra-paths ["dev"]
+           {:extra-paths ["dev" "target/shadow/dev" "target/stylo/dev"]
             :extra-deps  {org.clojure/clojure           {:mvn/version "1.10.0"}
                           cider/cider-nrepl             {:mvn/version "0.25.2"}
                           refactor-nrepl/refactor-nrepl {:mvn/version "2.4.0"}
-                          http-kit                      {:mvn/version "2.3.0"}
+                          re-frisk {:mvn/version "1.1.0"}
+                          binaryage/devtools            {:mvn/version "1.0.0"}
                           com.cognitect/test-runner     {:git/url "https://github.com/cognitect-labs/test-runner"
                                                          :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}}
 
+           :ui {:extra-paths ["src-ui" "src-c"]
+                :extra-deps {org.clojure/clojurescript   {:mvn/version "1.10.764"}
+                             re-frame                    {:mvn/version "0.12.0"}
+                             reagent                     {:mvn/version "0.10.0"}
+                             reagent-utils               {:mvn/version "0.3.3"}
+                             route-map                   {:mvn/version "0.0.7"}
+                             thheller/shadow-cljs        {:mvn/version "2.11.4"}
+                             medley                      {:mvn/version "1.3.0"}
+                             garden {:mvn/version "1.3.10"}}}
+           
            :native-image
            {:main-opts ["-m clj.native-image core"
                         "--initialize-at-build-time"

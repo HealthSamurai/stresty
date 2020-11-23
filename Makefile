@@ -4,7 +4,7 @@ clean:
 	rm pom.xml && rm -rf .cpcache
 
 repl:
-	clj -A:test:nrepl -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
+	clj -A:nrepl:ui -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
 
 resources/VERSION:
 	cp VERSION resources/VERSION

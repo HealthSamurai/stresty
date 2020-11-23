@@ -6,3 +6,5 @@ pom.xml
 .nrepl-port
 resources/VERSION
 .env
+node_modules
+.shadow-cljs
