@@ -6,7 +6,7 @@
             cheshire                        {:mvn/version "5.6.3"}
 
             zen-lang/zen {:git/url "https://github.com/zen-lang/zen"
-                          :sha     "d7205a173d47143ce491c080c5c29e43ee74350c"}
+                          :sha     "e041504bb4c4e560052cfe4390b1ed32b4328f94"}
 
             org.clojure/tools.cli      {:mvn/version "0.4.2"}
             clj-commons/clj-yaml       {:mvn/version "0.7.0"}

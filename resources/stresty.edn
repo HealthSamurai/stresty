@@ -46,9 +46,16 @@
                    :values {:confirms #{matcho}}}
          :body {:confirms #{matcho}}}}
 
+ ;; config
+ ;; {:zen/tags #{zen/tags zen/schema}
+ ;;  :type zen/map
+ ;;  :keys {:agents {:type zen/map
+ ;;                  :require #{:type}
+ ;;                  :keys {:type {:type zen/symbol}}}}}
+
  step {:zen/tags #{zen/schema}
        :type zen/map
-       :exclusive-keys #{:GET :POST :PUT :PATCH :DELETE :OPTION}
+       :exclusive-keys #{#{:GET :POST :PUT :PATCH :DELETE :OPTION}}
        :keys {:id {:type zen/keyword
                    :zen/desc "Remember response into named var"}
               :GET {:confirms #{uri}}
