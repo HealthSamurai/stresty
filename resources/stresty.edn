@@ -1,11 +1,6 @@
 {ns stresty
 
- case {:zen/tags #{zen/schema zen/tag}
-       :zen/desc "Schema for case"
-       :type zen/map
-       :keys {:desc {:type zen/string}
-              :steps {:type zen/vector
-                      :every {:confirms #{step}}}}}
+ ;; boring
 
  uri {:zen/tags #{zen/schema}
       :type zen/string
@@ -13,15 +8,22 @@
 
  predicate {:zen/tags #{zen/tag}
             :zen/desc "Register predicate function"}
-
  boolean?  {:zen/tags #{predicate}}
  distinct? {:zen/tags #{predicate}}
  double?   {:zen/tags #{predicate}}
  empty?    {:zen/tags #{predicate}}
  even?     {:zen/tags #{predicate}}
- string?     {:zen/tags #{predicate}}
- ;; TBD
+ string?   {:zen/tags #{predicate}}
 
+
+ case {:zen/tags #{zen/schema zen/tag}
+       :zen/desc "Schema for case"
+       :type zen/map
+       :keys {:desc {:type zen/string}
+              :steps {:type zen/vector
+                      :every {:confirms #{step}}}}}
+
+ ;; TBD
  matcho {:zen/tags #{zen/schema}
          :type zen/case
          :case [{:when {:type zen/map :values {:type zen/any}}
@@ -46,33 +48,49 @@
                    :values {:confirms #{matcho}}}
          :body {:confirms #{matcho}}}}
 
- ;; config
- ;; {:zen/tags #{zen/tags zen/schema}
- ;;  :type zen/map
- ;;  :keys {:agents {:type zen/map
- ;;                  :require #{:type}
- ;;                  :keys {:type {:type zen/symbol}}}}}
 
- step {:zen/tags #{zen/schema}
-       :type zen/map
-       :exclusive-keys #{#{:GET :POST :PUT :PATCH :DELETE :OPTION}}
-       :keys {:id {:type zen/keyword
-                   :zen/desc "Remember response into named var"}
-              :GET {:confirms #{uri}}
-              :POST {:confirms #{uri}}
-              :PUT {:confirms #{uri}}
-              :PATCH {:confirms #{uri}}
-              :DELETE {:confirms #{uri}}
-              :OPTION {:confirms #{uri}}
-              :desc {:type zen/string}
-              :agent {:type zen/keyword
-                      :enum [{:value :admin} {:value :user}]}
-              :headers {:type zen/map
-                        :key {:type zen/string}
-                        :values {:type zen/string}}
-              :body {:type zen/any}
-              :match {:confirms #{response}}}}
+ ;; FIXME: think about middleware mechanism instead of auth-method
+ auth-method
+ {:zen/tags #{zen/schema zen/tag}
+  :type zen/map
+  :require #{:type}
+  :schema-key {:key :type}
+  :keys {:type {:type zen/symbol}}}
 
+ basic-auth
+ {:zen/tags #{auth-method}
+  :type zen/map
+  :keys {:client-id {:type zen/string}
+         :client-secret {:type zen/string}}}
+
+ step
+ {:zen/tags #{zen/schema zen/tag}
+  :type zen/map
+  :require #{:type} ;; FIXME: make stresty/http-step default schema
+  :schema-key {:key :type}
+  :keys {:type {:type zen/symbol}
+         :desc {:type zen/string}}}
+
+ http-step
+ {:zen/tags #{zen/schema step}
+  :type zen/map
+  :require #{#{:GET :POST :PUT :PATCH :DELETE :OPTION}}
+  :exclusive-keys #{#{:GET :POST :PUT :PATCH :DELETE :OPTION} #{:GET :body} #{:HEAD :body} #{:OPTIONS :body}}
+  :keys {:type {:type zen/symbol}
+         :id {:type zen/keyword}
+         :GET {:confirms #{uri}}
+         :POST {:confirms #{uri}}
+         :PUT {:confirms #{uri}}
+         :PATCH {:confirms #{uri}}
+         :DELETE {:confirms #{uri}}
+         :OPTION {:confirms #{uri}}
+         :desc {:type zen/string}
+         :agent {:type zen/keyword}
+         :headers {:type zen/map
+                   :key {:type zen/string}
+                   :values {:type zen/string}}
+         :body {:type zen/any}
+         :match {:confirms #{response}}}}
 
 
  }

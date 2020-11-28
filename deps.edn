@@ -2,7 +2,7 @@
  :jvm-opts []
  :deps     {org.clojure/clojure             {:mvn/version "1.10.0"}
             org.martinklepsch/clj-http-lite {:mvn/version "0.4.1"}
-            clj-http                        {:mvn/version "2.3.0"}
+            clj-http                        {:mvn/version "3.11.0"}
             cheshire                        {:mvn/version "5.6.3"}
 
             zen-lang/zen {:git/url "https://github.com/zen-lang/zen"

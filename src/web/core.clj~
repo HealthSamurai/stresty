@@ -1,5 +1,0 @@
-(ns web.core
-  (:require [org.httpkit.server]
-            [route-map])
-  )
-

@@ -1,0 +1,31 @@
+{ns user
+ import #{stresty stresty.aidbox}
+
+ create-patient
+ {:zen/tags #{stresty/case}
+  :desc "Create Patient"
+  :steps [{:type stresty.aidbox/truncate-step
+           :truncate [:Patient]}
+          {:type stresty/http-step
+           :POST "/Patient"
+           :body {:name [{:family "Smith" :given ["John"]}]}
+           :match {:status 200}}
+          {:type stresty/http-step
+           :GET "/Patient"
+           :match {:status 200
+                   :body {:total 1
+                          :entry [{:resource {:name [{:family "Smith" :given ["John"]}]}}]}}}]}
+
+ put-patient
+ {:zen/tags #{stresty/case}
+  :desc "Put Patient"
+  :steps [{:type stresty/http-step
+           :PUT "/Patient/pt-1"
+           :body {:name [{:family "Smith" :given ["John"]}]}
+           :match {:status 200}}
+          {:type stresty/http-step
+           :GET "/Patient/pt-1"
+           :match {:status 200
+                   :body {:name [{:family "Smith" :given ["John"]}]}}}]}
+
+}
