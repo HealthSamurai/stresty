@@ -1,6 +1,18 @@
 {ns user
  import #{stresty stresty.aidbox}
 
+ config
+ {:zen/tags #{stresty/config}
+  :url "http://access-policy-box.aidbox.io"
+  :agents {:default {:type stresty/basic-auth
+                     :client-id "stresty"
+                     :client-secret "stresty"}
+           :user {:type stresty.aidbox/auth-token
+                  :username "patient-user"
+                  :password "admin"
+                  :client-id "myapp"
+                  :client-secret "verysecret"}}}
+ 
  create-patient
  {:zen/tags #{stresty/case}
   :desc "Create Patient"
@@ -8,13 +20,13 @@
            :truncate [:Patient]}
           {:type stresty/http-step
            :POST "/Patient"
-           :body {:name [{:family "Smith" :given ["John"]}]}
-           :match {:status 200}}
+           :body {:id "new-patient" :name [{:family "Smith" :given ["John"]}]}
+           :match {:status 201}}          
           {:type stresty/http-step
-           :GET "/Patient"
+           :GET "/Patient/new-patient"
+           :agent :user
            :match {:status 200
-                   :body {:total 1
-                          :entry [{:resource {:name [{:family "Smith" :given ["John"]}]}}]}}}]}
+                   :body {:id "new-patient"}}}]}
 
  put-patient
  {:zen/tags #{stresty/case}

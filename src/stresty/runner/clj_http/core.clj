@@ -15,9 +15,9 @@
     (println "found case " case-name)
     case))
 
-
 (defn run-case [ztx config case]
-  (let [case (if (symbol? case) (find-case ztx case) case)]
+  (let [case (if (symbol? case) (find-case ztx case) case)
+        config (zen/get-symbol ztx config)]
     (reduce
      (fn [ctx step]
        (println step)
@@ -37,18 +37,18 @@
       :config config}
      (:steps case))))
 
-
 (comment
 
 
   (+ 40 2)
 
-
+  
   (do
     (def ztx (zen/new-context))
-    (zen/read-ns ztx 'user))
-
-
+    (clojure.pprint/pprint (zen/read-ns ztx 'user)))
+  
+  (clojure.pprint/pprint (run-case ztx 'user/config 'user/create-patient))
+  
 
   (run-case ztx {:url "https://little.aidbox.app"
                  :agents {:default {:type 'stresty/basic-auth
@@ -94,9 +94,7 @@
 
   (zen/get-symbol ctx 'user/my-scenario)
 
-
-
-
+  
   (reduce (fn [ctx step]
             (run-step ctx step))
           {:url "https://little.aidbox.app"

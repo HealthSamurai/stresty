@@ -22,6 +22,11 @@
      :throw-exceptions false
      :headers (merge {"content-type" "application/json"} (:headers config))}))
 
+(auth {:config {:agents {:default {:client-id "stresty"
+                                   :client-secret "stresty"
+                                   :type 'stresty/basic-auth}}}}
+      {}
+      :default)
 
 (defmulti auth (fn [ctx _ agent-name]
                  (get-in ctx [:config :agents agent-name :type])))
@@ -40,24 +45,29 @@
         json-resp             (json/parse-string body keyword)]
     (:access_token json-resp)))
 
-(defmethod auth 'stresty.adibox/auth-token [ctx req-opts agent-name]
+(defmethod auth 'stresty.aidbox/auth-token [ctx req-opts agent-name]
   (if-let [token (get-in ctx [:config :agents agent-name :token])]
     {:req-opts (update req-opts :headers assoc "authorization" (str "Bearer " token))}
     (let [agnt (get-in ctx [:config :agents agent-name])
-          body {:username      (:user-id agnt)
-                :password      (:user-secret agnt)
-                :client_id     (:auth-client-id agnt)
-                :client_secret (:auth-client-secret agnt)
-                :grant_type    "password"}
+          body (json/generate-string {:username      (:username agnt)
+                                      :password      (:password agnt)
+                                      :client_id     (:client-id agnt)
+                                      :client_secret (:client-secret agnt)
+                                      :grant_type    "password"})
+          url (-> ctx
+                  (get-in [:config :url])
+                  (str "/auth/token"))
           resp (-> (default-req-params ctx)
                    (assoc :body body)
+                   (assoc :request-method :post)
+                   (assoc :url url)
                    request)
-          json-resp (json/parse-string (resp :body) keyword)]
+          json-resp (json/parse-string (resp :body) keyword)
+          token (:access_token json-resp)]
       (if (= (:status resp) 200)
         {:req-opts (update req-opts :headers
-                           assoc "authorization" (str "Bearer " ,,,))
-         :ctx (update-in ctx [:config :agents agent-name :token] ,,,)}))))
-
+                           assoc "authorization" (str "Bearer " token))
+         :ctx (assoc-in ctx [:config :agents agent-name :token] token)}))))
 
 
 ;;   {:url              (str (:base-url ctx) "/auth/token")
@@ -84,7 +94,7 @@
 (defmethod run-step 'stresty/http-step [{config :config :as ctx} step]
   (let [method (first (filter meths (keys step)))
         url (str (get-in ctx [:config :url]) (get step method))
-        body (if (string? (:body step)) (:body step) (json/generate-string (:body step)))
+        body (if (:body step) (if (string? (:body step)) (:body step) (json/generate-string (:body step))))
         req-opts (cond-> (merge (default-req-params ctx)
                                 {:url url
                                  :request-method (keyword (str/lower-case (name method)))})
@@ -95,7 +105,8 @@
          new-ctx :ctx}
         (if (get-in ctx [:config :agents agent-name]) (auth ctx req-opts agent-name) req-opts)
         ctx (or new-ctx ctx)
-        _ (prn "...")
+        _ (prn "..")
+        _ (prn req-opts)
         resp (http/request req-opts)
         _ (prn "===")
         resp
@@ -106,19 +117,28 @@
         errs (if-let [m (:match step)] (matcho/match nil resp m) [])]
     {:resp resp
      :ctx ctx
-     :errros errs}))
+     :errors errs}))
+
+(http/request {:url "http://access-policy-box.aidbox.io/Patient",
+               :redirect-strategy :none,
+               :throw-exceptions false,
+               :headers
+               {"content-type" "application/json",
+                "authorization" "Basic c3RyZXN0eTpzdHJlc3R5"},
+               :request-method :get,
+               :body "null"})
 
 
 (defmethod run-step 'stresty.aidbox/sql-step [ctx step]
   (run-step ctx {:type 'stresty/http-step
                  :POST "/$sql"
-                 :body (:sql step)
+                 :body (pr-str (:sql step))
                  :match {:status 200}}))
 
 (defmethod run-step 'stresty.aidbox/truncate-step [ctx step]
   (let [sql (str "TRUNCATE "
                  (str/join ", "
-                           (map (fn [x] (str "\"" (if (keyword? x) (str/lower-case (name x)) x) "\""))
+                           (map (fn [x] (str (if (keyword? x) (str/lower-case (name x)) x)))
                                 (:truncate step))))]
     (run-step ctx {:type 'stresty.aidbox/sql-step
                    :sql sql})))

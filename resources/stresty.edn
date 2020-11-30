@@ -48,6 +48,16 @@
                    :values {:confirms #{matcho}}}
          :body {:confirms #{matcho}}}}
 
+ config
+ {:zen/tags #{zen/tag}
+  :type zen/map
+  :require #{:url :agents}
+  :keys {:url {:type zen/string}
+         :agents {:type zen/map
+                  :require #{:default}
+                  :key {:type zen/keyword}
+                  :values {:confirms #{auth-method}}}}
+  }
 
  ;; FIXME: think about middleware mechanism instead of auth-method
  auth-method
@@ -58,7 +68,7 @@
   :keys {:type {:type zen/symbol}}}
 
  basic-auth
- {:zen/tags #{auth-method}
+ {:zen/tags #{zen/schema auth-method}
   :type zen/map
   :keys {:client-id {:type zen/string}
          :client-secret {:type zen/string}}}
@@ -75,15 +85,15 @@
  http-step
  {:zen/tags #{zen/schema step}
   :type zen/map
-  :require #{#{:GET :POST :PUT :PATCH :DELETE :OPTION}}
-  :exclusive-keys #{#{:GET :POST :PUT :PATCH :DELETE :OPTION} #{:GET :body} #{:HEAD :body} #{:OPTIONS :body}}
+  :require #{#{:GET :POST :PUT :PATCH :DELETE :OPTIONS :HEAD}}
+  :exclusive-keys #{#{:GET :POST :PUT :PATCH :DELETE :OPTIONS} #{:GET :body} #{:HEAD :body} #{:OPTIONS :body}}
   :keys {:type {:type zen/symbol}
          :GET {:confirms #{uri}}
          :POST {:confirms #{uri}}
          :PUT {:confirms #{uri}}
          :PATCH {:confirms #{uri}}
          :DELETE {:confirms #{uri}}
-         :OPTION {:confirms #{uri}}
+         :OPTIONS {:confirms #{uri}}
          :agent {:type zen/keyword}
          :headers {:type zen/map
                    :key {:type zen/string}
