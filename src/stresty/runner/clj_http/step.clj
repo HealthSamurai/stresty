@@ -29,23 +29,35 @@
 (defmethod auth 'stresty/basic-auth [ctx req-opts agent-name]
   (let [agnt (get-in ctx [:config :agents agent-name])]
     {:req-opts (update req-opts :headers
-                      assoc "authorization" (str "Basic " (b64/encode (str (:client-id agnt) ":" (:client-secret agnt)))))}))
+                       assoc "authorization" (str "Basic " (b64/encode (str (:client-id agnt) ":" (:client-secret agnt)))))}))
 
+(defn request [opts]
+  (http/request opts))
 
-;; (defn get-user-data [ctx]
-;;   (let [{body :body :as resp} (-> ctx
-;;                                   auth-user-req
-;;                                   http/request)
-;;         json-resp             (json/parse-string body true)
-;;         access-token          (:access_token json-resp)]
-;;     (merge {:headers {"Authorization" (str "Bearer " access-token)}}
-;;            (:userinfo json-resp))))
+(defn get-user-data [req-opts]
+  (let [{body :body :as resp} (-> req-opts
+                                  http/request)
+        json-resp             (json/parse-string body keyword)]
+    (:access_token json-resp)))
 
+(defmethod auth 'stresty.adibox/auth-token [ctx req-opts agent-name]
+  (if-let [token (get-in ctx [:config :agents agent-name :token])]
+    {:req-opts (update req-opts :headers assoc "authorization" (str "Bearer " token))}
+    (let [agnt (get-in ctx [:config :agents agent-name])
+          body {:username      (:user-id agnt)
+                :password      (:user-secret agnt)
+                :client_id     (:auth-client-id agnt)
+                :client_secret (:auth-client-secret agnt)
+                :grant_type    "password"}
+          resp (-> (default-req-params ctx)
+                   (assoc :body body)
+                   request)
+          json-resp (json/parse-string (resp :body) keyword)]
+      (if (= (:status resp) 200)
+        {:req-opts (update req-opts :headers
+                           assoc "authorization" (str "Bearer " ,,,))
+         :ctx (update-in ctx [:config :agents agent-name :token] ,,,)}))))
 
-;; (defmethod auth 'stresty.aidbox/user-login [ctx req-opts agent-name]
-;;   (let [agnt (get-in ctx [:config :agents agent-name])]
-;;     {:req-opts (update req-opts :headers
-;;                        assoc "authorization" (str "Basic " (b64/encode (str (:client-id agnt) ":" (:client-secret agnt)))))})
 
 
 ;;   {:url              (str (:base-url ctx) "/auth/token")
@@ -58,7 +70,6 @@
 ;;                                             :client_secret (:auth-client-secret ctx)
 ;;                                             :grant_type    "password"})}
 ;;   (str (:base-url ctx) "/auth/token")
-
 ;;   )
 
 
@@ -71,7 +82,6 @@
       (Throwable->map e))))
 
 (defmethod run-step 'stresty/http-step [{config :config :as ctx} step]
-  (prn "wow")
   (let [method (first (filter meths (keys step)))
         url (str (get-in ctx [:config :url]) (get step method))
         body (if (string? (:body step)) (:body step) (json/generate-string (:body step)))
@@ -166,7 +176,9 @@
 
 
 (http/get "http://example.invalid" {:ignore-unknown-host? true})
-;; => nil
+
+
+hello
+
+
   )
-
-

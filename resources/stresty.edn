@@ -69,6 +69,7 @@
   :require #{:type} ;; FIXME: make stresty/http-step default schema
   :schema-key {:key :type}
   :keys {:type {:type zen/symbol}
+         :id {:type zen/keyword}
          :desc {:type zen/string}}}
 
  http-step
@@ -77,14 +78,12 @@
   :require #{#{:GET :POST :PUT :PATCH :DELETE :OPTION}}
   :exclusive-keys #{#{:GET :POST :PUT :PATCH :DELETE :OPTION} #{:GET :body} #{:HEAD :body} #{:OPTIONS :body}}
   :keys {:type {:type zen/symbol}
-         :id {:type zen/keyword}
          :GET {:confirms #{uri}}
          :POST {:confirms #{uri}}
          :PUT {:confirms #{uri}}
          :PATCH {:confirms #{uri}}
          :DELETE {:confirms #{uri}}
          :OPTION {:confirms #{uri}}
-         :desc {:type zen/string}
          :agent {:type zen/keyword}
          :headers {:type zen/map
                    :key {:type zen/string}

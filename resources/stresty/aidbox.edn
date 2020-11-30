@@ -18,7 +18,7 @@
   :require #{:sql}
   :keys {:sql {:type zen/string}}}
 
- user-login
+ auth-token
  {:zen/tags #{zen/schema stresty/auth-method}
   :type zen/map
   :keys {:username {:type zen/string}

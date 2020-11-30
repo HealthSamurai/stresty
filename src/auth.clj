@@ -60,5 +60,3 @@
                        :auth-user-password "admin"}))
 
   )
-
-
