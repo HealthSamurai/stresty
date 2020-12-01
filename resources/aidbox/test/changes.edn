@@ -1,0 +1,87 @@
+{ns aidbox.test.changes
+ import #{stresty stresty.aidbox}
+
+ ;; FIXME: support ctx in stresty
+
+ changes-operation-test
+ {:zen/tags #{stresty/case}
+  :desc "Test for https://github.com/HealthSamurai/sansara/blob/master/box/test/proto/operations/changes_test.clj"
+  :steps
+  [{:type stersty.aidbox/truncate-step
+    :truncate [:Patient]}
+
+   {:type stresy/http-step
+    :GET "/Patient/$changes"
+    :match {:status 200
+            :body {:version stresty/number?}}
+    :ctx {:init-version (get-in resp [:body :version])
+          :version (get-in resp [:body :version])}}
+
+   {:type stresty/http-step
+    :GET "/Patient/$changes"
+    :params {:version (get ctx :version)}
+    :match {:status 304}}
+
+   {:type stresty.aidbox/save
+    :resources [{:resourceType "Patient" :id "pt-2"}]}
+
+   {:type stresty/http-step
+    :GET "/Patient/$changes"
+    :params {:version (get ctx :version)}
+    :match {:status 200
+            :body {:changes [{:event "created" :resource {:id "pt-2"}}] :version stresty/number?}}
+    :ctx {:version (get-in resp [:body :version])}}
+
+   {:type stresty/http-step
+    :GET "/Patient/$changes"
+    :match {:status 304}}
+
+   {:type stresty.aidbox/delete
+    :resources [{:resourceType "Patient" :id "pt-1"}]}
+
+   {:type stresty/http-step
+    :GET "/Patient/$changes"
+    :match
+    {:status 200
+     :body
+     {:changes [{:event "deleted" :resource {:id "pt-1"}}] :version stresty/number?}}
+    :ctx {:version (get-in resp [:body :version])}}
+
+   {:type stresty/http-step
+    :GET "/Patient/$changes"
+    :match {:status 304}}
+
+   {:type stresty.aidbox/save
+    :resource [{:resourceType "Patient" :id "pt-2" :name [{:family "Smith"}]}]}
+
+   {:type stresty/http-step
+    :GET "/Patient/$changes"
+    :match
+    {:status 200
+     :body
+     {:changes
+      [{:event "updated" :resource {:id "pt-2" :name [{:family "Smith"}]}}]
+      :version stresty/number?}}}
+
+   {:type stresty/http-step
+    :GET "/Patient/$changes"
+    :params {:version (get-in ctx [:init-version])}
+    :match
+    {:status 200
+     :body
+     {:changes
+      [{:event "created" :resource {:id "pt-2"}}
+       {:event "deleted" :resource {:id "pt-1"}}
+       {:event "updated" :resource {:id "pt-2" :name [{:family "Smith"}]}}]
+      :version stresty/number?}}}
+
+   {:type stresty/http-step
+    :GET "/Patient/$changes"
+    :params {:version (get-in ctx [:init-version])
+             :.name.0.family "Smith"}
+    :match
+    {:status 200
+     :body
+     {:changes
+      [{:event "updated" :resource {:id "pt-2" :name [{:family "Smith"}]}}]
+      :version stresty/number?}}}]}}

@@ -1,8 +1,6 @@
 {ns stresty.aidbox
  import #{stresty}
 
- ;; stresty.aidbox module introduces few new step types and a auth method
-
  truncate-step
  {:zen/tags #{zen/schema stresty/step}
   :type zen/map
@@ -11,6 +9,22 @@
                     :every {:type zen/case
                             :case [{:when {:type zen/string}}
                                    {:when {:type zen/keyword}}]}}}}
+
+ save
+ {:zen/tags #{zen/schema stresty/step}
+  :type zen/map
+  :require #{:resources}
+  :keys {:resources {:type zen/vector
+                     :every {:type zen/map
+                             :require #{:id :resourceType}}}}}
+
+ delete
+ {:zen/tags #{zen/schema stresty/step}
+  :type zen/map
+  :require #{:resources}
+  :keys {:resources {:type zen/vector
+                     :every {:type zen/map
+                             :require #{:id :resourceType}}}}}
 
  sql-step
  {:zen/tags #{zen/schema stresty/step}
