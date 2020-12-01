@@ -2,10 +2,18 @@
   (:require [cheshire.core :as json]
             [runner]
             [clojure.string :as str]
+            [zen.core :as zen]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.java.io :as io]
             [auth])
   (:gen-class))
+
+(defn load-edn ;; TODO: refactor loading
+  [ztx filename]
+  (->> filename
+       slurp
+       edamame.core/parse-string
+       (zen/load-ns ztx)))
 
 (def cli-options
   [["-v" nil "Verbosity level"
@@ -35,23 +43,22 @@
       (println "https://github.com/Aidbox/stresty")
       (System/exit 0))
 
-
     (when (-> opts :options :version)
       (println "Stresty. CLI Tool for REST Tests.")
       (println "Version" (slurp (io/resource "VERSION")))
       (System/exit 0))
 
-    (let [ctx (-> (opts :options)
-                  (merge
-                    {:base-url           (System/getenv "AIDBOX_URL")
-                     :client-id          (System/getenv "AIDBOX_CLIENT_ID")
-                     :client-secret      (System/getenv "AIDBOX_CLIENT_SECRET")
-                     :authorization-type (System/getenv "AIDBOX_AUTH_TYPE")
-                     :auth-client-id     (System/getenv "AIDBOX_AUTH_CLIENT_ID")
-                     :auth-client-secret (System/getenv "AIDBOX_AUTH_CLIENT_SECRET")
-                     :user-id            (System/getenv "AIDBOX_USER_ID")
-                     :user-secret        (System/getenv "AIDBOX_USER_SECRET")})
-                  auth/add-auth-data)]
+
+    (let [ztx (zen/new-context)
+          _ (load-edn ztx (get-in opts [:arguments 0]))
+          config (->> (zen/get-tag ztx 'stresty/config)
+                     first
+                     (zen/get-symbol ztx))
+          ctx (-> (opts :options)
+                  (assoc :config config)
+                  (assoc :ztx ztx)
+                  )]
+      (prn "config:" config)
       (println "Args:" (:arguments opts))
       (println "Configuration:")
       (println)
@@ -60,10 +67,8 @@
         (System/exit 1)))))
 
 (comment
+  (-main ["resources/user.edn"])
 
-  (clojure.pprint/pprint (parse-opts ["-h" "-vv" "wow/file.txt"] cli-options))
-
-  (-main )
+  (parse-opts ["-h" "-vv" "wow/file.txt some-file.end"] cli-options)
 
   )
-

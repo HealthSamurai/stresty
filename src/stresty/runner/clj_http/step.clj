@@ -108,7 +108,7 @@
         _ (prn "if:" (get-in ctx [:config :agents agent-name]))
         {req-opts :req-opts
          new-ctx :ctx}
-        (if (get-in ctx [:config :agents agent-name]) (auth ctx req-opts agent-name) (throw (Exception. (str "No config for agent " (name agent-name))) ))
+        (if (get-in ctx [:config :agents agent-name]) (auth ctx req-opts agent-name) (throw (ex-info (str "No config for agent " (name agent-name)) {:agent-name agent-name}) ))
         ctx (or new-ctx ctx)
         _ (prn "..")
         _ (prn "req-opts:" req-opts)

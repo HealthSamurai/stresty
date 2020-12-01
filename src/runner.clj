@@ -37,6 +37,7 @@
     `(when (>= (:verbosity ~ctx) 2)
        ~do-cmds)))
 
+
 (defmacro i [ctx & cmds]
   (let [do-cmds (conj cmds 'do)]
     `(when (:interactive ~ctx)
@@ -247,8 +248,6 @@
         sum        (sum-for-test-cases (:test-cases result))
         summary    (get-summary result)
         passed?    (zero? (:count-failed-tests summary))]
-
-    
 
     (println)
     (println "Test results:" (:passed-tests sum) "passed,")
