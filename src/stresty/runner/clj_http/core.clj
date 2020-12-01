@@ -16,8 +16,7 @@
     case))
 
 (defn run-case [ztx config case]
-  (let [case (if (symbol? case) (find-case ztx case) case)
-        config (zen/get-symbol ztx config)]
+  (let [case (if (symbol? case) (find-case ztx case) case)]
     (reduce
      (fn [ctx step]
        (println step)
@@ -39,13 +38,16 @@
 
 (comment
 
+  stresty.runner.clj-http.step/run-step
 
   (+ 40 2)
 
-  
   (do
     (def ztx (zen/new-context))
-    (clojure.pprint/pprint (zen/read-ns ztx 'user)))
+    (clojure.pprint/pprint (zen/read-ns ztx 'user))
+    (zen/get-symbol ztx 'config)
+
+    )
   
   (clojure.pprint/pprint (run-case ztx 'user/config 'user/create-patient))
   
@@ -68,20 +70,20 @@
   (get-in
    (zen/get-symbol ztx 'user/create-patient)
    [:steps 0 :type])
-  ;; =>
 
   (zen/validate ztx ['stresty/step] {})
 
-  (run-case ztx {:url "https://little.aidbox.app"
+  (run-case ztx {:url "http://access-policy-box.aidbox.io/"
                  :agents {:default {:type 'stresty/basic-auth
-                                    :client-id "basic"
-                                    :client-secret "secret"}}}
-            'user/my-scenario)
-
-
-
-  (zen/load-ns! )
-
+                                    :client-id "stresty"
+                                    :client-secret "stresty"}
+                          :user1 {:type 'stresty.aidbox/auth-token
+                                  :username "patient-user"
+                                  :password "admin"
+                                  :client-id "myapp"
+                                  :client-secret "verysecret"
+                                  }}}
+            'user/create-patient)
 
   (clojure.pprint/pprint)
   (zen/read-ns ztx 'user)

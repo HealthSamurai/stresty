@@ -22,7 +22,7 @@
      :throw-exceptions false
      :headers (merge {"content-type" "application/json"} (:headers config))}))
 
-(auth {:config {:agents {:default {:client-id "stresty"
+#_(auth {:config {:agents {:default {:client-id "stresty"
                                    :client-secret "stresty"
                                    :type 'stresty/basic-auth}}}}
       {}
@@ -34,7 +34,8 @@
 (defmethod auth 'stresty/basic-auth [ctx req-opts agent-name]
   (let [agnt (get-in ctx [:config :agents agent-name])]
     {:req-opts (update req-opts :headers
-                       assoc "authorization" (str "Basic " (b64/encode (str (:client-id agnt) ":" (:client-secret agnt)))))}))
+                       assoc "authorization" (str "Basic " (b64/encode (str (:client-id agnt) ":" (:client-secret agnt)))))
+     :ctx ctx}))
 
 (defn request [opts]
   (http/request opts))
@@ -67,7 +68,8 @@
       (if (= (:status resp) 200)
         {:req-opts (update req-opts :headers
                            assoc "authorization" (str "Bearer " token))
-         :ctx (assoc-in ctx [:config :agents agent-name :token] token)}))))
+         :ctx (assoc-in ctx [:config :agents agent-name :token] token)}
+        resp))))
 
 
 ;;   {:url              (str (:base-url ctx) "/auth/token")
@@ -95,18 +97,21 @@
   (let [method (first (filter meths (keys step)))
         url (str (get-in ctx [:config :url]) (get step method))
         body (if (:body step) (if (string? (:body step)) (:body step) (json/generate-string (:body step))))
-        req-opts (cond-> (merge (default-req-params ctx)
-                                {:url url
-                                 :request-method (keyword (str/lower-case (name method)))})
+        _ (prn "body:" body)
+        req-opts (cond-> (merge (default-req-params ctx) {:url url :request-method (keyword (str/lower-case (name method)))})
                    body
                    (assoc :body body))
         agent-name (get step :agent :default)
+        _ (prn "step:" step)
+        _ (prn "context: " ctx)
+        _ (prn "agent-name" agent-name)
+        _ (prn "if:" (get-in ctx [:config :agents agent-name]))
         {req-opts :req-opts
          new-ctx :ctx}
-        (if (get-in ctx [:config :agents agent-name]) (auth ctx req-opts agent-name) req-opts)
+        (if (get-in ctx [:config :agents agent-name]) (auth ctx req-opts agent-name) (throw (Exception. (str "No config for agent " (name agent-name))) ))
         ctx (or new-ctx ctx)
         _ (prn "..")
-        _ (prn req-opts)
+        _ (prn "req-opts:" req-opts)
         resp (http/request req-opts)
         _ (prn "===")
         resp
@@ -118,6 +123,12 @@
     {:resp resp
      :ctx ctx
      :errors errs}))
+
+(cond-> (merge (default-req-params {})
+               {:url "some-url"
+                :request-method (keyword (str/lower-case (name :PUT)))})
+  "some-body"
+  (assoc :body "some-body"))
 
 (http/request {:url "http://access-policy-box.aidbox.io/Patient",
                :redirect-strategy :none,

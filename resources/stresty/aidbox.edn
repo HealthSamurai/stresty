@@ -21,6 +21,7 @@
  auth-token
  {:zen/tags #{zen/schema stresty/auth-method}
   :type zen/map
+  :require #{:username :password :client-id :client-secret}
   :keys {:username {:type zen/string}
          :password {:type zen/string}
          :client-id {:type zen/string}
