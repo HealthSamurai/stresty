@@ -9,7 +9,9 @@
              "anti"          {:. :app.anti/index}
              "reagent"  {:. :app.reagent/ctx}
              "reframe" {:. :app.reframe/ctx}
-             "case" {:. :app.case.core/ctx}})
+             "case" {:. :app.case.core/ctx}
+             "scenario" {:. :app.scenario.core/index
+                         [:ns] {[:name] {:. :app.scenario.show/index}}}})
 
 (defn to-query-params [params]
   (->> params

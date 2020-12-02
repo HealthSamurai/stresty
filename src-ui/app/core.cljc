@@ -18,6 +18,8 @@
             [app.anti]
             [app.dashboard]
             [app.case.core]
+            [app.scenario.core]
+            [app.scenario.show]
             #?(:cljs [app.reagent])
             [app.reframe]))
 
@@ -69,7 +71,7 @@
  ::initialize
  (fn [{db :db} _]
    {:db (assoc db :cases (into {} (map (juxt :id identity) cases)))
-    :dispatch [:zframes.routing/page-redirect {:uri "#/"}]}))
+    :dispatch [:zframes.routing/page-redirect {:uri "#/scenario"}]}))
 
 (defn mount-root []
   (rf/clear-subscription-cache!)

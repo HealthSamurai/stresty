@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [zframes.routing :refer [unparse-query-string]]
             [re-frame.db :refer [app-db]]
+            [edamame.core]
             [zframes.re-frame :as zrf]))
 
 
@@ -76,7 +77,17 @@
 
            (-> (js/fetch (str uri (unparse-query-string params)) (clj->js init))
                (.then (fn [resp]
-                        (if (some-> (.-headers resp)
+                        (cond
+                          (some-> (.-headers resp)
+                                    (.get "content-type")
+                                    (str/index-of "application/edn"))
+                          (-> (.text resp)
+                              (.then (fn [doc]
+                                       (let [doc (edamame.core/parse-string doc)]
+                                         (if (< (.-status resp) 300)
+                                           (zrf/dispatch [http-ok opts resp doc])
+                                           (zrf/dispatch [http-error opts resp doc]))))))
+                          (some-> (.-headers resp)
                                     (.get "content-type")
                                     (str/index-of "application/json"))
                           (-> (.json resp)
@@ -88,6 +99,7 @@
                                      (fn [error]
                                        (let [error (js->clj error :keywordize-keys true)]
                                          (zrf/dispatch [json-error opts resp error])))))
+                          :else
                           (-> (.text resp)
                               (.then (fn [doc]
                                        (if (< (.-status resp) 300)

@@ -19,7 +19,9 @@
  case {:zen/tags #{zen/schema zen/tag}
        :zen/desc "Schema for case"
        :type zen/map
-       :keys {:desc {:type zen/string}
+       :require #{:steps}
+       :keys {:title {:type zen/string}
+              :desc {:type zen/string}
               :steps {:type zen/vector
                       :every {:confirms #{step}}}}}
 

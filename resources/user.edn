@@ -15,7 +15,8 @@
  
  create-patient
  {:zen/tags #{stresty/case}
-  :desc     "Create Patient"
+  :title    "Create Patient"
+  :desc     "This scenario shows you, how to create a new Patient resource in Aidbox"
   :steps    [{:type     stresty.aidbox/truncate-step
               :truncate [:Patient]}
              {:type  stresty/http-step
