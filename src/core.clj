@@ -5,6 +5,7 @@
             [zen.core :as zen]
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [auth])
   (:gen-class))
 
@@ -16,7 +17,12 @@
        (zen/load-ns ztx)))
 
 (def cli-options
-  [["-v" nil "Verbosity level"
+  [["-c" "--config FILE" "Config file"
+    :default "config.edn"]
+   ["-f" "--file NAME" "File names with test cases"
+    :default []
+    :parse-fn #(str/split % #",")]
+   ["-v" nil "Verbosity level"
     :id :verbosity
     :default 0
     ;; :update-fn inc
@@ -27,7 +33,9 @@
    [nil "--version" "Show version"]])
 
 (defn -main [& args]
+
   (let [opts (parse-opts args cli-options)]
+    (clojure.pprint/pprint opts)
     (when-let [errors (:errors opts)]
       (println (first errors))
       (System/exit 1))
@@ -49,26 +57,35 @@
       (System/exit 0))
 
 
-    (let [ztx (zen/new-context)
-          _ (load-edn ztx (get-in opts [:arguments 0]))
-          config (->> (zen/get-tag ztx 'stresty/config)
-                     first
-                     (zen/get-symbol ztx))
-          ctx (-> (opts :options)
-                  (assoc :config config)
-                  (assoc :ztx ztx)
-                  )]
-      (prn "config:" config)
-      (println "Args:" (:arguments opts))
-      (println "Configuration:")
-      (println)
-      (if (:passed? (runner/run ctx (:arguments opts)))
-        (System/exit 0)
-        (System/exit 1)))))
+
+    (System/exit 0)
+
+    #_(let [ztx    (zen/new-context)
+            _      (load-edn ztx (get-in opts [:arguments 0]))
+            config (->> (zen/get-tag ztx 'stresty/config)
+                        first
+                        (zen/get-symbol ztx))
+            ctx    (-> (opts :options)
+                       (assoc :config config)
+                       (assoc :ztx ztx)
+                       )]
+        (prn "config:" config)
+        (println "Args:" (:arguments opts))
+        (println "Configuration:")
+        (println)
+        (if (:passed? (runner/run ctx (:arguments opts)))
+          (System/exit 0)
+          (System/exit 1)))))
 
 (comment
-  (-main ["resources/user.edn"])
+  (-main "--config resources/user.edn --file wow/file.txt some-file.end")
 
-  (parse-opts ["-h" "-vv" "wow/file.txt some-file.end"] cli-options)
+  (cli/parse-opts ["-c" "conf.edn" "-f wow/file.txt some-file.end"] cli-options)
+  ;; => {:options {:config true, :verbosity 2, :interactive false, :help true},
+  ;;     :arguments ["conf.edn" "wow/file.txt some-file.end"],
+  ;;     :summary
+  ;;     "  -c, --config       config file\n  -v                 Verbosity level\n  -i, --interactive  Interactive mode\n  -h, --help\n      --version      Show version",
+  ;;     :errors nil}
 
   )
+

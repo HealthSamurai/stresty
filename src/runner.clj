@@ -16,8 +16,6 @@
             [auth]))
 
 (def zen-ctx (zen/new-context))
-(zen/read-ns zen-ctx 'stresty)
-
 
 (defn zen-valid? [ctx]
   (when-not (empty? (:errors ctx))
@@ -25,7 +23,6 @@
     (assert (empty? (:errors ctx)) "See STDOUT for errors"))
   (empty? (:errors ctx)))
 
-(zen/read-ns zen-ctx 'stresty)
 
 (defmacro v [ctx & cmds]
   (let [do-cmds (conj cmds 'do)]
