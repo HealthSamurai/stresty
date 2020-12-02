@@ -17,11 +17,44 @@
 
             [app.anti]
             [app.dashboard]
-            [app.users.core]
-            [app.access.core]
-            [app.patients.core]
+            [app.case.core]
             #?(:cljs [app.reagent])
             [app.reframe]))
+
+(def cases
+  [{:id :simple-crud
+    :desc "Simple CRUD Tutorial"
+    :steps [{:id :create-patient
+              :desc "You should create patient to start use Jedi force"
+              :POST "/Patient"
+              :body {:id "new-patient"
+                     :name [{:given ["Luke"]
+                             :family "Skywalker"}]
+                     :birthDate "2145-08-12"
+                     :gender "male"}}
+            {:id :patch-user
+             :desc "Now need to update user to link it to our new patient"
+             :PATCH "/Users/postman"
+             :body {:data {:patient_id "new-patient"}}}
+            {:id :match-user
+             :desc "Check that user has acess to patient"
+             :GET "Patient/new-patient"}]}
+   {:id :access-patient-data
+    :desc "Access Patient Data"
+    :steps [{:id :create-patient
+             :desc "Create patient"
+             :POST "/Patient"
+             :body {:id "/obi-wan"
+                    :name [{:given ["Obi-Wan"]
+                            :family "Kenobe"}]
+                    :birthDate "2126-12-12"
+                    :gender "male"}}
+            {:id :make-obi-wan-jedi
+             :desc "Make Obi-Wan great Jedi again"
+             :PATCH "/Patient/obi-wan"
+             :body {:gender "Jedi"}}
+            ]}
+   ])
 
 (zrf/defview current-page
   [route not-found?]
@@ -34,8 +67,9 @@
 
 (rf/reg-event-fx
  ::initialize
- (fn [_ _]
-   {:zframes.routing/page-redirect {:uri "#/"}}))
+ (fn [{db :db} _]
+   {:db (assoc db :cases (into {} (map (juxt :id identity) cases)))
+    :dispatch [:zframes.routing/page-redirect {:uri "#/"}]}))
 
 (defn mount-root []
   (rf/clear-subscription-cache!)

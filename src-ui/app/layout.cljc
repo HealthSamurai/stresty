@@ -6,13 +6,34 @@
 (zrf/defs current-uri [db]
  (:uri (first (:route/history db))))
 
+(zrf/defs cases
+  [db _]
+  (:cases db))
+
+(zrf/defx select-case
+  [{db :db} [_ case-id]]
+  {:db (-> db
+           (assoc :current-case case-id))
+   :dispatch [:zframes.routing/page-redirect {:uri "#/case"}]}
+  )
+
+(zrf/defview case-list [cases]
+  [:<>
+   (for [case (vals cases)]
+     ^{:key (:id case)}
+      [:a {:class (c [:text :white] :text-base [:p 2])
+              :on-click #(zrf/dispatch [::select-case (get-in case [:id])])}
+          [:span (str (:desc case))]]
+     )
+   ]
+  )
 
 (zrf/defview quick-menu []
   [:<>
    [:div {:class (c [:z 100] :overflow-hidden :flex :flex-col
                     {:background-color "#2c3645"
                      :box-shadow       "4px 0 6px -1px rgba(0, 0, 0, 0.15), 2px 0 4px -1px rgba(0, 0, 0, 0.09)"})}
-    [:span "hahha"]
+    [case-list]
     [:div {:class (c :flex-1)}]
     ]])
 
