@@ -23,7 +23,6 @@
     (assert (empty? (:errors ctx)) "See STDOUT for errors"))
   (empty? (:errors ctx)))
 
-
 (defmacro v [ctx & cmds]
   (let [do-cmds (conj cmds 'do)]
     `(when (>= (:verbosity ~ctx) 1)
@@ -34,7 +33,6 @@
     `(when (>= (:verbosity ~ctx) 2)
        ~do-cmds)))
 
-
 (defmacro i [ctx & cmds]
   (let [do-cmds (conj cmds 'do)]
     `(when (:interactive ~ctx)
@@ -44,7 +42,6 @@
   (let [do-cmds (conj cmds 'do)]
     `(when (or (>= (:verbosity ~ctx) 2) (:interactive ~ctx))
        ~do-cmds)))
-
 
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
@@ -149,7 +146,7 @@
         result (exec-step ctx step)]
     (-> ctx
         (update
-          :steps #(conj % result))
+         :steps #(conj % result))
         (merge (if (:failed? result) {:failed?     true
                                       :failed-step (:id result)
                                       :resp        (:resp result)
@@ -164,17 +161,16 @@
 (defn- run-steps
   [conf test-case]
   (let [steps     (:steps test-case)
-        only-step (reduce find-only-step nil steps)
-        result    (reduce run-step {:conf conf :steps [] :only only-step} steps)]
-    (assoc result :id (:id test-case))))
+        result    (reduce run-step ctx steps)]
+    (assoc result :id (:zen/name test-case))))
 
-(defn run-test-case [{conf :conf test-cases :test-cases :as ctx} test-case]
-  (println "run test case" (:id test-case))
+(defn run-test-case [ctx test-case]
+  (println "run test case" (:zen/name test-case))
 
-  (let [result (run-steps conf test-case)]
+  (let [result (run-steps ctx test-case)]
     (if (:failed? result)
       (println (colors/red "failed") (str (get-id test-case) "." (:failed-step result)))
-      (println (colors/green "passed") (:id test-case)))
+      (println (colors/green "passed") (:zen/name test-case)))
 
     (update ctx :test-cases #(conj % result))))
 
@@ -196,9 +192,9 @@
       slurp
       yaml/parse-string
       (assoc
-        :filename filename)
+       :filename filename)
       (update
-        :id #(if (nil? %) filename %))))
+       :id #(if (nil? %) filename %))))
 
 (defmethod load-test-case
   :zen
@@ -214,12 +210,11 @@
    :failed-tests  (count (filter #(-> % :status (= "failed")) steps))
    :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))})
 
-
 (defn sum-for-test-cases [test-cases]
-(reduce (fn [a b] {:passed-tests  (+ (:passed-tests a) (:passed-tests b))
-                   :failed-tests  (+ (:failed-tests a) (:failed-tests b))
-                   :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
-        (map sum-for-test-case test-cases)))
+  (reduce (fn [a b] {:passed-tests  (+ (:passed-tests a) (:passed-tests b))
+                     :failed-tests  (+ (:failed-tests a) (:failed-tests b))
+                     :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
+          (map sum-for-test-case test-cases)))
 
 (defn get-summary [{test-cases :test-cases}]
   (let [failed-tests (filter :failed? test-cases)
@@ -239,9 +234,8 @@
     (zen-valid? @zen-ctx)
     (into yaml-cases zen-cases)))
 
-(defn run [conf files]
-  (let [test-cases (load-cases files)
-        result     (reduce run-test-case {:conf conf :test-cases []} test-cases)
+(defn run [{:keys [test-cases config] :as ctx}]
+  (let [result     (reduce run-test-case ctx test-cases)
         sum        (sum-for-test-cases (:test-cases result))
         summary    (get-summary result)
         passed?    (zero? (:count-failed-tests summary))]
@@ -270,18 +264,16 @@
             :auth-client-id     "myapp"
             :auth-client-secret "verysecret"
             :user-id            "patient-user"
-            :user-secret        "admin"
-            })
-
+            :user-secret        "admin"})
 
   (def ctx* (merge ctx (auth/add-auth-data ctx)))
 
   (prn ctx*)
-  
+
   (clojure.pprint/pprint (run ctx* ["test/sample-1.edn"]))
-  
+
   (def r (run ctx*
-           ["resources/stresty/tests/core.edn"]))
+              ["resources/stresty/tests/core.edn"]))
 
   (def tc (-> r
               :test-cases
