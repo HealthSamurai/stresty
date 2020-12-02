@@ -209,3 +209,12 @@ String values starting with the number sign (#) are considered as [regex pattern
 1. 2xx? is not ok. `404 != #object[matcho$fn__1973 0x113eed88 "matcho$fn__1973@113eed88"]`
 1. readme for skip/only keywords
 
+
+# Development
+
+0. `make npm` will download dependencies for frontend
+1. `make repl` to start clj REPL (will be started inside this one)
+2. Open `dev/user.clj`, connect to the REPL and eval the file
+3. eval `(restart)` to start the server.
+4. eval `(restart-ui)` to start UI.
+

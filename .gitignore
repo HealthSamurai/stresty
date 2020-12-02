@@ -8,3 +8,4 @@ resources/VERSION
 .env
 node_modules
 .shadow-cljs
+*~

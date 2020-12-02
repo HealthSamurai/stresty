@@ -4,7 +4,8 @@
             [clojure.string :as str]
             [ring.util.codec]
             [ring.util.response]
-            [ring.middleware.head]))
+            [ring.middleware.head]
+            [clojure.java.io :as io]))
 
 (defonce server (atom nil))
 
@@ -27,6 +28,7 @@
           (ring.middleware.head/head-response req)))))
 
 
+
 (defn handler [{meth :request-method uri :uri :as req}]
   (or (handle-static req)
       (if-let [fn-handler (route-map.core/match [meth uri] routes)]
@@ -44,16 +46,18 @@
 
 (defn stop []
   (when-not (nil? @server)
-    (@server :timeout 100)
-    (reset! server nil)
-    :stopped))
+    (@server)
+    (reset! server nil))
+  :stopped)
 
 (defn restart []
   (stop)
-  (start)
-  )
+  (start))
 
 (comment
   (restart)
-  )
 
+  (io/resource "public/js/main.js")
+
+
+  )

@@ -17,3 +17,6 @@ build-native: resources/VERSION
 build: resources/VERSION
 	clojure -A:run-test && clojure -A:build --app-version `cat VERSION` && cp target/stresty-*-standalone.jar target/stresty.jar
 	rm resources/VERSION
+
+npm:
+	npm install
