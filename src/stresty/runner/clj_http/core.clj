@@ -37,81 +37,70 @@
      (:steps case))))
 
 (comment
-
-  stresty.runner.clj-http.step/run-step
-
-  (+ 40 2)
-
   (do
     (def ztx (zen/new-context))
     (clojure.pprint/pprint (zen/read-ns ztx 'user))
-    (zen/get-symbol ztx 'config)
+    (zen/get-symbol ztx 'config))
 
-    )
-  
-  (clojure.pprint/pprint (run-case ztx 'user/config 'user/create-patient))
-  
-
-  (run-case ztx {:url "https://little.aidbox.app"
-                 :agents {:default {:type 'stresty/basic-auth
-                                    :client-id "basic"
-                                    :client-secret "secret"}}}
-            'user/create-patient)
-
-
-
-  (stresty.runner.clj-http.step/run-step
-   nil
-   (get-in
-    (zen/get-symbol ztx 'user/create-patient)
-    [:steps 0]))
-
-
-  (get-in
-   (zen/get-symbol ztx 'user/create-patient)
-   [:steps 0 :type])
-
-  (zen/validate ztx ['stresty/step] {})
-
-  (run-case ztx {:url "http://access-policy-box.aidbox.io/"
-                 :agents {:default {:type 'stresty/basic-auth
-                                    :client-id "stresty"
+  (run-case ztx {:url    "http://access-policy-box.aidbox.io/"
+                 :agents {:default {:type          'stresty/basic-auth
+                                    :client-id     "stresty"
                                     :client-secret "stresty"}
-                          :user1 {:type 'stresty.aidbox/auth-token
-                                  :username "patient-user"
-                                  :password "admin"
-                                  :client-id "myapp"
-                                  :client-secret "verysecret"
-                                  }}}
-            'user/create-patient)
-
-  (clojure.pprint/pprint)
-  (zen/read-ns ztx 'user)
-
-  ctx
-
-
-  (zen/get-tag ctx 'stresty/case)
-
-
-  (zen/get-symbol ctx 'user/my-scenario)
-
-  
-  (reduce (fn [ctx step]
-            (run-step ctx step))
-          {:url "https://little.aidbox.app"
-           :agent {"default" {:type 'stresty/basic-auth
-                              :username "basic"
-                              :password "secret"}
-                   "user" {:type 'stresty/user-login
-                           :client-id "..."
-                           :client-secret "..."
-                           :user "user-1"
-                           :password "password"}}}
-          (:steps test))
-
-
-
-
-
-  )
+                          :user    {:type          'stresty.aidbox/auth-token
+                                    :username      "patient-user"
+                                    :password      "admin"
+                                    :client-id     "myapp"
+                                    :client-secret "verysecret"
+                                    }}}
+            'user/create-patient);; => {:stresty.runner.clj-http.core/case
+;;     {:desc "Create Patient",
+;;      :zen/tags #{stresty/case},
+;;      :steps
+;;      [{:truncate [:Patient], :type stresty.aidbox/truncate-step}
+;;       {:type stresty/http-step,
+;;        :POST "/Patient",
+;;        :body {:name [{:given ["John"], :family "Smith"}], :id "new-patient"},
+;;        :match {:status 201}}
+;;       {:type stresty/http-step,
+;;        :agent :user,
+;;        :GET "/Patient/new-patient",
+;;        :match {:status 200, :body {:id "new-patient"}}}],
+;;      :zen/file "/home/u473t8/Projects/health-samurai/stresty/resources/user.edn",
+;;      :zen/name user/create-patient},
+;;     :stresty.runner.clj-http.core/steps nil,
+;;     :config
+;;     {:url "http://access-policy-box.aidbox.io/",
+;;      :agents
+;;      {:default
+;;       {:type stresty/basic-auth, :client-id "stresty", :client-secret "stresty"},
+;;       :user
+;;       {:type stresty.aidbox/auth-token,
+;;        :username "patient-user",
+;;        :password "admin",
+;;        :client-id "myapp",
+;;        :client-secret "verysecret",
+;;        :token "OWI1MzlkOGItZDMxYS00YWFkLTlhNTQtM2NlZTMxMWUyYTFj"}}},
+;;     :stresty.runner.clj-http.core/last-result
+;;     {:resp
+;;      {:status 200,
+;;       :headers
+;;       {"x-duration" "5",
+;;        "server" "http-kit",
+;;        "via" "1.1 google",
+;;        "content-type" "application/json",
+;;        "content-length" "203",
+;;        "connection" "close",
+;;        "etag" "660",
+;;        "date" "Wed, 02 Dec 2020 15:47:48 GMT",
+;;        "last-modified" "Wed, 02 Dec 2020 15:47:47 GMT",
+;;        "x-request-id" "fa30f82b-041d-4e20-9197-1b58cccaca27",
+;;        "cache-control" "no-cache"},
+;;       :body
+;;       {:name [{:given ["John"], :family "Smith"}],
+;;        :id "new-patient",
+;;        :resourceType "Patient",
+;;        :meta
+;;        {:lastUpdated "2020-12-02T15:47:47.920183Z",
+;;         :createdAt "2020-12-02T15:47:47.920183Z",
+;;         :versionId "660"}}},
+;;      :errors []}})

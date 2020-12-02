@@ -58,40 +58,32 @@
 
 
 
-    (let [ztx    (zen/new-context)
-            _      (load-edn ztx (get-in opts [:options :config]))
-            config (->> (zen/get-tag ztx 'stresty/config)
-                        first
-                        (zen/get-symbol ztx))
-          _ (doseq [f (get-in opts [:options :file])]
-              (load-edn ztx f))
+    (let [ztx        (zen/new-context)
+          _          (load-edn ztx (get-in opts [:options :config]))
+          config     (->> (zen/get-tag ztx 'stresty/config)
+                          first
+                          (zen/get-symbol ztx))
+          _          (doseq [f (get-in opts [:options :file])]
+                       (load-edn ztx f))
           test-cases (mapv #(zen/get-symbol ztx %)
-                          (zen/get-tag ztx 'stresty/case))
-            ctx    (-> (opts :options)
-                       (assoc :config config)
-                       (assoc :test-cases test-cases)
-                       )]
-        (prn "config:" config)
-        (clojure.pprint/pprint  test-cases)
-        (println "Args:" (:arguments opts))
-        (println "Configuration:")
-        (println)
-        (if (:passed? (runner/run ctx))
+                           (zen/get-tag ztx 'stresty/case))
+          ctx        (-> (opts :options)
+                         (assoc :config config)
+                         (assoc :test-cases test-cases)
+                         )]
+      (prn "config:" config)
+      (clojure.pprint/pprint  test-cases)
+      (println "Args:" (:arguments opts))
+      (println "Configuration:")
+      (println)
+      (runner/run ctx)
+      #_(if (:passed? (runner/run ctx))
           (System/exit 0)
           (System/exit 1)))))
 
 (comment
   (-main "--config" "resources/user.edn" "--file" "resources/user.edn")
 
-  (parse-opts ["--config" "resources/user.edn" "--file" "wow/file.txt,some-file.end"] cli-options)
-;; => {:options
-;;     {:config "resources/user.edn",
-;;      :file ["wow/file.txt" "some-file.end"],
-;;      :verbosity 0,
-;;      :interactive false},
-;;     :arguments [],
-;;     :summary
-;;     "  -c, --config FILE  config.edn  Config file\n  -f, --file NAME    []          File names with test cases\n  -v                             Verbosity level\n  -i, --interactive              Interactive mode\n  -h, --help\n      --version                  Show version",
-;;     :errors nil}
-  )
+  (parse-opts ["--config" "resources/user.edn" "--file" "wow/file.txt,some-file.end"] cli-options))
+
 
