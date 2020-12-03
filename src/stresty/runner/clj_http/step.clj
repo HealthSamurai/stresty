@@ -97,30 +97,25 @@
   (let [method     (first (filter meths (keys step)))
         url        (str (get-in ctx [:config :url]) (get step method))
         body       (if (:body step) (if (string? (:body step)) (:body step) (json/generate-string (:body step))))
-        _          (prn "body:" body)
         req-opts   (cond-> (merge (default-req-params ctx) {:url url :request-method (keyword (str/lower-case (name method)))})
                      body
                      (assoc :body body))
         agent-name (get step :agent :default)
-        _          (prn "step:" step)
-        _          (prn "context: " ctx)
-        _          (prn "agent-name" agent-name)
-        _          (prn "if:" (get-in ctx [:config :agents agent-name]))
         {req-opts :req-opts
          new-ctx  :ctx}
         (if (get-in ctx [:config :agents agent-name]) (auth ctx req-opts agent-name) (throw (ex-info (str "No config for agent " (name agent-name)) {:agent-name agent-name}) ))
         ctx        (or new-ctx ctx)
-        _          (prn "..")
-        _          (prn "req-opts:" req-opts)
         resp       (http/request req-opts)
-        _          (prn "===")
         resp
         (cond-> {:status (:status resp)
                  :headers (reduce (fn [m [k v]] (assoc m (str/lower-case k) v)) {} (:headers resp))}
           (:body resp)
           (assoc :body (parse-json-or-leave-string (:body resp))))
         errs       (if-let [m (:match step)] (matcho/match nil resp m) [])]
-    (update-in ctx [:results current-case] #(conj % resp))))
+    (-> ctx
+        (assoc current-case (select-keys (:body resp) (:ctx step)))
+        (update-in  [:results current-case] conj {:response resp
+                                                     :errors errs}))))
 
 
 (defmethod run-step 'stresty.aidbox/sql-step [ctx step]

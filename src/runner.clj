@@ -40,16 +40,19 @@
                              (reduced method))) nil meths)]
       (update step method #(template/render conf %))))
 
-(defn run-test-case [ctx {:keys [steps zen/name] :as test-case}]
-  (println "run test case" 'zen/name)
+(defn run-test-case [ctx {:keys [steps :zen/name] :as test-case}]
+  (println "run test case" name)
   (reduce
-    (fn [ctx step]
-      (println step)
-      (cond-> ctx
-        (empty? (:errors ctx))
-        (step/run-step step)))
-    (assoc ctx :current-case (keyword 'zen/name))
-    steps))
+   (fn [ctx step]
+     (let [errors (-> (get-in ctx [:results (keyword name)])
+                      first
+                      :errors)]
+       (println "Errors: " errors)
+       (if-not (empty? errors)
+         ctx
+         (step/run-step ctx step))))
+   (assoc ctx :current-case (keyword name))
+   steps))
 
 (defn sum-for-test-case [{:keys [steps]}]
   {:passed-tests  (count (filter #(-> % :status (= "passed")) steps))

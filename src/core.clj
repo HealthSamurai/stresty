@@ -55,9 +55,6 @@
       (println "Version" (slurp (io/resource "VERSION")))
       (System/exit 0))
 
-
-
-
     (let [ztx        (zen/new-context)
           _          (load-edn ztx (get-in opts [:options :config]))
           config     (->> (zen/get-tag ztx 'stresty/config)
@@ -71,12 +68,8 @@
                          (assoc :config config)
                          (assoc :test-cases test-cases)
                          )]
-      (prn "config:" config)
-      (clojure.pprint/pprint  test-cases)
-      (println "Args:" (:arguments opts))
-      (println "Configuration:")
-      (println)
-      (runner/run ctx)
+;;      (clojure.pprint/pprint  test-cases)
+      (clojure.pprint/pprint (runner/run ctx))
       #_(if (:passed? (runner/run ctx))
           (System/exit 0)
           (System/exit 1)))))

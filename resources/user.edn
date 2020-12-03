@@ -12,7 +12,7 @@
                        :password      "admin"
                        :client-id     "myapp"
                        :client-secret "verysecret"}}}
- 
+
  create-patient
  {:zen/tags #{stresty/case}
   :title    "Create Patient"
@@ -21,21 +21,22 @@
               :truncate [:Patient]}
              {:type  stresty/http-step
               :POST  "/Patient"
+              :ctx [:id]
               :body  {:id "new-patient" :name [{:family "Smith" :given ["John"]}]}
-              :match {:status 201}}
+              :match {:status 221}}
              {:type  stresty/http-step
-              :GET   "/Patient/new-patient"
+              :GET   "/Patient/new-patient}"
               :agent :user
               :match {:status 200
                       :body   {:id "new-patient"}}}]}
 
- #_put-patient
- #_ {:zen/tags #{stresty/case}
+ put-patient
+  {:zen/tags #{stresty/case}
      :desc     "Put Patient"
      :steps    [{:type  stresty/http-step
                  :PUT   "/Patient/pt-1"
                  :body  {:name [{:family "Smith" :given ["John"]}]}
-                 :match {:status 200}}
+                 :match {:status 201}}
                 {:type  stresty/http-step
                  :GET   "/Patient/pt-1"
                  :match {:status 200
