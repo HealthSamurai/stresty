@@ -69,6 +69,7 @@
                          (assoc :test-cases test-cases)
                          )]
 ;;      (clojure.pprint/pprint  test-cases)
+      (def result (runner/run ctx))
       (clojure.pprint/pprint (runner/run ctx))
       #_(if (:passed? (runner/run ctx))
           (System/exit 0)

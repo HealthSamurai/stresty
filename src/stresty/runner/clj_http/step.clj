@@ -103,7 +103,7 @@
         agent-name (get step :agent :default)
         {req-opts :req-opts
          new-ctx  :ctx}
-        (if (get-in ctx [:config :agents agent-name]) (auth ctx req-opts agent-name) (throw (ex-info (str "No config for agent " (name agent-name)) {:agent-name agent-name}) ))
+        (if (get-in ctx [:config :agents agent-name]) (auth ctx req-opts agent-name) (throw (ex-info (str "No config for agent " (name agent-name)) {:agent-name agent-name})))
         ctx        (or new-ctx ctx)
         resp       (http/request req-opts)
         resp
@@ -114,8 +114,9 @@
         errs       (if-let [m (:match step)] (matcho/match nil resp m) [])]
     (-> ctx
         (assoc current-case (select-keys (:body resp) (:ctx step)))
-        (update-in  [:results current-case] conj {:response resp
-                                                     :errors errs}))))
+        (update :results conj {:case-name current-case
+                               :response resp
+                               :errors errs}))))
 
 
 (defmethod run-step 'stresty.aidbox/sql-step [ctx step]

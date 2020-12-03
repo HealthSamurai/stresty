@@ -44,27 +44,45 @@
   (println "run test case" name)
   (reduce
    (fn [ctx step]
-     (let [errors (-> (get-in ctx [:results (keyword name)])
-                      first
-                      :errors)]
+     (let [last-step (first (get ctx :results))
+           _ (prn "last-step: " last-step)
+           errors (:errors last-step)
+           last-case (:case-name last-step)]
        (println "Errors: " errors)
-       (if-not (empty? errors)
+       (if (and (seq errors) (= name last-case))
          ctx
          (step/run-step ctx step))))
-   (assoc ctx :current-case (keyword name))
+   (-> ctx
+       ;(assoc :results [])
+       (assoc :current-case name))
    steps))
 
-(defn sum-for-test-case [{:keys [steps]}]
+#_(defn sum-for-test-case [{:keys [test-cases results] :as ctx}]
   {:passed-tests  (count (filter #(-> % :status (= "passed")) steps))
    :failed-tests  (count (filter #(-> % :status (= "failed")) steps))
    :skipped-tests (count (filter #(-> % :status (= "skipped")) steps))})
 
-(defn sum-for-test-cases [test-cases]
-(reduce (fn [a b] {:passed-tests  (+ (:passed-tests a) (:passed-tests b))
-                   :failed-tests  (+ (:failed-tests a) (:failed-tests b))
-                   :skipped-tests (+ (:skipped-tests a) (:skipped-tests b))})
-          (map sum-for-test-case test-cases)))
+(def results {:results #:user{:create-patient
+                              [{:response 1
+                                :errors [{:expected 200}]}
+                               {:response 2
+                                :errors []}]
 
+                              :put-patient
+                              [{:response 2}
+                               {:response 3}
+                               {:response 4}]}})
+
+
+(defn sum-for-test-cases [{:keys [test-cases results] :as ctx}]
+  (reduce (fn [acc r]
+            (conj acc  r))
+          [] results))
+
+(sum-for-test-cases results) 
+;; => [[:user/create-patient
+;;      [{:response 1, :errors [{:expected 200}]} {:response 2, :errors []}]]
+;;     [:user/put-patient [{:response 2} {:response 3} {:response 4}]]]
 (defn get-summary [{test-cases :test-cases}]
   (let [failed-tests (filter :failed? test-cases)
         passed-tests (filter #(-> % :failed? not) test-cases)]
@@ -128,3 +146,10 @@
 
   (-> (run {:interactive false :verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="} [#_"test/w.yaml" "test/w.yaml"])
       :failed))
+(comment
+
+  (def result {:x 1 :b #:user{:a 1 :b 2 :c 3}})
+
+  (:user/c (:b result))
+
+  )

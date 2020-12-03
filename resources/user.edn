@@ -25,7 +25,7 @@
               :body  {:id "new-patient" :name [{:family "Smith" :given ["John"]}]}
               :match {:status 221}}
              {:type  stresty/http-step
-              :GET   "/Patient/new-patient}"
+              :GET   "/Patient/new-patient"
               :agent :user
               :match {:status 200
                       :body   {:id "new-patient"}}}]}
