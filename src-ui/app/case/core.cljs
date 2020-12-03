@@ -9,7 +9,9 @@
             [anti.input :refer [input]]
             [anti.util :refer [block]]
             [reagent.core :as r]
-            [reagent.dom :as dom]))
+            [reagent.dom :as dom]
+            [monaco]
+            ))
 
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
@@ -17,9 +19,7 @@
 
 (zrf/defx ctx
   [{db :db} [_ phase params]]
-  (cond
-    
-    ))
+  )
 
 (zrf/defx run-step
   [{db :db} [_ index]]
@@ -102,23 +102,15 @@
       (fn [this]
         (let [el (dom/dom-node this)
               component-id (str "result-" (:id step))
-              cm (js/CodeMirror.
-                  el
-                  #js {:lineNumbers true
-                       :readOnly read-only
-                       :mode "clojure"
-                       :value (with-out-str (cljs.pprint/pprint value))
-                       :theme "idea"
-                       })]
-          (swap! cms assoc component-id cm)
-          (.setSize cm "100%" "100%")
-          (.on cm "change"
-               (fn []
-                 (if-let [edn-value (cljs.reader/read-string (.getValue cm))]
-                   (rf/dispatch [::change-value (into [step-index] path) edn-value]))))))
+              monaco (monaco/editor.create el
+                                           #js {:tabSize 2
+                                                :language "clojure"})]
+          (.setValue monaco (with-out-str (cljs.pprint/pprint value)))
+          ))
+      
       :reagent-render
       (fn [stresty-case]
-        [:div {:class (c :h-auto)}]
+        [:div {:class (c [:h 100])}]
         )
       }
      ))

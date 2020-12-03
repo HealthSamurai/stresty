@@ -6,6 +6,10 @@ clean:
 repl:
 	clj -A:nrepl:ui -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
 
+npm:
+	npm install
+	npx webpack --mode=production
+
 resources/VERSION:
 	cp VERSION resources/VERSION
 
