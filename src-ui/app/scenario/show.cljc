@@ -17,32 +17,27 @@
   [{db :db} [_ phase params]]
   (cond
     (= :init phase)
-    {:http/fetch [{:uri (str "/zen/symbol/" (:ns params) "/" (:name params))
-                   :path [::db :scenario]}
-                  {:uri "/create-new-ctx"
-                   :method "POST"
-                   :headers {:content-type "application/edn"}
-                   :body  (str {:url "https://little.aidbox.app"
-                                :agents {:default {:client-id "basic"
-                                                   :type 'stresty/basic-auth
-                                                   :client-secret "secret"}}
-                                :current-case (str (:ns params) "/" (:name params))}
-                               )
-                   :path [::db :ctx]}]}
+    (let [config (get db :config)
+          config* (assoc config :current-case (str (:ns params) "/" (:name params)))]
+      {:http/fetch [{:uri (str "/zen/symbol/" (:ns params) "/" (:name params))
+                     :path [::db :scenario]}
+                    {:uri "/create-new-ctx"
+                     :method "POST"
+                     :headers {:content-type "application/edn"}
+                     :body  (str config*)
+                     :path [::db :ctx]}]})
     :else
     {}))
 
 (zrf/defx create-ctx [{db :db} _]
-  {:http/fetch
-   {:uri "/create-new-ctx"
-    :method "POST"
-    :headers {:content-type "application/edn"}
-    :body (str {:url "https://little.aidbox.app"
-                                :agents {:default {:client-id "basic"
-                                                   :type 'stresty/basic-auth
-                                                   :client-secret "secret"}}
-                                :current-case (get-in db [::db :scenario :data :zen/name])})
-    :path [::db :ctx]}})
+  (let [config (get db :config)
+        config* (assoc config :current-case (get-in db [::db :scenario :data :zen/name]))]
+    {:http/fetch
+     {:uri "/create-new-ctx"
+      :method "POST"
+      :headers {:content-type "application/edn"}
+      :body (str config*)
+      :path [::db :ctx]}}))
 
 (zrf/defs scenario [db]
   (get-in db [::db :scenario :data]))

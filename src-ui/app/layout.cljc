@@ -18,8 +18,16 @@
   )
 
 (zrf/defview case-list [cases]
-  [:<>
-   (for [case (vals cases)]
+  [:div {:class (c :flex :flex-col [:pl 4] [:pr 4])}
+   [:a {:class (c [:text :white] :text-base [:p 2])
+        :on-click #(zrf/dispatch [:zframes.routing/page-redirect {:uri "#/scenario"}])}
+    "Scenarios"
+    ]
+   [:a {:class (c [:text :white] :text-base [:p 2])
+        :on-click #(zrf/dispatch [:zframes.routing/page-redirect {:uri "#/config"}])}
+    "Config"
+    ]
+   #_(for [case (vals cases)]
      ^{:key (:id case)}
       [:a {:class (c [:text :white] :text-base [:p 2])
               :on-click #(zrf/dispatch [::select-case (get-in case [:id])])}
@@ -31,8 +39,8 @@
 (zrf/defview quick-menu []
   [:<>
    [:div {:class (c [:z 100] :overflow-hidden :flex :flex-col
-                    {:background-color "#2c3645"
-                     :box-shadow       "4px 0 6px -1px rgba(0, 0, 0, 0.15), 2px 0 4px -1px rgba(0, 0, 0, 0.09)"})}
+                    {:background-color "#9CA3AF"
+                     :box-shadow       "4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.09)"})}
     [case-list]
     [:div {:class (c :flex-1)}]
     ]])

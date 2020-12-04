@@ -11,7 +11,9 @@
              "reframe" {:. :app.reframe/ctx}
              "case" {:. :app.case.core/ctx}
              "scenario" {:. :app.scenario.core/index
-                         [:ns] {[:name] {:. :app.scenario.show/index}}}})
+                         [:ns] {[:name] {:. :app.scenario.show/index}}}
+             "config" {:. :app.config.core/index}
+             })
 
 (defn to-query-params [params]
   (->> params
