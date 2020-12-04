@@ -31,22 +31,33 @@
 
 (defn get-tag [_ _] (throw (ex-info "Not implemented" {})))
 
-(defn run-step [{ztx :ztx :as ctx} req]
-  (if-let [body (:body req)]
-    (let [resp (first (:results (step-runner/run-step ctx body)))
-          _ (prn resp)]
-      (prn resp)
+(defn run-step [{ztx :ztx :as ctx} {body :body :as req}]
+  (if body
+    (let [_ (prn (zen/validate-schema ztx 'stresty/step (:step body))) ;; FIXME: fail if not valid
+          _ (prn ">>>>" (:ctx body))
+          step-result (step-runner/run-step (:ctx body) (:step body))
+          new-ctx-case (-> (:ctx body)
+                           (assoc :stresty/status (if (empty? (:errors step-result))
+                                                    "ok"
+                                                    "fail"))
+                           (update :stresty/step-results conj step-result))]
       {:status 200
-       :body resp})
-    {:status 400}
-    ))
+       :body new-ctx-case})
+    {:status 400}))
+
+(defn init-case-ctx [ctx {body :body :as req}]
+  {:status 200
+   :body {:config body
+          :stresty/step-results []
+          :stresty/status nil}})
 
 (def routes
   {:GET index
-   "scenarios" {:GET get-scenarios}
-   "zen" {"symbol" {[:ns] {[:name] {:GET get-symbol}}}
-          "tag" {[:ns] {[:name] {:GET get-tag}}}}
-   "run-step" {:POST run-step}})
+   "scenarios" {:GET #'get-scenarios}
+   "create-new-ctx" {:POST #'init-case-ctx}
+   "zen" {"symbol" {[:ns] {[:name] {:GET #'get-symbol}}}
+          "tag" {[:ns] {[:name] {:GET #'get-tag}}}}
+   "run-step" {:POST #'run-step}})
 
 (defn wrap-static [h]
   (fn [{meth :request-method uri :uri :as req}]
@@ -63,20 +74,11 @@
 
 (defn wrap-content-type [h]
   (fn [req]
-    (let [req* (cond-> req
-                 (and (-> req
-                          (get :body)
-                          nil?
-                          not)
-                      (-> req
-                          (get-in [:headers "content-type"])
-                            (= "application/edn")))
-                 (assoc :body (-> req
-                                  (get :body)
-                                  (io/reader :encoding "UTF-8")
-                                  slurp
-                                  read-string)))
-          resp (h req*)]
+    (let [body (if (and (:body req) (str/includes?  (get-in req [:headers "content-type"]) "application/edn"))
+                 (-> (slurp (:body req))
+                     edamame.core/parse-string)
+                 (:body req))
+          resp (h (assoc req :body body))]
       (if (:body resp)
         (-> resp
             (update :body str)
@@ -120,10 +122,11 @@
                      first
                      (zen.core/get-symbol ztx)))
     (swap! *context assoc :ztx ztx)
-    (swap! *context assoc :config config))
+    #_(swap! *context assoc :config config))
   
   (restart *context)
-  
+
+  (:web @*context)
 
   (def req
     (-> {:type 'stresty/http-step

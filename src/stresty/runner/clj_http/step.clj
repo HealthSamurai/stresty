@@ -31,7 +31,7 @@
 (defmulti auth (fn [ctx _ agent-name]
                  (get-in ctx [:config :agents agent-name :type])))
 
-(defmethod auth 'stresty/basic-auth [ctx req-opts agent-name]
+(defmethod auth 'stresty/basic-auth_ [ctx req-opts agent-name]
   (let [agnt (get-in ctx [:config :agents agent-name])]
     {:req-opts (update req-opts :headers
                        assoc "authorization" (str "Basic " (b64/encode (str (:client-id agnt) ":" (:client-secret agnt)))))
@@ -93,7 +93,24 @@
     (catch Exception e
       (Throwable->map e))))
 
-(defmethod run-step 'stresty/http-step [{:keys [config current-case] :as ctx} step]
+
+(comment
+
+  {:status :ok}
+
+  (run-step {:config {:url ""
+                      :agents {:default {:client-id ""
+                                         :client-secret ""}}}}
+            )
+
+  {:case-ctxs {'user/create-patient {,,,}}}
+
+  {}
+  )
+
+
+(defmethod run-step 'stresty/http-step [{:keys [config] :as ctx} step]
+  (prn "....")
   (let [method     (first (filter meths (keys step)))
         url        (str (get-in ctx [:config :url]) (get step method))
         body       (if (:body step) (if (string? (:body step)) (:body step) (json/generate-string (:body step))))
@@ -112,7 +129,9 @@
           (:body resp)
           (assoc :body (parse-json-or-leave-string (:body resp))))
         errs       (if-let [m (:match step)] (matcho/match nil resp m) [])]
-    (-> ctx
+    {:response resp
+     :errors errs}
+    #_(-> ctx
         (assoc current-case (select-keys (:body resp) (:ctx step)))
         (update :results conj {:case-name current-case
                                :response resp
