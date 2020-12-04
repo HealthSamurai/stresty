@@ -10,6 +10,12 @@
                             :case [{:when {:type zen/string}}
                                    {:when {:type zen/keyword}}]}}}}
 
+ desc-step
+ {:zen/tags #{zen/schema stresty/step}
+  :type zen/map
+  :require #{:description}
+  :keys {:description {:type zen/string}}}
+ 
  save
  {:zen/tags #{zen/schema stresty/step}
   :type zen/map

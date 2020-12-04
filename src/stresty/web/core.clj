@@ -35,21 +35,25 @@
   (if body
     (let [_ (prn (zen/validate-schema ztx 'stresty/step (:step body))) ;; FIXME: fail if not valid
           _ (prn ">>>>" (:ctx body))
+          _ (prn "index: " (:index body))
           step-result (step-runner/run-step (:ctx body) (:step body))
           new-ctx-case (-> (:ctx body)
                            (assoc :stresty/status (if (empty? (:errors step-result))
                                                     "ok"
                                                     "fail"))
-                           (update :stresty/step-results conj step-result))]
+                           (assoc-in [:stresty/step-results (:index body)] step-result))]
       {:status 200
        :body new-ctx-case})
     {:status 400}))
 
-(defn init-case-ctx [ctx {body :body :as req}]
-  {:status 200
-   :body {:config body
-          :stresty/step-results []
-          :stresty/status nil}})
+(defn init-case-ctx [{ztx :ztx :as ctx} {body :body :as req}]
+  (let [current-case (:current-case body)
+        symbol (zen/get-symbol ztx (symbol current-case))
+        step-results (mapv (fn [_] nil) (:steps symbol))]
+        {:status 200
+     :body {:config body
+            :stresty/step-results step-results
+            :stresty/status nil}}))
 
 (def routes
   {:GET index

@@ -22,23 +22,26 @@
                   {:uri "/create-new-ctx"
                    :method "POST"
                    :headers {:content-type "application/edn"}
-                   :body (str {:url "https://little.aidbox.app"
-                               :agents {:default {:client-id "basic"
-                                                  :type 'stresty/basic-auth
-                                                  :client-secret "secret"}}})
+                   :body  (str {:url "https://little.aidbox.app"
+                                :agents {:default {:client-id "basic"
+                                                   :type 'stresty/basic-auth
+                                                   :client-secret "secret"}}
+                                :current-case (str (:ns params) "/" (:name params))}
+                               )
                    :path [::db :ctx]}]}
     :else
     {}))
 
-(zrf/defx create-ctx [_ _]
+(zrf/defx create-ctx [{db :db} _]
   {:http/fetch
    {:uri "/create-new-ctx"
     :method "POST"
     :headers {:content-type "application/edn"}
     :body (str {:url "https://little.aidbox.app"
-                :agents {:default {:client-id "basic"
-                                   :type 'stresty/basic-auth
-                                   :client-secret "secret"}}})
+                                :agents {:default {:client-id "basic"
+                                                   :type 'stresty/basic-auth
+                                                   :client-secret "secret"}}
+                                :current-case (get-in db [::db :scenario :data :zen/name])})
     :path [::db :ctx]}})
 
 (zrf/defs scenario [db]
@@ -57,38 +60,84 @@
     {:http/fetch {:uri (str "/run-step")
                   :method "post"
                   :format "edn"
-                  :body (str {:ctx case-ctx :step step})
+                  :body (str {:ctx case-ctx
+                              :step step
+                              :index idx})
                   :path [::db :ctx]}}))
 
-(defmethod render-step 'stresty/http-step [step index]
+(zrf/defx change-step-method
+  [{db :db} [_ step index new-method]]
+  (let [path [::db :scenario :data :steps index]
+        method (->> step
+                    keys
+                    (filter meths)
+                    first)
+        url (get step method)]
+    {:db (-> db
+             (update-in (into path) dissoc method)
+             (assoc-in (into path [new-method]) url))}))
+
+(zrf/defx change-url [{db :db} [_ index method value]]
+  {:db (-> db
+           (assoc-in (into [::db :scenario :data :steps index method]) value))})
+
+(def default-step-style
+  (c :flex :flex-col [:mb 2] [:p 2] [:bg :gray-200]))
+
+(defn step-method [step index]
+  (let [step-method (->> step
+                            keys
+                            (filter meths)
+                            first)]
+    [:select {:type "select"
+              :on-change #(zrf/dispatch [::change-step-method step index (-> % .-target .-value keyword)])
+              :value step-method}
+     (for [meth meths]
+       ^{:key meth}
+       [:option {:value meth} (name meth)])]))
+
+(defn response-view [index result]
+  (if result
+    [:div
+     "Response"
+     [zf-editor [::db :ctx :data :stresty/step-results index :response]]]
+    )
+  )
+
+(defmethod render-step 'stresty/http-step [step index result]
   (let [method (first (filter meths (keys step)))]
-    
-    [:div {:class (c :flex :flex-col)}
-     "Request" 
-     [:div {:class (c [:pl 2] :flex-row)}
-      method " " (get step method)
+    [:div {:class default-step-style}
+     [:div {:class (c :flex :flex-row :items-)}
+      [step-method step index]
+      [:div {:class (c :w-full)}
+       [input {:placeholder "URL"
+               :default-value (get step method)
+               :on-change #(rf/dispatch [::change-url index method (-> % .-target .-value)])}]]
       [zf-button {:on-click [::run-step step index]} "Run"]]
      (if-let [body (:body step)]
        [:div
         [zf-editor [::db :scenario :data :steps index :body]]])
-     (if-let [resp (get-in step [:results :data :response])]
-       [:div
-        "Response"
-        [:div {:class (c [:pl 2])}
-         [zf-editor [::db :scenario :data :steps index :results :data :response]]
-         ]])]))
+     [response-view index result]
+      ]))
 
-(defmethod render-step 'stresty.aidbox/truncate-step [step]
-  [:div {:class (c :flex :flex-col)}
+(defmethod render-step 'stresty.aidbox/truncate-step [step index result]
+  [:div {:class default-step-style}
    [:div {:class (c :flex :flex-row)}
     "TRUNCATE " (str (:truncate step))
     [zf-button {:on-click [::run-step step index]} "Run"]]
-   (if-let [resp (get-in step [:results :data :response])]
-     [:div {:class (c [:pl 2])}
-      [zf-editor [::db :scenario :data :steps index :results :data :response]]
-      ]
-     )
-   ])
+   [response-view index result]])
+
+(defmethod render-step 'stresty.aidbox/sql-step [step index result]
+  [:div {:class default-step-style}
+   [:div {:class (c :flex :flex-row)}
+    [zf-button {:on-click [::run-step step index]} "Run"]]
+   [zf-editor [::db :scenario :data :steps index :sql]]
+   [response-view index result]]
+  )
+
+(defmethod render-step 'stresty.aidbox/desc-step [step]
+  [:div (:description step)]
+  )
 
 (defmethod render-step :default [step]
   [:pre (str step)])
@@ -105,8 +154,6 @@
 
    (for [[idx step] (map-indexed #(vector %1 %2) (:steps scenario))]
      ^{:key idx}
-     [render-step step idx])
-
-   ])
+     [render-step step idx (get-in case-ctx [:stresty/step-results idx])])])
 
 (pages/reg-page index view)
