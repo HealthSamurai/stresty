@@ -135,8 +135,6 @@
 
 (comment
 
-  (run-step nil {:type 'stresty.aidbox/truncate-step :truncate [:Patient "Practitioner"]})
-
 
   (reduce (fn [m [k v]] (assoc m (str/lower-case k) v)) {} {"Wow" "q"})
 
@@ -151,10 +149,9 @@
       :GET "/Patient"
       :match {:status 200}}))
 
-
+  (clojure.pprint/pprint ccc)
+  
   (matcho/match nil ccc {:status 200})
-
-  ccc
 
 
   (let [r {:body ["wow"]}]

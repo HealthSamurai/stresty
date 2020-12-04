@@ -7,8 +7,7 @@ repl:
 	clj -A:nrepl:ui -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
 
 npm:
-	npm install
-	npx webpack --mode=production
+	npm install && npx webpack --config webpack.config.json --mode=production
 
 resources/VERSION:
 	cp VERSION resources/VERSION
@@ -21,6 +20,3 @@ build-native: resources/VERSION
 build: resources/VERSION
 	clojure -A:run-test && clojure -A:build --app-version `cat VERSION` && cp target/stresty-*-standalone.jar target/stresty.jar
 	rm resources/VERSION
-
-npm:
-	npm install

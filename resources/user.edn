@@ -21,7 +21,6 @@
               :truncate [:Patient]}
              {:type  stresty/http-step
               :POST  "/Patient"
-              :ctx [:id]
               :body  {:id "new-patient" :name [{:family "Smith" :given ["John"]}]}
               :match {:status 221}}
              {:type  stresty/http-step

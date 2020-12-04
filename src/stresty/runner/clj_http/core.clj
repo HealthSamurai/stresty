@@ -42,17 +42,21 @@
     (clojure.pprint/pprint (zen/read-ns ztx 'user))
     (zen/get-symbol ztx 'config))
 
-  (run-case ztx {:url    "http://access-policy-box.aidbox.io/"
-                 :agents {:default {:type          'stresty/basic-auth
-                                    :client-id     "stresty"
-                                    :client-secret "stresty"}
-                          :user    {:type          'stresty.aidbox/auth-token
-                                    :username      "patient-user"
-                                    :password      "admin"
-                                    :client-id     "myapp"
-                                    :client-secret "verysecret"
-                                    }}}
-            'user/create-patient);; => {:stresty.runner.clj-http.core/case
+  (def result (run-case ztx {:url    "http://access-policy-box.aidbox.io/"
+                             :agents {:default {:type          'stresty/basic-auth
+                                                :client-id     "stresty"
+                                                :client-secret "stresty"}
+                                      :user    {:type          'stresty.aidbox/auth-token
+                                                :username      "patient-user"
+                                                           :password      "admin"
+                                                :client-id     "myapp"
+                                                :client-secret "verysecret"
+                                                }}}
+                        'user/create-patient))
+
+  (:results)
+  
+  ;; => {:stresty.runner.clj-http.core/case
 ;;     {:desc "Create Patient",
 ;;      :zen/tags #{stresty/case},
 ;;      :steps
@@ -103,4 +107,6 @@
 ;;        {:lastUpdated "2020-12-02T15:47:47.920183Z",
 ;;         :createdAt "2020-12-02T15:47:47.920183Z",
 ;;         :versionId "660"}}},
-;;      :errors []}})
+  ;;      :errors []}})
+
+  )

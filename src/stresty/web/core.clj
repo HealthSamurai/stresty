@@ -8,7 +8,8 @@
             [ring.middleware.head]
             [edamame.core]
             [clojure.java.io :as io]
-            [zen.core :as zen]))
+            [zen.core :as zen]
+            [stresty.runner.clj-http.step :as step-runner]))
 
 (defn index [_ req]
   {:status 302
@@ -30,11 +31,22 @@
 
 (defn get-tag [_ _] (throw (ex-info "Not implemented" {})))
 
+(defn run-step [{ztx :ztx :as ctx} req]
+  (if-let [body (:body req)]
+    (let [resp (first (:results (step-runner/run-step ctx body)))
+          _ (prn resp)]
+      (prn resp)
+      {:status 200
+       :body resp})
+    {:status 400}
+    ))
+
 (def routes
   {:GET index
    "scenarios" {:GET get-scenarios}
    "zen" {"symbol" {[:ns] {[:name] {:GET get-symbol}}}
-          "tag" {[:ns] {[:name] {:GET get-tag}}}}})
+          "tag" {[:ns] {[:name] {:GET get-tag}}}}
+   "run-step" {:POST run-step}})
 
 (defn wrap-static [h]
   (fn [{meth :request-method uri :uri :as req}]
@@ -51,7 +63,20 @@
 
 (defn wrap-content-type [h]
   (fn [req]
-    (let [resp (h req)]
+    (let [req* (cond-> req
+                 (and (-> req
+                          (get :body)
+                          nil?
+                          not)
+                      (-> req
+                          (get-in [:headers "content-type"])
+                            (= "application/edn")))
+                 (assoc :body (-> req
+                                  (get :body)
+                                  (io/reader :encoding "UTF-8")
+                                  slurp
+                                  read-string)))
+          resp (h req*)]
       (if (:body resp)
         (-> resp
             (update :body str)
@@ -89,12 +114,24 @@
   (do
     (defonce *context (atom {}))
     (def ztx (zen/new-context))
-    (swap! *context assoc :ztx ztx))
-
+    (zen/read-ns ztx 'user)
+    (zen/read-ns ztx 'config)
+    (def config (->> (zen/get-tag ztx 'stresty/config)
+                     first
+                     (zen.core/get-symbol ztx)))
+    (swap! *context assoc :ztx ztx)
+    (swap! *context assoc :config config))
+  
   (restart *context)
+  
 
-  (zen/read-ns ztx 'user)
-
+  (def req
+    (-> {:type 'stresty/http-step
+         :POST "/Patient"
+         :body {:id "new-patient"}}
+        str)
+    )
+  
   (map
    (partial zen/get-symbol ztx)
    (zen/get-tag ztx 'stresty/case))

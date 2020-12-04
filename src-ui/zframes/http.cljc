@@ -59,7 +59,8 @@
          (let [format (case format
                         "json" "application/json"
                         "yaml" "text/yaml"
-                        "application/json")
+                        "application/json"
+                        "edn" "application/edn")
 
                headers (cond-> {"accept" format}
                                (nil? files) (assoc "Content-Type" format

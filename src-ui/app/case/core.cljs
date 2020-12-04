@@ -84,8 +84,6 @@
         steps (get-in db path)
         steps* (vec (remove #(= (:id %) (:id step)) steps))
         ]
-    (prn "Steps count: " (count steps))
-    (prn "Steps* count: " (count steps*))
     {:db (-> db
              (assoc-in path steps*))}))
 

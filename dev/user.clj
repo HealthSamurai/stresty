@@ -5,7 +5,7 @@
     [shadow.cljs.devtools.api :as shadow]
     [shadow.cljs.devtools.config :as shadow.config]
     [shadow.cljs.devtools.server :as shadow.server]
-    [web.core]))
+    [stresty.web.core]))
 
 (defn delete-recursively [f]
   (when (.isDirectory f)
@@ -13,8 +13,8 @@
       (delete-recursively c)))
   (io/delete-file f))
 
-(defn restart []
-  (web.core/restart))
+(defn restart [ctx]
+  (stresty.web.core/restart ctx))
 
 (defn restart-shadow-clean []
   (shadow.server/stop!)
@@ -38,7 +38,14 @@
   
   (reload-ns)
 
-  (restart)
+  (do
+    (defonce *context (atom {}))
+    (def ztx (zen.core/new-context))
+    (swap! *context assoc :ztx ztx))
+
+  (zen.core/read-ns ztx 'user)
+  
+  (restart *context)
 
   (restart-ui)
   
