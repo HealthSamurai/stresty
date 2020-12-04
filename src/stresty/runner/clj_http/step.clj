@@ -31,7 +31,7 @@
 (defmulti auth (fn [ctx _ agent-name]
                  (get-in ctx [:config :agents agent-name :type])))
 
-(defmethod auth 'stresty/basic-auth_ [ctx req-opts agent-name]
+(defmethod auth 'stresty/basic-auth [ctx req-opts agent-name]
   (let [agnt (get-in ctx [:config :agents agent-name])]
     {:req-opts (update req-opts :headers
                        assoc "authorization" (str "Basic " (b64/encode (str (:client-id agnt) ":" (:client-secret agnt)))))
