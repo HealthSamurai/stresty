@@ -41,21 +41,10 @@
       (update step method #(template/render conf %))))
 
 (defn run-test-case [ctx {:keys [steps :zen/name] :as test-case}]
-  (println "run test case" name)
-  (reduce
-   (fn [ctx step]
-     (let [last-step (first (get ctx :results))
-           _ (prn "last-step: " last-step)
-           errors (:errors last-step)
-           last-case (:case-name last-step)]
-       (println "Errors: " errors)
-       (if (and (seq errors) (= name last-case))
-         ctx
-         (step/run-step ctx step))))
-   (-> ctx
-       ;(assoc :results [])
-       (assoc :current-case name))
-   steps))
+  (println "Run test case" name)
+  (map (fn [step]
+         (-> (step/run-step ctx step)
+             (assoc :case-name name))) steps))
 
 #_(defn sum-for-test-case [{:keys [test-cases results] :as ctx}]
   {:passed-tests  (count (filter #(-> % :status (= "passed")) steps))
@@ -93,7 +82,7 @@
      :count-passed-tests (count passed-tests)}))
 
 (defn run [{:keys [test-cases config] :as ctx}]
-  (reduce run-test-case ctx test-cases)
+  (map (partial run-test-case ctx) test-cases)
   #_(let [result  (reduce run-test-case ctx test-cases)
           sum     (sum-for-test-cases (:test-cases result))
           summary (get-summary result)
@@ -111,45 +100,4 @@
 
       (assoc result :passed? (zero? (:failed-tests sum)))))
 
-(comment
 
-  (run-file {:base-url "http://boxik.aidbox.app"} "stresty.tests.core")
-
-  (def ctx {:interactive        false
-            :verbosity          0
-            :base-url           "http://access-policy-box.aidbox.io"
-            :client-id          "stresty"
-            :client-secret      "stresty"
-            :auth-client-id     "myapp"
-            :auth-client-secret "verysecret"
-            :user-id            "patient-user"
-            :user-secret        "admin"})
-
-  (def ctx* (merge ctx (auth/add-auth-data ctx)))
-
-  (prn ctx*)
-
-  (clojure.pprint/pprint (run ctx* ["test/sample-1.edn"]))
-
-  (def r (run ctx*
-           ["resources/stresty/tests/core.edn"]))
-
-  (def tc (-> r
-              :test-cases
-              first))
-
-  (:filename tc)
-
-  (sum-for-test-case steps)
-
-  (clojure.pprint/pprint r)
-
-  (-> (run {:interactive false :verbosity 2 :base-url "http://localhost:8888" :basic-auth "cm9vdDpzZWNyZXQ="} [#_"test/w.yaml" "test/w.yaml"])
-      :failed))
-(comment
-
-  (def result {:x 1 :b #:user{:a 1 :b 2 :c 3}})
-
-  (:user/c (:b result))
-
-  )

@@ -35,7 +35,7 @@
   (let [agnt (get-in ctx [:config :agents agent-name])]
     {:req-opts (update req-opts :headers
                        assoc "authorization" (str "Basic " (b64/encode (str (:client-id agnt) ":" (:client-secret agnt)))))
-     :ctx ctx}))
+     :ctx      ctx}))
 
 (defn request [opts]
   (http/request opts))
@@ -93,24 +93,7 @@
     (catch Exception e
       (Throwable->map e))))
 
-
-(comment
-
-  {:status :ok}
-
-  (run-step {:config {:url ""
-                      :agents {:default {:client-id ""
-                                         :client-secret ""}}}}
-            )
-
-  {:case-ctxs {'user/create-patient {,,,}}}
-
-  {}
-  )
-
-
 (defmethod run-step 'stresty/http-step [{:keys [config] :as ctx} step]
-  (prn "....")
   (let [method     (first (filter meths (keys step)))
         url        (str (get-in ctx [:config :url]) (get step method))
         body       (if (:body step) (if (string? (:body step)) (:body step) (json/generate-string (:body step))))
@@ -130,12 +113,7 @@
           (assoc :body (parse-json-or-leave-string (:body resp))))
         errs       (if-let [m (:match step)] (matcho/match nil resp m) [])]
     {:response resp
-     :errors errs}
-    #_(-> ctx
-        (assoc current-case (select-keys (:body resp) (:ctx step)))
-        (update :results conj {:case-name current-case
-                               :response resp
-                               :errors errs}))))
+     :errors   errs}))
 
 
 (defmethod run-step 'stresty.aidbox/sql-step [ctx step]
@@ -150,61 +128,6 @@
                            (map (fn [x] (str (if (keyword? x) (str/lower-case (name x)) x)))
                                 (:truncate step))))]
     (run-step ctx {:type 'stresty.aidbox/sql-step
-                   :sql sql})))
-
-(comment
+                   :sql  sql})))
 
 
-  (reduce (fn [m [k v]] (assoc m (str/lower-case k) v)) {} {"Wow" "q"})
-
-
-  (def ccc
-    (run-step
-     {:config {:url "https://little.aidbox.app"
-               :agents {:default {:type 'stresty/basic-auth
-                                  :client-id "basic"
-                                  :client-secret "secret"}}}}
-     {:type 'stresty/http-step
-      :GET "/Patient"
-      :match {:status 200}}))
-
-  (clojure.pprint/pprint ccc)
-  
-  (matcho/match nil ccc {:status 200})
-
-
-  (let [r {:body ["wow"]}]
-    (cond-> {}
-      (:body r)
-      (assoc :body (if (string? ))(json/generate-string (:body r)))))
-
-
-
-  (meta
-   (try
-     (http/request
-      {:url "http://localhost:8080"
-       :ignore-unknown-host? true
-       :redirect-strategy :none
-       :throw-exceptions false})
-     (catch Exception e
-       (Throwable->map e)
-       )))
-
-
-  42
-
-(http/get "http://localhost:1234" {:ignore-unknown-host? true})
-
-
-(http/get "https://little.aidbox.wow" {:ignore-unknown-host? true})
-
-
-
-(http/get "http://example.invalid" {:ignore-unknown-host? true})
-
-
-hello
-
-
-  )

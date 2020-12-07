@@ -6,6 +6,7 @@
             [clojure.tools.cli :refer [parse-opts]]
             [clojure.java.io :as io]
             [clojure.string :as str]
+            [stresty.web.core :as server]
             [auth])
   (:gen-class))
 
@@ -22,6 +23,7 @@
    ["-f" "--file NAME" "File names with test cases"
     :default []
     :parse-fn #(str/split % #",")]
+   [nil "--ui" "Start test server with UI"]
    ["-v" nil "Verbosity level"
     :id :verbosity
     :default 0
@@ -32,8 +34,9 @@
    ["-h" "--help"]
    [nil "--version" "Show version"]])
 
-(defn -main [& args]
+(defonce *ctx (atom {}))
 
+(defn -main [& args]
   (let [opts (parse-opts args cli-options)]
     (when-let [errors (:errors opts)]
       (println (first errors))
@@ -66,14 +69,14 @@
                            (zen/get-tag ztx 'stresty/case))
           ctx        (-> (opts :options)
                          (assoc :config config)
-                         (assoc :test-cases test-cases)
-                         )]
-;;      (clojure.pprint/pprint  test-cases)
-      (def result (runner/run ctx))
-      (clojure.pprint/pprint (runner/run ctx))
-      #_(if (:passed? (runner/run ctx))
-          (System/exit 0)
-          (System/exit 1)))))
+                         (assoc :test-cases test-cases))]
+
+      (if (:ui opts)
+        (do
+          (swap! *ctx assoc :ztx ztx)
+          (server/start *ctx)
+          (println "UI started on localhost:8080"))
+        (clojure.pprint/pprint (runner/run ctx))))))
 
 (comment
   (-main "--config" "resources/user.edn" "--file" "resources/user.edn")
