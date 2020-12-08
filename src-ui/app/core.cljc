@@ -1,6 +1,5 @@
 (ns app.core
-  (:require #?(:cljs [reagent.dom])
-            [re-frame.core :as rf]
+  (:require [re-frame.core :as rf]
             [zframes.re-frame :as zrf]
             [zframes.cookies]
             [zframes.routing :refer [route not-found?]]
@@ -8,21 +7,25 @@
             [zframes.window]
             [zframes.console]
             [zframes.storage]
-            #?(:cljs [zframes.http])
+
+            [app.pages :as pages]
+
             [zframes.hotkeys]
             [zf.core]
             [app.routes :as routes]
-            [app.layout]
-            [app.pages :as pages]
 
-            [app.anti]
             [app.dashboard]
+            [app.anti]
+            [app.layout]
+
             [app.case.core]
             [app.scenario.core]
             [app.scenario.show]
             [app.config.core]
+
+            #?(:cljs [zframes.http])
             #?(:cljs [app.reagent])
-            [app.reframe]))
+            #?(:cljs [reagent.dom])))
 
 (zrf/defview current-page
   [route not-found?]

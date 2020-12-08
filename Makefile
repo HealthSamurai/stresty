@@ -20,3 +20,6 @@ build-native: resources/VERSION
 build: resources/VERSION
 	clojure -A:run-test && clojure -A:build --app-version `cat VERSION` && cp target/stresty-*-standalone.jar target/stresty.jar
 	rm resources/VERSION
+
+jar:
+	clj -A:ui:build -m build

@@ -28,9 +28,9 @@
 #?(:clj
    (defmacro c [& rules]
      (when rules
-       1
-       (let [class (if (:name (:ns &env)) (str (str/replace (:name (:ns &env)) #"\." "_") "-" (:line &env) "-" (:column &env))
-                       (str "c" (hash rules)))]
+       (let [class (if (:name (:ns &env))
+                     (str (str/replace (:name (:ns &env)) #"\." "_") "-" (:line &env) "-" (:column &env))
+                     (str "c" (hash rules)))]
          (swap! styles assoc
                 (keyword (str "." class))
                 (with-meta (join-rules rules) {:location [(:name (:ns &env)) (:line &env) (:column &env)]}))
