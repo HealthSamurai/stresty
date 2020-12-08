@@ -70,16 +70,17 @@
           ctx        (-> (opts :options)
                          (assoc :config config)
                          (assoc :test-cases test-cases))]
-
-      (if (:ui opts)
+      (prn "opts: " opts)
+      (if (-> opts :options :ui)
         (do
           (swap! *ctx assoc :ztx ztx)
+          (prn "starting server... ")
           (server/start *ctx)
           (println "UI started on localhost:8080"))
         (clojure.pprint/pprint (runner/run ctx))))))
 
 (comment
-  (-main "--config" "resources/user.edn" "--file" "resources/user.edn")
+  (-main "--ui" "--config" "resources/user.edn" "--file" "resources/user.edn")
 
   (parse-opts ["--config" "resources/user.edn" "--file" "wow/file.txt,some-file.end"] cli-options))
 

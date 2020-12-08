@@ -22,7 +22,7 @@
     "--app-group-id" "app"
     "--app-artifact-id" "app"
     "--app-version" "0.0.1"
-    "-m" "clojure.main"))
+    "-m" "core"))
 
 
 (defn -main []
