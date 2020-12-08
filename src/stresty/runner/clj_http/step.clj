@@ -115,6 +115,8 @@
     {:response resp
      :errors   errs}))
 
+(defmethod run-step 'stresty.aidbox/desc-step [ctx step]
+  {})
 
 (defmethod run-step 'stresty.aidbox/sql-step [ctx step]
   (run-step ctx {:type  'stresty/http-step
