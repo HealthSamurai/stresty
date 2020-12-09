@@ -38,7 +38,8 @@
                               route-map                 {:mvn/version "0.0.7"}
                               thheller/shadow-cljs      {:mvn/version "2.11.4"}
                               medley                    {:mvn/version "1.3.0"}
-                              garden                    {:mvn/version "1.3.10"}}}
+                              garden                    {:mvn/version "1.3.10"}
+                              markdown-to-hiccup        {:mvn/version "0.6.2"}}}
 
            :native-image
            {:main-opts ["-m clj.native-image core"

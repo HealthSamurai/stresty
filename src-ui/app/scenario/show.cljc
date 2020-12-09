@@ -9,8 +9,9 @@
             [anti.input :refer [input]]
             [anti.util :refer [block]]
             [reagent.core :as r]
-            [reagent.dom :as dom]
-            [app.scenario.editor :refer [zf-editor]]))
+            #?(:cljs [reagent.dom :as dom])
+            #?(:cljs [app.scenario.editor :refer [zf-editor]])
+            [markdown-to-hiccup.core :as md]))
 
 
 (zrf/defx index
@@ -131,7 +132,9 @@
   )
 
 (defmethod render-step 'stresty.aidbox/desc-step [step]
-  [:div (:description step)]
+  [:div (-> (:description step)
+            md/md->hiccup
+            md/component)]
   )
 
 (defmethod render-step :default [step]
