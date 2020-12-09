@@ -17,7 +17,7 @@
   (println "Building uberjar")
   (uberjar/-main
     "-a" "all"
-    "-p" "resources:target/shadow/release:target/stylo/release"
+    "-p" "target/shadow/release:target/stylo/release"
     "--out" "target/uberjar"
     "--app-group-id" "hs"
     "--app-artifact-id" "stresty"
@@ -27,10 +27,17 @@
 
 (defn -main []
   (build-ui)
+
   (build)
+
   (System/exit 0))
 
 
 (comment
   (build-ui)
-  (build))
+
+  (count @stylo.core/styles)
+
+  (build)
+
+  )
