@@ -1,0 +1,14 @@
+{ns     user
+ import #{stresty stresty.aidbox}
+
+ config
+ {:zen/tags #{stresty/config}
+  :url      "aidbox-url"
+  :agents   {:default {:type          stresty/basic-auth
+                       :client-id     "client-id"
+                       :client-secret "client-secret"}
+             :user    {:type          stresty.aidbox/auth-token
+                       :username      "username"
+                       :password      "password"
+                       :client-id     "client-id"
+                       :client-secret "client-secret"}}}}
