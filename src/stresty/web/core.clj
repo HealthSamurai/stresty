@@ -12,16 +12,19 @@
             [stresty.runner.clj-http.step :as step-runner]))
 
 (defn index [_ req]
-  {:status 302
+  {:status  302
    :headers {"location" "static/index.html"}})
+
+(defn healthcheck [_ _]
+  {:status 200})
 
 (defn get-symbol [{ztx :ztx :as ctx} req]
   (let [{:keys [ns name]} (:params req)
-        o (zen/get-symbol ztx (symbol ns name))]
+        o                 (zen/get-symbol ztx (symbol ns name))]
     (if (nil? o)
       {:status 404}
       {:status 200
-       :body o})))
+       :body   o})))
 
 (defn get-scenarios [{ztx :ztx :as ctx} req]
   {:status 200
@@ -48,20 +51,21 @@
 
 (defn init-case-ctx [{ztx :ztx :as ctx} {body :body :as req}]
   (let [current-case (:current-case body)
-        symbol (zen/get-symbol ztx (symbol current-case))
+        symbol       (zen/get-symbol ztx (symbol current-case))
         step-results (mapv (fn [_] nil) (:steps symbol))]
-        {:status 200
-     :body {:config body
-            :stresty/step-results step-results
-            :stresty/status nil}}))
+    {:status 200
+     :body   {:config               body
+              :stresty/step-results step-results
+              :stresty/status       nil}}))
 
 (def routes
-  {:GET index
-   "scenarios" {:GET #'get-scenarios}
+  {:GET             index
+   "__healthcheck"  {:GET #'healthcheck}
+   "scenarios"      {:GET #'get-scenarios}
    "create-new-ctx" {:POST #'init-case-ctx}
-   "zen" {"symbol" {[:ns] {[:name] {:GET #'get-symbol}}}
-          "tag" {[:ns] {[:name] {:GET #'get-tag}}}}
-   "run-step" {:POST #'run-step}})
+   "zen"            {"symbol" {[:ns] {[:name] {:GET #'get-symbol}}}
+                     "tag"    {[:ns] {[:name] {:GET #'get-tag}}}}
+   "run-step"       {:POST #'run-step}})
 
 (defn wrap-static [h]
   (fn [{meth :request-method uri :uri :as req}]
