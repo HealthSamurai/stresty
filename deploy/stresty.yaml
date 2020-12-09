@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stresty-service
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: stresty-app
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stresty-app
+  labels:
+    app: stresty-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: stresty-app
+  template:
+    metadata:
+      labels:
+        app: stresty-app
+    spec:
+      containers:
+      - name: stresty-app
+        image: u473t8/stresty:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /__healthcheck
+            port: 8080
+          periodSeconds: 3
+          failureThreshold: 6
+

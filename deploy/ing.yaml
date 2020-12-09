@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: web
+spec:
+  rules:
+  - host: stresty.aidbox.io
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: stresty-service
+          servicePort: 80
+  # tls:
+  # - hosts:
+  #   - access-policy-box.aidbox.io
+  #   secretName: aidbox-io-tls

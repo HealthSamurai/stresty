@@ -23,3 +23,7 @@ build: resources/VERSION
 
 jar:
 	clj -M:ui:build -m build
+
+deploy:
+	VERSION="${DATE}" kustomize build deploy | kubectl apply -f -
+	kubectl get pod -n stresty-ui
