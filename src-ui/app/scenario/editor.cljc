@@ -3,6 +3,7 @@
             [reagent.dom :as dom]
             [stylo.core :refer [c]]
             [monaco]
+            #?(:cljs [cljs.pprint :refer [pprint]])
             [zframes.re-frame :as zrf]
             [re-frame.core :as rf])
   )
@@ -43,7 +44,7 @@
               on-change-editor ((.-onDidChangeModelDecorations monaco) #(update-height monaco el))
               on-change ((.-onDidChangeModelContent monaco) #(on-change-value monaco path))
               ]
-          (.setValue monaco (with-out-str (cljs.pprint/pprint data)))))
+          (.setValue monaco (with-out-str (pprint data)))))
       :reagent-render
       (fn [stresty-case]
         [:div {:class (c [:h 100])}])
