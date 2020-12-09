@@ -4,7 +4,7 @@ clean:
 	rm pom.xml && rm -rf .cpcache
 
 repl:
-	mkdir -p target/shadow/dev && mkdir -p target/stylo/dev && clj -A:nrepl:ui:build -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
+	mkdir -p target/shadow/dev && mkdir -p target/stylo/dev && clj -M:nrepl:ui:build -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
 
 npm:
 	npm install && npx webpack --config webpack.config.js --mode=production
@@ -15,11 +15,11 @@ resources/VERSION:
 # export GRAALVM_HOME=$HOME/graalvm/Contents/Home
 # clojure -A:native-image --graalvm-opt 'H:ReflectionConfigurationFiles=reflection.json'
 build-native: resources/VERSION
-	clojure -A:native-image
+	clojure -M:native-image
 
 build: resources/VERSION
-	clojure -A:run-test && clojure -A:build --app-version `cat VERSION` && cp target/stresty-*-standalone.jar target/stresty.jar
+	clojure -A:run-test && clojure -M:ui:build -m build  && cp target/uberjar/stresty-*-standalone.jar target/stresty.jar
 	rm resources/VERSION
 
 jar:
-	clj -A:ui:build -m build
+	clj -M:ui:build -m build
