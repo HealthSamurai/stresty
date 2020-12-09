@@ -41,9 +41,10 @@
   (do
     (defonce *context (atom {}))
     (def ztx (zen.core/new-context))
-    (swap! *context assoc :ztx ztx))
+    (swap! *context assoc :ztx ztx)
 
-  (zen.core/read-ns ztx 'user)
+    (zen.core/read-ns ztx 'user)
+    (zen.core/read-ns ztx 'config))
   
   (restart *context)
 

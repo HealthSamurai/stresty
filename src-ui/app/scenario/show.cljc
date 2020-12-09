@@ -50,6 +50,11 @@
 
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
+(def new-step {:type 'stresty/http-step
+               :POST "/Patient"
+               :body {:id "new-patient"}
+               :match {:status 201}})
+
 (zrf/defx run-step
   [{db :db} [_ step idx]]
   (let [case-ctx (get-in db [::db :ctx :data])]
@@ -77,8 +82,36 @@
   {:db (-> db
            (assoc-in (into [::db :scenario :data :steps index method]) value))})
 
+(zrf/defx add-step
+ [{db :db} [_ index]]
+  (let [steps (get-in db [::db :scenario :data :steps])
+        [before after] (split-at (+ 1 index) steps)
+        steps* (vec (concat before [new-step] after))]
+    {:db (assoc-in db [::db :scenario :data :steps] steps*)}))
+
+(zrf/defx delete-step
+  [{db :db} [_ index]]
+  (let [steps (get-in db [::db :scenario :data :steps])
+        steps* (vec (concat (subvec steps 0 index)
+                            (subvec steps (+ 1 index))))]
+    {:db (assoc-in db [::db :scenario :data :steps] steps*)}
+    )
+  )
+
+(defn step-controls [index]
+  [:div {:class (c :flex :flex-row :items-start)}
+   [:button {:on-click #(rf/dispatch [::add-step index])} [:i.fas.fa-plus]]
+   [:i.fas.fa-arrows-alt]
+   [:button {:on-click #(rf/dispatch [::delete-step index])} [:i.fas.fa-trash]]]
+  )
+
+(defn render-step-root [step index result]
+  [:div {:class (c :flex :flex-row)}
+   [step-controls index]
+   [render-step step index result]])
+
 (def default-step-style
-  (c :flex :flex-col [:mb 2] [:p 2] [:bg :gray-200]))
+  (c :flex :flex-col [:mb 2] [:p 2] [:bg :gray-200] :w-full))
 
 (defn step-method [step index]
   (let [step-method (->> step
@@ -152,6 +185,6 @@
 
    (for [[idx step] (map-indexed #(vector %1 %2) (:steps scenario))]
      ^{:key idx}
-     [render-step step idx (get-in case-ctx [:stresty/step-results idx])])])
+     [render-step-root step idx (get-in case-ctx [:stresty/step-results idx])])])
 
 (pages/reg-page index view)

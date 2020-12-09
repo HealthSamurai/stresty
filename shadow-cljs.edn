@@ -12,5 +12,7 @@
                               :output-dir "target/shadow/dev/public/js"}
                 :release     {:modules    {:main {:entries [app.prod]}}
                               :output-dir "target/shadow/release/public/js"
-                              :compiler-options {:optimizations :advanced}}
+                              :compiler-options {:pretty-print true
+                                                 :pseudo-names true}
+                              }
                 }}}
