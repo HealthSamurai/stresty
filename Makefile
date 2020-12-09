@@ -4,7 +4,7 @@ clean:
 	rm pom.xml && rm -rf .cpcache
 
 repl:
-	clj -A:nrepl:ui:build -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
+	mkdir -p target/shadow/dev && mkdir -p target/stylo/dev && clj -A:nrepl:ui:build -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
 
 npm:
 	npm install && npx webpack --config webpack.config.js --mode=production

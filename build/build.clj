@@ -19,9 +19,9 @@
     "-a" "all"
     "-p" "resources:target/shadow/release:target/stylo/release"
     "--out" "target/uberjar"
-    "--app-group-id" "app"
-    "--app-artifact-id" "app"
-    "--app-version" "0.0.1"
+    "--app-group-id" "hs"
+    "--app-artifact-id" "stresty"
+    "--app-version" "1.0.0"
     "-m" "core"))
 
 
