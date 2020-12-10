@@ -56,6 +56,7 @@
 (defmulti render-step (fn [step] (:type step)))
 
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
+(def body-meths #{:POST :PUT :PATCH})
 
 (def new-step {:type 'stresty/http-step
                :POST "/Patient"
@@ -151,7 +152,7 @@
                :default-value (get step method)
                :on-change #(rf/dispatch [::change-url index method (-> % .-target .-value)])}]]
       [zf-button {:on-click [::run-step step index]} "Run"]]
-     (if-let [body (:body step)]
+     (if (contains? body-meths method)
        [:div
         [zf-editor [::db :scenario :data :steps index :body]]])
      [response-view index result]
