@@ -11,7 +11,9 @@
             [reagent.core :as r]
             #?(:cljs [reagent.dom :as dom])
             #?(:cljs [app.scenario.editor :refer [zf-editor]])
-            [markdown-to-hiccup.core :as md]))
+            [markdown-to-hiccup.core :as md]
+            [cljs.pprint :as pp]
+            [clojure.string :as str]))
 
 (def step-types
   [{:value 'stresty/http-step :display "HTTP"}
@@ -131,6 +133,23 @@
   (let [current-state (get-in db [::db :editors-state index :editing])]
     {:db (assoc-in db [::db :editors-state index :editing] (not current-state))}))
 
+(zrf/defx export-case [{db :db} _]
+  (let [case (get-in db [::db :scenario :data])
+        blob (js/Blob. [(-> case
+                            (pp/write :pretty true :right-margin 60)
+                            with-out-str
+                            (str/replace "\\n" "\n"))]
+                       #js {:type "application/edn"})
+        link (.createElement js/document "a")]
+    (set! (.-href link) (.createObjectURL js/URL blob))
+    (.setAttribute link "download" (str (:zen/name case) ".edn"))
+    (.appendChild (.-body js/document) link)
+    (.click link)
+    (.removeChild (.-body js/document) link)
+    
+    {:db db}
+    ))
+
 (zrf/defx delete-step
   [{db :db} [_ index]]
   (let [steps (get-in db [::db :scenario :data :steps])
@@ -234,7 +253,7 @@
   [:div {:class (c :flex :flex-col :items-center)}
    
    [:div {:class (c [:p 6] :flex :flex-col :w-max-4xl)}
-
+    
     [:div {:on-click #(rf/dispatch [create-ctx])} "Create CTX"]
     [:pre (str case-ctx)]
 
@@ -246,6 +265,11 @@
           :let [result (get-in case-ctx [:stresty/step-results idx])
                 editor-state (get editors-state idx)]]
       ^{:key idx}
-      [render-step-root step idx result editor-state])]])
+      [render-step-root step idx result editor-state])
+
+    [:div 
+     [zf-button {:on-click [::export-case]} "Export case"]]
+    
+    ]])
 
 (pages/reg-page index view)
