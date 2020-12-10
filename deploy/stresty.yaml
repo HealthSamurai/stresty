@@ -20,7 +20,7 @@ metadata:
   labels:
     app: stresty-app
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: stresty-app
@@ -41,4 +41,3 @@ spec:
             port: 8080
           periodSeconds: 3
           failureThreshold: 6
-
