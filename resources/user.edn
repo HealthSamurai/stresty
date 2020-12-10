@@ -70,5 +70,96 @@ Inline `code`
               :match {:status 200
                       :body   {:name [{:family "Smith" :given ["John"]}]}}}]}
 
+ 
+  preparing
+ {:zen/tags #{stresty/case}
+  :title    "Preparing"
+  :desc     "Clearing tables and uploading resources to the server"
+  :steps    [{:type     stresty.aidbox/truncate-step
+              :truncate [:Patient]}
+
+             {:type     stresty.aidbox/truncate-step
+              :truncate [:Encounter]}
+
+             {:type     stresty.aidbox/truncate-step
+              :truncate [:Practitioner]}
+
+             {:type     stresty.aidbox/truncate-step
+              :truncate [:Observation]}
+
+
+             {:type   stresty/http-step
+              :DELETE "/User/user-1"
+              :body   {}}
+
+             {:type  stresty/http-step
+              :POST  "/Patient"
+              :body  {:id   "patient-1"
+                      :name [{:family "Smith" :given ["John"]}]}
+              :desc  "Create patient-1"
+              :match {:status 201}}
+
+             {:type  stresty/http-step
+              :POST  "/User"
+              :body  {:data {:patient_id "patient-1"}
+                      :id   "user-1"}
+              :desc  "Create user-1"
+              :match {:status 201}}
+
+
+             {:type  stresty/http-step
+              :POST  "/Practitioner"
+              :body  {:id "practitioner-1"}
+              :desc  "Create practitioner-1"
+              :match {:status 201}}
+
+             {:type  stresty/http-step
+              :POST  "/Encounter"
+              :body  {:id          "enc1"
+                      :class       {:code "AMB"}
+                      :status      "planned"
+                      :subject     {:id           "patient-1"
+                                    :resourceType "Patient"}
+                      :participant [{:individual
+                                     {:id           "practitioner-1"
+                                      :resourceType "Practitioner"
+                                      }}]}
+              :desc  "Create encounter-1"
+              :match {:status 201}}
+
+             {:type  stresty/http-step
+              :POST  "/Observation"
+              :body  {:id        "observation-1"
+                      :status    "registered"
+                      :code      {:coding [{:code "12345-6"}]}
+                      :subject   {:id           "patient-1"
+                                  :resourceType "Patient"}
+                      :performer [{:id           "patient-1"
+                                   :resourceType "Patient"}]}
+              :desc  "Create observation-1"
+              :match {:status 201}}
+
+             {:type  stresty/http-step
+              :POST  "/Observation"
+              :body  {:id        "observation-2"
+                      :status    "registered"
+                      :code      {:coding [{:code "12345-6"}]}
+                      :subject   {:id           "patient-1"
+                                  :resourceType "Patient"}
+                      :performer [{:id           "practitioner-1"
+                                   :resourceType "Practitioner"}]}
+              :desc  "Create observation-2"
+              :match {:status 201}}
+             ]}
+
+ test-access
+ {:zen/tags #{stresty/case}
+  :title    "Test-access"
+  :desc     "Test-access"
+  :steps    [{:type  stresty/http-step
+              :GET   "/Patient/patient-1"
+              :body  {}
+              :match {:status 200}}]}
+ 
  }
 
