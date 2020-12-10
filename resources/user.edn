@@ -21,7 +21,8 @@
               :truncate [:Patient]}
              {:type stresty.aidbox/desc-step
               :description "
-***Let's create patient with name John Smith***
+# Let's create patient with name John Smith
+
 1. haha
 2. hihi
 3. hehe

@@ -3,10 +3,11 @@
             #?(:cljs [reagent.dom :as dom])
             [stylo.core :refer [c]]
             #?(:cljs [monaco])
-            #?(:cljs [cljs.pprint :refer [pprint]])
+            #?(:cljs [cljs.pprint :as pp :refer [pprint]])
             [zframes.re-frame :as zrf]
             [re-frame.core :as rf]
-            [edamame.core :as edn])
+            [edamame.core :as edn]
+            [clojure.string :as str])
   )
 
 
@@ -14,8 +15,6 @@
   [{db :db} [_ path value]]
   (prn (cljs.reader/read-string value))
   {:db (assoc-in db path (cljs.reader/read-string value))})
-
-(defrecord Wrapper [obj loc])
 
 (defn iobj? [x]
   #?(:clj (instance? clojure.lang.IObj x)
@@ -87,7 +86,10 @@
                                                      :language "clojure"
                                                      :scrollBeyondLastLine false
                                                      :minimap {:enabled false}}))
-              text (with-out-str (pprint data))
+              text (-> data
+                       (pp/write :pretty true :right-margin 60)
+                       with-out-str
+                       (str/replace "\\n" "\n"))
               _ (.setValue monaco text)
               on-change-editor ((.-onDidChangeModelDecorations monaco) #(update-height monaco el))
               on-change ((.-onDidChangeModelContent monaco) #(on-change-value monaco path))
@@ -107,7 +109,7 @@
   (def errors [{:path [:status] :but 308 :expected 200}])
   (defrecord Wrapper [obj loc])
 
-  raw-edn
+  (meta (get-in (edn/parse-string "{:body {:status 200}}") [:body :status]))
   (meta (get-in raw-edn [:body :status]))
   (clojure.pprint/pprint raw-edn)
 

@@ -1,46 +1,43 @@
 (ns app.layout
   (:require [zframes.re-frame :as zrf]
             [stylo.core :refer [c]]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [app.routes :refer [href]]
+            ))
 
 (zrf/defs current-uri [db]
  (:uri (first (:route/history db))))
 
-(zrf/defs cases
+(zrf/defs scenarios
   [db _]
-  (:cases db))
+  (get-in db [:app.scenario.core/db :scenarios :data]))
 
-(zrf/defx select-case
-  [{db :db} [_ case-id]]
-  {:db (-> db
-           (assoc :current-case case-id))
-   :dispatch [:zframes.routing/page-redirect {:uri "#/case"}]}
-  )
-
-(zrf/defview case-list [cases]
-  [:div {:class (c :flex :flex-col [:pl 4] [:pr 4])}
-   [:a {:class (c [:text :white] :text-base [:p 2])
-        :on-click #(zrf/dispatch [:zframes.routing/page-redirect {:uri "#/scenario"}])}
-    "Scenarios"
+(zrf/defview case-list [scenarios]
+  [:div {:class (c :flex :flex-col [:p 4] [:h "100%"] :justify-between [:w-min 50])}
+   [:div
+    (for [scenario scenarios]
+      ^{:key (:zen/name scenarios)}
+      [:a {:class (c [:mb 2])
+           :href (href "scenario" (namespace (:zen/name scenario)) (name (:zen/name scenario)))}
+       [:div {:class (c :text-base)} (:title scenario)]
+       ]
+      )
     ]
-   [:a {:class (c [:text :white] :text-base [:p 2])
-        :on-click #(zrf/dispatch [:zframes.routing/page-redirect {:uri "#/config"}])}
-    "Config"
-    ]
-   #_(for [case (vals cases)]
-     ^{:key (:id case)}
-      [:a {:class (c [:text :white] :text-base [:p 2])
-              :on-click #(zrf/dispatch [::select-case (get-in case [:id])])}
-          [:span (str (:desc case))]]
-     )
+   [:div 
+    [:a {:class (c :text-base [:p 2])
+         :on-click #(zrf/dispatch [:zframes.routing/page-redirect {:uri "#/config"}])}
+     [:i.fas.fa-cog]
+     " Config"
+     ]]
+   
    ]
   )
 
 (zrf/defview quick-menu []
   [:<>
    [:div {:class (c [:z 100] :overflow-hidden :flex :flex-col
-                    {:background-color "#9CA3AF"
-                     :box-shadow       "4px 0 6px -1px rgba(0, 0, 0, 0.1), 2px 0 4px -1px rgba(0, 0, 0, 0.09)"})}
+                    {:background-color "#f7f6f3"
+                     })}
     [case-list]
     [:div {:class (c :flex-1)}]
     ]])
