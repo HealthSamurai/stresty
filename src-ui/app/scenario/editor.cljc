@@ -5,7 +5,8 @@
             #?(:cljs [monaco])
             #?(:cljs [cljs.pprint :refer [pprint]])
             [zframes.re-frame :as zrf]
-            [re-frame.core :as rf])
+            [re-frame.core :as rf]
+            [edamame.core :as edn])
   )
 
 
@@ -14,23 +15,50 @@
   (prn (cljs.reader/read-string value))
   {:db (assoc-in db path (cljs.reader/read-string value))})
 
-(defn set-model-markers [editor]
-  #_(let [markers [(clj->js {:startLineNumber 1
-                           :endLineNumber 2
-                           :startColumn 1
-                           :endColumn 20
-                           :message "Expected 200, but 201"
-                           :severity monaco/MarkerSeverity.Error})]
+(defrecord Wrapper [obj loc])
+
+(defn iobj? [x]
+  #?(:clj (instance? clojure.lang.IObj x)
+     :cljs (satisfies? IWithMeta x)))
+
+(defn read-edn-with-meta [edn]
+  (edn/parse-string edn
+                    {:postprocess
+                     (fn [{:keys [:obj :loc]}]
+                       (cond
+                         (keyword? obj)
+                         obj
+                         (iobj? obj)
+                         (vary-meta obj merge loc)
+                         :else
+                         (vary-meta (symbol (str obj)) merge loc)))}))
+
+(defn get-model-markers [text errors]
+  (let [edn-meta (read-edn-with-meta text)]
+    (map (fn [e]
+           (let [meta-path (meta (get-in edn-meta (:path e)))]
+             (prn "Error path: " (:path e))
+             (prn "Meta path: " meta-path)
+             {:startLineNumber (:row meta-path)
+              :endLineNumber (:end-row meta-path)
+              :startColumn (:col meta-path)
+              :endColumn (:end-col meta-path)
+              :severity monaco/MarkerSeverity.Error
+              :message (str "Expected " (:expected e) ", but " (:but e))}
+             ))
+         errors)))
+
+(defn set-model-markers [^js/monaco.editor.ICodeeditor editor value errors]
+  (let [markers (clj->js (get-model-markers value errors))
+        _ (prn "Markers: " markers)
         text-model (.getModel editor)]
-    
+    (set! (.-text-model js/window) text-model)
+    (set! (.-markers js/window) markers)
     (monaco/editor.setModelMarkers text-model
                                    "jslint"
-                                   markers))
-  )
+                                   markers)))
 
 (defn on-change-value [monaco path]
-  (prn "On-change-value")
-  (set-model-markers monaco)
   (let [value (.getValue monaco)]
     (zrf/dispatch [::change-value path value])))
 
@@ -44,12 +72,12 @@
 
 (zrf/defs ed-sub-dynamic
   [db [_ path]]
-  (prn "Path: " path)
-  (prn "Path value: " path)
   (get-in db path))
 
-(defn zf-editor [path]
-  (let [data @(rf/subscribe [::ed-sub-dynamic path ])]
+
+(defn zf-editor [path errors]
+  (let [data @(rf/subscribe [::ed-sub-dynamic path])
+        ]
     (r/create-class
      {:component-did-mount
       (fn [this]
@@ -59,19 +87,15 @@
                                                      :language "clojure"
                                                      :scrollBeyondLastLine false
                                                      :minimap {:enabled false}}))
-              _ (.setValue monaco (with-out-str (pprint data)))
+              text (with-out-str (pprint data))
+              _ (.setValue monaco text)
               on-change-editor ((.-onDidChangeModelDecorations monaco) #(update-height monaco el))
               on-change ((.-onDidChangeModelContent monaco) #(on-change-value monaco path))
               ]
+          (if errors
+            (set-model-markers monaco text errors)
+            )
           ))
-      :component-will-unmount
-      (fn [this]
-        (prn "Haha unmount component")
-        )
-      :component-did-update
-      (fn [this]
-        (prn "Component did update path: " path)
-        )
       :reagent-render
       (fn [stresty-case]
         [:div {:class (c [:h 100])}])
@@ -79,3 +103,21 @@
      ))
   )
 
+(comment
+  (def errors [{:path [:status] :but 308 :expected 200}])
+  (defrecord Wrapper [obj loc])
+
+  raw-edn
+  (meta (get-in raw-edn [:body :status]))
+  (clojure.pprint/pprint raw-edn)
+
+  
+
+  
+  (def path [:body :status])
+  
+ 
+  
+  
+  
+  )

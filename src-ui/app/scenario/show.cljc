@@ -4,7 +4,7 @@
             [stylo.core :refer [c]]
             [app.pages :as pages]
             [zframes.re-frame :as zrf]
-            [anti.select :refer [zf-select]]
+            [anti.dropdown-menu :refer [zf-dropdown-menu]]
             [anti.button :refer [zf-button]]
             [anti.input :refer [input]]
             [anti.util :refer [block]]
@@ -13,6 +13,13 @@
             #?(:cljs [app.scenario.editor :refer [zf-editor]])
             [markdown-to-hiccup.core :as md]))
 
+(def step-types
+  [{:value 'stresty/http-step :display "HTTP"}
+   {:value 'stresty.aidbox/desc-step :display "Text"}
+   {:value 'stresty.aidbox/truncate-step :display "Truncate"}
+   {:value 'stresty.aidbox/sql-step :display "SQL"}
+   ]
+  )
 
 (zrf/defx index
   [{db :db} [_ phase params]]
@@ -99,14 +106,17 @@
   )
 
 (defn step-controls [index]
-  [:div {:class (c :flex :flex-row :items-start)}
-   [:button {:on-click #(rf/dispatch [::add-step index])} [:i.fas.fa-plus]]
-   [:i.fas.fa-arrows-alt]
-   [:button {:on-click #(rf/dispatch [::delete-step index])} [:i.fas.fa-trash]]]
+  [:div {:class (c :flex :flex-row :items-start
+                   :absolute [:right "100%"])}
+   [zf-button {:on-click [::add-step index]
+               :type "text"} [:i.fas.fa-plus]]
+   
+   [zf-button {:on-click [::delete-step index]
+               :type "text"} [:i.fas.fa-trash]]]
   )
 
 (defn render-step-root [step index result]
-  [:div {:class (c :flex :flex-row)}
+  [:div {:class (c :relative)}
    [step-controls index]
    [render-step step index result]])
 
@@ -129,9 +139,7 @@
   (if result
     [:div
      "Response"
-     [zf-editor [::db :ctx :data :stresty/step-results index :response]]]
-    )
-  )
+     [zf-editor [::db :ctx :data :stresty/step-results index :response] (:errors result)]]))
 
 (defmethod render-step 'stresty/http-step [step index result]
   (let [method (first (filter meths (keys step)))]
@@ -174,17 +182,19 @@
   [:pre (str step)])
 
 (zrf/defview view [scenario case-ctx]
-  [:div {:class (c [:p 6])}
+  [:div {:class (c :flex :flex-col :items-center)}
+   
+   [:div {:class (c [:p 6] :flex :flex-col :w-max-4xl)}
 
-   [:div {:on-click #(rf/dispatch [create-ctx])} "Create CTX"]
-   [:pre (str case-ctx)]
+    [:div {:on-click #(rf/dispatch [create-ctx])} "Create CTX"]
+    [:pre (str case-ctx)]
 
 
-   [:h1 {:class (c :text-2xl [:mb 2])} (:title scenario)]
-   [:div {:class (c [:mb 6])} (:desc scenario)]
+    [:h1 {:class (c :text-2xl [:mb 2])} (:title scenario)]
+    [:div {:class (c [:mb 6])} (:desc scenario)]
 
-   (for [[idx step] (map-indexed #(vector %1 %2) (:steps scenario))]
-     ^{:key idx}
-     [render-step-root step idx (get-in case-ctx [:stresty/step-results idx])])])
+    (for [[idx step] (map-indexed #(vector %1 %2) (:steps scenario))]
+      ^{:key idx}
+      [render-step-root step idx (get-in case-ctx [:stresty/step-results idx])])]])
 
 (pages/reg-page index view)

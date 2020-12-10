@@ -52,7 +52,9 @@ Inline `code`
              {:type  stresty/http-step
               :GET   "/Patient/new-patient"
               :match {:status 200
-                      :body   {:id "new-patient"}}}]}
+                      :body   {:id "new-patient"}}}
+             {:type stresty.aidbox/sql-step
+              :sql "SELECT * FROM Patient"}]}
 
  put-patient
  {:zen/tags #{stresty/case}
