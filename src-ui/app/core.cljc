@@ -43,7 +43,11 @@
                            :agents {:default {:type 'stresty/basic-auth
                                               :client-id "stresty"
                                               :client-secret "stresty"}
-                                    :client {:type 'stresty/auth-client}}})
+                                    :user {:type 'stresty.aidbox/auth-token
+                                           :username "patient-user"
+                                           :password "admin"
+                                           :client-id "myapp"
+                                           :client-secret "verysecret"}}})
     :dispatch [:zframes.routing/page-redirect {:uri "#/scenario"}]}))
 
 (defn mount-root []
