@@ -5,109 +5,112 @@
  access-policy-test
  {:zen/tags #{stresty/case}
   :title    "Patient can see their own data"
-  :steps [{:type stresty.aidbox/desc-step
-           :description "#Prerequisites"}
+  :steps    [{:type        stresty.aidbox/desc-step
+              :description "#Prerequisites"}
 
-          {:type stresty.aidbox/desc-step
-           :description "Clean all resources to avoid conflicts"}
-          {:type stresty.aidbox/truncate-step
-           :truncate [:Patient :Encounter :Observation :Practitioner ]}
+             {:type        stresty.aidbox/desc-step
+              :description "Clean all resources to avoid conflicts"}
+             {:type     stresty.aidbox/truncate-step
+              :truncate [:Patient :Encounter :Observation :Practitioner ]}
 
-          {:type stresty.aidbox/desc-step
-           :description "load resources that you will need to work with policies"}
-          {:type stresty/http-step
-           :POST "/$import"
-           :body {:id "patient_import"
-                  :inputFormat "application/fhir+ndjson"
-                  :contentEncoding "gzip"
-                  :mode "bulk"
-                  :inputs [
-                           {:resourceType "Client"
-                            :url "https://storage.googleapis.com/aidbox-public/demo/client.ndjson.gz"}
-                           {:resourceType "User"
-                            :url "https://storage.googleapis.com/aidbox-public/demo/user.ndjson.gz"}
-                           {:resourceType "Patient"
-                             :url "https://storage.googleapis.com/aidbox-public/demo/patient.ndjson.gz"}
-                           {:resourceType "Encounter"
-                            :url "https://storage.googleapis.com/aidbox-public/demo/encounter.ndjson.gz"}
-                           {:resourceType "Observation"
-                            :url "https://storage.googleapis.com/aidbox-public/demo/observation.ndjson.gz"}
-                           {:resourceType "Practitioner"
-                            :url "https://storage.googleapis.com/aidbox-public/demo/practitioner.ndjson.gz"}]}
-           :match {:status 200}}
+             {:type        stresty.aidbox/desc-step
+              :description "load resources that you will need to work with policies"}
+             {:type  stresty/http-step
+              :POST  "/$import"
+              :body  {:id              "patient_import"
+                      :inputFormat     "application/fhir+ndjson"
+                      :contentEncoding "gzip"
+                      :mode            "bulk"
+                      :inputs          [
+                                        {:resourceType "Client"
+                                         :url          "https://storage.googleapis.com/aidbox-public/demo/client.ndjson.gz"}
+                                        {:resourceType "User"
+                                         :url          "https://storage.googleapis.com/aidbox-public/demo/user.ndjson.gz"}
+                                        {:resourceType "Patient"
+                                         :url          "https://storage.googleapis.com/aidbox-public/demo/patient.ndjson.gz"}
+                                        {:resourceType "Encounter"
+                                         :url          "https://storage.googleapis.com/aidbox-public/demo/encounter.ndjson.gz"}
+                                        {:resourceType "Observation"
+                                         :url          "https://storage.googleapis.com/aidbox-public/demo/observation.ndjson.gz"}
+                                        {:resourceType "Practitioner"
+                                         :url          "https://storage.googleapis.com/aidbox-public/demo/practitioner.ndjson.gz"}]}
+              :match {:status 200}}
 
-          {:type stresty.aidbox/desc-step
-           :description "##Patient Resource access
+             {:type        stresty.aidbox/desc-step
+              :description "##Patient Resource access
 
 Let's make sure that we really don't have access to the Patient resource:"}
-          {:type stresty/http-step
-           :GET "/Patient/new-patient"
-           :agent :user
-           :match {:status 403}}
 
-          {:type stresty.aidbox/desc-step
-           :description "
+             {:type  stresty/http-step
+              :GET   "/Patient/new-patient"
+              :agent :user
+              :match {:status 403}}
+
+             {:type        stresty.aidbox/desc-step
+              :description "
 Let's add out first policy that will grant us access to the Patient resource, associated with our user.
  Here we specified that Access Policy will grant GET access to a URI that matches #/Patient/.*
 regex if the request parameter named resource/id matches data.patient value of the user that makes the request."}
-          {:type stresty/http-step
-           :POST "/AccessPolicy"
-           :body {:id "patient-access"
-                  :engine "matcho"
-                  :matcho {:uri "#/Patient/.*"
-                           :params {:resource/id ".user.data.patient_id"}
-                           :request-method "get"}}
-           :match {:status 201}}
 
-          {:type stresty.aidbox/desc-step
-           :description "So now we can read our patient. The part of the URL after /Patient/
+             {:type  stresty/http-step
+              :POST  "/AccessPolicy"
+              :body  {:id     "patient-access"
+                      :engine "matcho"
+                      :matcho {:uri            "#/Patient/.*"
+                               :params         {:resource/id ".user.data.patient_id"}
+                               :request-method "get"}}
+              :match {:status 201}}
+
+             {:type        stresty.aidbox/desc-step
+              :description "So now we can read our patient. The part of the URL after /Patient/
 namely new-patient is parsed by Access Policy engine as the resource/id parameter of the request:"}
-          {:type stresty/http-step
-           :agent :user
-           :GET "/Patient/new-patient"
-           :match {:status 200}}
+
+             {:type  stresty/http-step
+              :agent :user
+              :GET   "/Patient/new-patient"
+              :match {:status 200}}
 
 
-          {:type stresty.aidbox/desc-step
-           :description "##Encounter access
+             {:type        stresty.aidbox/desc-step
+              :description "##Encounter access
 
 Let's make sure that we really don't have access to the Encounter resource:"}
-          {:type stresty/http-step
-           :GET "/Encounter/?patient=new-patient"
-           :agent :user
-           :match {:status 403}}
 
-          {:type stresty.aidbox/desc-step
-           :description "Now let's give our user the ability to retrieve all encounters where they are referred to as a subject:"}
-          {:type stresty/http-step
-           :POST "/AccessPolicy"
-           :body {:id "search-patient-encounter"
-                  :engine "matcho"
-                  :matcho {:uri "/Encounter"
-                           :params {:patient ".user.data.patient_id"}
-                           :request-method "get"}}
-           :match {:status 201}}
+             {:type  stresty/http-step
+              :GET   "/Encounter/?patient=new-patient"
+              :agent :user
+              :match {:status 403}}
 
-          {:type stresty.aidbox/desc-step
-           :description "And this policy works a bit trickier. The allowed URI is `/Encounter` and it doesn't contain any additional parts that could be identified as request parameters as in the previous case. So, in order to provide the required request parameter `patient` to the Access Policy matching engine, we have to specify it as the query parameter of our request. And after the Access Policy engine allows such a request, the Search Engine comes into play. It filters out encounters that do not match the condition of `patient = our-patient-id`. To know more about how the AidBox Search works, see the [Search section](https://docs.aidbox.app/basic-concepts/search-1). To know more about the available search parameters, refer to the Search Parameters section of the FHIR documentation for the resource of interest.
+             {:type        stresty.aidbox/desc-step
+              :description "Now let's give our user the ability to retrieve all encounters where they are referred to as a subject:"}
+
+             {:type  stresty/http-step
+              :POST  "/AccessPolicy"
+              :body  {:id     "search-patient-encounter"
+                      :engine "matcho"
+                      :matcho {:uri            "/Encounter"
+                               :params         {:patient ".user.data.patient_id"}
+                               :request-method "get"}}
+              :match {:status 201}}
+
+             {:type        stresty.aidbox/desc-step
+              :description "And this policy works a bit trickier. The allowed URI is `/Encounter` and it doesn't contain any additional parts that could be identified as request parameters as in the previous case. So, in order to provide the required request parameter `patient` to the Access Policy matching engine, we have to specify it as the query parameter of our request. And after the Access Policy engine allows such a request, the Search Engine comes into play. It filters out encounters that do not match the condition of `patient = our-patient-id`. To know more about how the AidBox Search works, see the [Search section](https://docs.aidbox.app/basic-concepts/search-1). To know more about the available search parameters, refer to the Search Parameters section of the FHIR documentation for the resource of interest.
 Finally, we can make a request for the list of patient encounters."}
-          {:type stresty/http-step
-           :GET "/Encounter/?patient=new-patient"
-           :agent :user
-           :match {:status 200}}
 
+             {:type  stresty/http-step
+              :GET   "/Encounter?patient=new-patient"
+              :agent :user
+              :match {:status 200}}
+             
+             {:type        stresty/desc-step
+              :description "##Clean up
 
-          #_{:type stresty/http-step
-           :DELETE "/AccessPolicy/search-patient-encounter"
-           :match {:status 200}}
+Let's remove all access policies we have createted to keep all tidy."}
 
-          {:type stresty/http-step
-           :DELETE "/AccessPolicy/patient-access"
-           :match {:status 200}}
+             {:type   stresty/http-step
+              :DELETE "/AccessPolicy/search-patient-encounter"
+              :match  {:status 200}}
 
-
-          
-          ]}
-
- 
- }
+             {:type   stresty/http-step
+              :DELETE "/AccessPolicy/patient-access"
+              :match  {:status 200}}]}}
