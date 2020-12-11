@@ -119,6 +119,7 @@
   {})
 
 (defmethod run-step 'stresty.aidbox/sql-step [ctx step]
+  (prn "SQL: " (str (:sql step)))
   (run-step ctx {:type  'stresty/http-step
                  :POST  "/$sql"
                  :body  (pr-str (:sql step))
@@ -127,7 +128,7 @@
 (defmethod run-step 'stresty.aidbox/truncate-step [ctx step]
   (let [sql (str "TRUNCATE "
                  (str/join ", "
-                           (map (fn [x] (str (if (keyword? x) (str/lower-case (name x)) x)))
+                           (map (fn [x] (str (if (keyword? x) (name x) x)))
                                 (:truncate step))))]
     (run-step ctx {:type 'stresty.aidbox/sql-step
                    :sql  sql})))

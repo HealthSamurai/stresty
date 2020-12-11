@@ -14,7 +14,7 @@
 (zrf/defx change-value
   [{db :db} [_ path value]]
   (let [old-value (get-in db path)
-        edn-value (edn/parse-string value)
+        edn-value (cljs.reader/read-string value)
         db* (cond-> db
               (not= old-value edn-value)
               (assoc-in path edn-value))]
@@ -103,7 +103,7 @@
               
               _ (.setValue monaco text)
               on-change-editor ((.-onDidChangeModelDecorations monaco) #(update-height monaco el))
-              on-change ((.-onDidChangeModelContent monaco) #(on-change-value monaco path))]
+              on-change ((.-onDidBlurEditorText monaco) #(on-change-value monaco path))]
           (aset this :editor monaco)
           (if errors
             (set-model-markers monaco text errors)
