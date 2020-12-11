@@ -6,15 +6,15 @@
  {:zen/tags #{stresty/case}
   :title    "Patient can see their own data"
   :steps    [{:type        stresty.aidbox/desc-step
-              :description "#Prerequisites"}
+              :description "##Prerequisites"}
 
              {:type        stresty.aidbox/desc-step
-              :description "Clean all resources to avoid conflicts"}
+              :description "Clean all resources to avoid conflicts."}
              {:type     stresty.aidbox/truncate-step
               :truncate [:Patient :Encounter :Observation :Practitioner ]}
 
              {:type        stresty.aidbox/desc-step
-              :description "load resources that you will need to work with policies"}
+              :description "Load resources that you will need to work with policies."}
              {:type  stresty/http-step
               :POST  "/$import"
               :body  {:id              "patient_import"
@@ -37,7 +37,7 @@
               :match {:status 200}}
 
              {:type        stresty.aidbox/desc-step
-              :description "##Patient Resource access
+              :description "###Patient Resource access
 
 Let's make sure that we really don't have access to the Patient resource:"}
 
@@ -72,7 +72,7 @@ namely new-patient is parsed by Access Policy engine as the resource/id paramete
 
 
              {:type        stresty.aidbox/desc-step
-              :description "##Encounter access
+              :description "###Encounter access
 
 Let's make sure that we really don't have access to the Encounter resource:"}
 
@@ -94,22 +94,47 @@ Let's make sure that we really don't have access to the Encounter resource:"}
               :match {:status 201}}
 
              {:type        stresty.aidbox/desc-step
-              :description "And this policy works a bit trickier. The allowed URI is `/Encounter` and it doesn't contain any additional parts that could be identified as request parameters as in the previous case. So, in order to provide the required request parameter `patient` to the Access Policy matching engine, we have to specify it as the query parameter of our request. And after the Access Policy engine allows such a request, the Search Engine comes into play. It filters out encounters that do not match the condition of `patient = our-patient-id`. To know more about how the AidBox Search works, see the [Search section](https://docs.aidbox.app/basic-concepts/search-1). To know more about the available search parameters, refer to the Search Parameters section of the FHIR documentation for the resource of interest.
+              :description "And this policy works a bit trickier. The allowed URI is `/Encounter` and it doesn't contain any additional parts that could be identified as request parameters as in the previous case. So, in order to provide the required request parameter `patient` to the Access Policy matching engine, we have to specify it as the query parameter of our request. And after the Access Policy engine allows such a request, the Search Engine comes into play. It filters out encounters that do not match the condition of `patient = our-patient-id`. To know more about how the AidBox Search works, see the [Search section](https://docs.aidbox.app/basic-concepts/search-1). To know more about the available search parameters, refer to the [Search Parameters](https://www.hl7.org/fhir/encounter.html#search) section of the FHIR documentation for the resource of interest.
 Finally, we can make a request for the list of patient encounters."}
 
              {:type  stresty/http-step
               :GET   "/Encounter?patient=new-patient"
               :agent :user
               :match {:status 200}}
-             
-             {:type        stresty/desc-step
-              :description "##Clean up
 
-Let's remove all access policies we have createted to keep all tidy."}
+             {:type        stresty.aidox/desc-step
+              :description "###The Other Way
+
+Granting access to another resource is similar to the previous case. We just add another policy, that looks just like the previous one, but matches against another URI. It is so similar, that we should stop there and think a little what happens if we want to grant read access to more resources — we end up with a bunch of almost indistinguishable policies. A better approach in this case is to use the `CompartmentDefinition` resource. We create a `CompartmentDefinition` resource that includes just `Encounter` for now."}
+
+             {:type  stresty/http-step
+              :POST  "/fhir/CompartmentDefinition"
+              :body  {:id       "patient"
+                      :url      "http://hl7.org/fhir/CompartmentDefinition/patient"
+                      :code     "Patient"
+                      :search   true
+                      :status   "draft"
+                      :resource [{:code  "Encounter"
+                                  :param ["patient"]}]}
+              :match {:status 201}}
+
+             {:type        stresty.aidbox/desc-step
+              :description "Now, when we've created `CompartmentDefinition` resource, we can access patient related resources with such requests: `GET /Patient/{patient-id}/{resource}`. To know in detail about how compartments work see the [Compartments tutorial](https://docs.aidbox.app/tutorials/compartments).
+And that's it! We don't even need to add more policies, since we already have the policy that allows user to access URIs that match `/Patient/.*` regex."}
 
              {:type   stresty/http-step
               :DELETE "/AccessPolicy/search-patient-encounter"
               :match  {:status 200}}
+
+             {:type  stresty/http-step
+              :GET   "/Patient/new-patient/Encounter"
+              :agent :user
+              :match {:status 200}}
+
+             {:type        stresty.aidbox/desc-step
+              :description "###Clean up
+
+Let's remove remaining policy to keep all tidy."}
 
              {:type   stresty/http-step
               :DELETE "/AccessPolicy/patient-access"
