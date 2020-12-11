@@ -32,30 +32,43 @@
                          :else
                          (vary-meta (symbol (str obj)) merge loc)))}))
 
-(defn get-model-markers [text errors]
-  (let [edn-meta (read-edn-with-meta text)]
-    (map (fn [e]
-           (let [meta-path (meta (get-in edn-meta (:path e)))]
-             (prn "Error path: " (:path e))
-             (prn "Meta path: " meta-path)
-             {:startLineNumber (:row meta-path)
-              :endLineNumber (:end-row meta-path)
-              :startColumn (:col meta-path)
-              :endColumn (:end-col meta-path)
-              :severity monaco/MarkerSeverity.Error
-              :message (str "Expected " (:expected e) ", but " (:but e))}
-             ))
-         errors)))
+(defn get-error-marker [{:keys [row end-row col end-col] :as meta} error]
+  {:startLineNumber row
+   :endLineNumber end-row
+   :startColumn col
+   :endColumn end-col
+   :severity monaco/MarkerSeverity.Error
+   :message (str "Expected " (:expected error) ", but " (:but error))})
+
+(defn get-error-decoration [{:keys [row end-row col end-col :as meta]} error]
+  {:range (new monaco.Range row col end-row end-col)
+   :options {:inlineClassName (c [:bg :red-200]) :isWholeLine true}}
+  )
+
+(defn get-error-models [text errors]
+  (let [edn-meta (read-edn-with-meta text)
+        markers (map #(-> edn-meta
+                          (get-in (:path %))
+                          meta
+                          (get-error-marker %)) errors)
+        decorations (map #(-> edn-meta
+                              (get-in (:path %))
+                              meta
+                              (get-error-decoration %)) errors)]
+    {:markers markers :decorations decorations}
+    ))
 
 (defn set-model-markers [^js/monaco.editor.ICodeeditor editor value errors]
-  (let [markers (clj->js (get-model-markers value errors))
-        _ (prn "Markers: " markers)
+  (let [error-models (get-error-models value errors)
+        _ (prn "Error models" error-models)
+        {:keys [markers decorations]} error-models
         text-model (.getModel editor)]
-    (set! (.-text-model js/window) text-model)
-    (set! (.-markers js/window) markers)
+    (.deltaDecorations editor [] (clj->js decorations))
     (monaco/editor.setModelMarkers text-model
                                    "jslint"
-                                   markers)))
+                                   (clj->js markers))
+    
+    )  )
 
 (defn on-change-value [monaco path]
   (let [value (.getValue monaco)]
