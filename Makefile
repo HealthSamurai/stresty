@@ -35,7 +35,7 @@ pub:
 	docker push ${IMG}
 
 jar:
-	clj -M:ui:build -m build
+	clj -M:ui:build -m build && cp target/uberjar/stresty-*-standalone.jar target/stresty.jar
 
 deploy:
 	cd deploy && envsubst < kustomization.template.yaml > kustomization.yaml && kubectl apply -k .
