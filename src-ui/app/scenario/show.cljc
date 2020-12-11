@@ -57,8 +57,6 @@
     {:db (-> db
              (assoc-in [::db :editors-state] editors-state))}))
 
-
-
 (zrf/defs scenario [db]
   (get-in db [::db :scenario :data]))
 
@@ -78,16 +76,19 @@
                :body {:id "new-patient"}
                :match {:status 201}})
 
+(update-in {:steps [{} {} {:haha 'haha}]} [:steps 1] (fn [_] nil))
+
 (zrf/defx run-step
   [{db :db} [_ step idx]]
   (let [case-ctx (get-in db [::db :ctx :data])]
-    {:http/fetch {:uri (str "/run-step")
-                  :method "post"
-                  :format "edn"
-                  :body (str {:ctx case-ctx
-                              :step step
-                              :index idx})
-                  :path [::db :ctx]}}))
+    {:dispatch [:http/fetch {:uri (str "/run-step")
+                             :method "post"
+                             :format "edn"
+                             :body (str {:ctx case-ctx
+                                         :step step
+                                         :index idx})
+                             :path [::db :ctx]}]
+     :db (update-in db [::db :ctx :data :stresty/step-results idx] (fn [_] nil))}))
 
 (zrf/defx change-step-method
   [{db :db} [_ step index new-method]]
@@ -184,14 +185,27 @@
        [:i.fas.fa-pencil-alt])]
     ]])
 
-(def default-step-style
-  (c :flex :flex-col [:mb 2] [:p 2] {:background-color "#EBECED"} :w-full))
+(def bg-color :red-300)
+
+(identity bg-color)
+
+(defn default-step-style [result]
+  (prn (:errors result))
+  (let [bg-class (cond
+                   (nil? result)
+                   (c {:background-color "#EBECED"})
+                   (seq (:errors result))
+                   (c [:bg :red-200])
+                   :else
+                   (c [:bg :green-200])
+                   )]
+    [(c :flex :flex-col [:mb 2] [:p 2]) bg-class]))
 
 (defn render-step-root [step index result editor-state]
   [:div {:class (c :relative)}
    [step-controls step index (:editing editor-state)]
    (if (:editing editor-state)
-     [:div {:class default-step-style}
+     [:div {:class (default-step-style result)}
       [zf-editor [::db :scenario :data :steps index]]]
      [render-step step index result])])
 
@@ -215,7 +229,7 @@
 
 (defmethod render-step 'stresty/http-step [step index result]
   (let [method (first (filter meths (keys step)))]
-    [:div {:class default-step-style}
+    [:div {:class (default-step-style result)}
      [:div {:class (c :flex :flex-row :items-)}
       [step-method step index]
       [:div {:class (c :w-full)}
@@ -229,13 +243,13 @@
       ]))
 
 (defmethod render-step 'stresty.aidbox/truncate-step [step index result]
-  [:div {:class default-step-style}
+  [:div {:class (default-step-style result)}
    [:div {:class (c :flex :flex-row :items-center)}
     "TRUNCATE " (str (:truncate step))]
    [response-view index result]])
 
 (defmethod render-step 'stresty.aidbox/sql-step [step index result]
-  [:div {:class default-step-style}
+  [:div {:class (default-step-style result)}
    
    [zf-editor [::db :scenario :data :steps index :sql]]
    [response-view index result]]

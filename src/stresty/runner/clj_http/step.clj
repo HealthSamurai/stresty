@@ -98,7 +98,7 @@
         url        (str (get-in ctx [:config :url]) (get step method))
         body       (if (:body step) (if (string? (:body step)) (:body step) (json/generate-string (:body step))))
         req-opts   (cond-> (merge (default-req-params ctx) {:url url :request-method (keyword (str/lower-case (name method)))})
-                     body
+                     (and body (contains? #{:POST :PUT :PATCH} method))
                      (assoc :body body))
         agent-name (get step :agent :default)
         {req-opts :req-opts
@@ -120,11 +120,10 @@
   {})
 
 (defmethod run-step 'stresty.aidbox/sql-step [ctx step]
-  (prn "SQL: " (str (:sql step)))
   (run-step ctx {:type  'stresty/http-step
                  :POST  "/$sql"
                  :body  (pr-str (:sql step))
-                 :match {:status 200}}))
+                 :match (merge {:status 200} (:match step))}))
 
 (defmethod run-step 'stresty.aidbox/truncate-step [ctx step]
   (let [sql (str "TRUNCATE "

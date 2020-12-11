@@ -15,6 +15,7 @@
 (zrf/defview case-list [scenarios]
   [:div {:class (c :flex :flex-col [:p 4] [:h "100%"] :justify-between [:w-min 50])}
    [:div
+    [:span {:class (c :text-2xl)} "Cases"]
     (for [scenario scenarios]
       ^{:key (:zen/name scenario)}
       [:a {:href (href "scenario" (namespace (:zen/name scenario)) (name (:zen/name scenario)))}

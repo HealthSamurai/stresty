@@ -46,7 +46,7 @@
 (defn compile-styles [styles]
   (garden.core/css
     (concat
-      stylo.tailwind.preflight/preflight
+     stylo.tailwind.preflight/preflight
       (->> styles
            (sort-by (comp :location meta val))
            (map (fn [[k v]] (into [k] v)))))))
