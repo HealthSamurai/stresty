@@ -102,7 +102,7 @@ Finally, we can make a request for the list of patient encounters."}
               :agent :user
               :match {:status 200}}
 
-             {:type        stresty.aidox/desc-step
+             {:type        stresty.aidbox/desc-step
               :description "###The Other Way
 
 Granting access to another resource is similar to the previous case. We just add another policy, that looks just like the previous one, but matches against another URI. It is so similar, that we should stop there and think a little what happens if we want to grant read access to more resources — we end up with a bunch of almost indistinguishable policies. A better approach in this case is to use the `CompartmentDefinition` resource. We create a `CompartmentDefinition` resource that includes just `Encounter` for now."}
@@ -110,6 +110,7 @@ Granting access to another resource is similar to the previous case. We just add
              {:type  stresty/http-step
               :POST  "/fhir/CompartmentDefinition"
               :body  {:id       "patient"
+                      :name     "Base FHIR compartment definition for Patient"
                       :url      "http://hl7.org/fhir/CompartmentDefinition/patient"
                       :code     "Patient"
                       :search   true
