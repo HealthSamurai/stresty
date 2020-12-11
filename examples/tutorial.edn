@@ -1,0 +1,37 @@
+{ns     user
+ import #{stresty stresty.aidbox}
+
+
+ access-policy-test
+ {:zen/tags #{stresty/case}
+  :title    "Patient can see their own data"
+  :steps [{:type #{stresty/desc-step}
+           :desc "#Prerequisites"}
+          {:type #{stresty/truncate-step}
+           :desc "Clean all resources to avoid conflicts"
+           :truncate [:Patient :Encounter :Observation :Practitioner :Clinet]}
+          {:type #{stresty/http-step}
+           :desc "load resources that you will need to work with policies"
+           :POST "/$import"
+           :body {:id patient_import
+                  :inputFormat "application/fhir+ndjson"
+                  :contentEncoding: "gzip"
+                  :mode "bulk"
+                  :inputs [
+                           {:resourceType "Client"
+                            :url "https://storage.googleapis.com/aidbox-public/demo/client.ndjson.gz"}
+                           {:resourceType "User"
+                            :url "https://storage.googleapis.com/aidbox-public/demo/user.ndjson.gz"}
+                           {:resourceType "Patient"
+                             :url "https://storage.googleapis.com/aidbox-public/demo/patient.ndjson.gz"}
+                           {:resourceType "Encounter"
+                            :url "https://storage.googleapis.com/aidbox-public/demo/encounter.ndjson.gz"}
+                           {:resourceType "Observation"
+                            :url "https://storage.googleapis.com/aidbox-public/demo/observation.ndjson.gz"}
+                           {:resourceType "Practitioner"
+                            :url "https://storage.googleapis.com/aidbox-public/demo/practitioner.ndjson.gz"}]}
+           :match {:status 200}}
+
+          {}]}
+
+ }
