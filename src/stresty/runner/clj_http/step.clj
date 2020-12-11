@@ -112,7 +112,8 @@
           (:body resp)
           (assoc :body (parse-json-or-leave-string (:body resp))))
         errs       (if-let [m (:match step)] (matcho/match nil resp m) [])]
-    {:response resp
+    {:request req-opts
+     :response resp
      :errors   errs}))
 
 (defmethod run-step 'stresty.aidbox/desc-step [ctx step]

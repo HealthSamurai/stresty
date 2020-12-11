@@ -5,17 +5,21 @@
  access-policy-test
  {:zen/tags #{stresty/case}
   :title    "Patient can see their own data"
-  :steps [{:type #{stresty/desc-step}
-           :desc "#Prerequisites"}
-          {:type #{stresty/truncate-step}
-           :desc "Clean all resources to avoid conflicts"
-           :truncate [:Patient :Encounter :Observation :Practitioner :Clinet]}
-          {:type #{stresty/http-step}
-           :desc "load resources that you will need to work with policies"
+  :steps [{:type stresty.aidbox/desc-step
+           :description "#Prerequisites"}
+
+          {:type stresty.aidbox/desc-step
+           :description "Clean all resources to avoid conflicts"}
+          {:type stresty.aidbox/truncate-step
+           :truncate [:Patient :Encounter :Observation :Practitioner ]}
+
+          {:type stresty.aidbox/desc-step
+           :description "load resources that you will need to work with policies"}
+          {:type stresty/http-step
            :POST "/$import"
-           :body {:id patient_import
+           :body {:id "patient_import"
                   :inputFormat "application/fhir+ndjson"
-                  :contentEncoding: "gzip"
+                  :contentEncoding "gzip"
                   :mode "bulk"
                   :inputs [
                            {:resourceType "Client"
@@ -32,6 +36,37 @@
                             :url "https://storage.googleapis.com/aidbox-public/demo/practitioner.ndjson.gz"}]}
            :match {:status 200}}
 
-          {}]}
+          {:type stresty.aidbox/desc-step
+           :description "##Patient Resource access
+
+Let's make sure that we really don't access to the Patient resource:"}
+          {:type stresty/http-step
+           :GET "/Patient/new-patient"
+           :match {:status 403}}
+
+          {:type stresty.aidbox/desc-step
+           :description "
+Let's add out first policy that will grant us access to the Patient resource, associated with our user.
+ Here we specified that Access Policy will grant GET access to a URI that matches #/Patient/.*
+regex if the request parameter named resource/id matches data.patient value of the user that makes the request."}
+          {:type stresty/http-step
+           :POST "/AccessPolicy"
+           :body {:id "patient-access"
+                  :engine "matcho"
+                  :matcho {:uri "#/Patient/.*"
+                           :params {:resorce/id ".user.data.patient_id"}
+                           :request-method: "get"}}
+           :match {:status 201}}
+
+          {:type stresty.aidbox/desc-step
+           :description "So now we can read our patient. The part of the URL after /Patient/
+namely new-patient is parsed by Access Policy engine as the resource/id parameter of the request:"}
+          {:type stresty/http-step
+           :GET "/Patient/new-patient"
+           :match {:status 200}}
+
+          {:type stresty/http-step
+           :DELETE "/AccessPolicy/patient-access"
+           :match {:status 200}}]}
 
  }
