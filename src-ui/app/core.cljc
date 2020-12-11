@@ -39,10 +39,10 @@
 (rf/reg-event-fx
  ::initialize
  (fn [{db :db} _]
-   {:db (assoc db :config  {:url "http://little.aidbox.app"
+   {:db (assoc db :config  {:url "http://access-policy-box.aidbox.app"
                            :agents {:default {:type 'stresty/basic-auth
-                                              :client-id "basic"
-                                              :client-secret "secret"}}})
+                                              :client-id "stresty"
+                                              :client-secret "stresty"}}})
     :dispatch [:zframes.routing/page-redirect {:uri "#/scenario"}]}))
 
 (defn mount-root []
