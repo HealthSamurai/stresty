@@ -17,6 +17,7 @@
     :figure
     :p
     :pre {:margin 0}]
+   
 
    [:button {:background-color "transparent"
              :background-image "none"
@@ -26,10 +27,6 @@
 
    [:fieldset {:margin  0
                :padding 0}]
-
-   [:ol :ul {:list-style "none"
-             :margin     0
-             :padding    0}]
 
    [:html {:font-family "system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,\"Noto Sans\",sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\",\"Noto Color Emoji\"" ; 1
            :line-height 1.5}]
@@ -52,16 +49,7 @@
 
    [:button
     "[role=\"button\"]" {:cursor "pointer"}]
-
-   [:table {:border-collapse "collapse"}]
-
-   [:h1
-    :h2
-    :h3
-    :h4
-    :h5
-    :h6 {:font-size   "inherit"
-         :font-weight "inherit"}]
+   
 
    [:a {:color "inherit"
         :text-decoration "inherit"}]
@@ -88,7 +76,6 @@
     :embed
     :object {:display "block"
              :vertical-align "middle"}]
-
    [:img
     :video {:max-width "100%"
             :height "auto"}]])
