@@ -197,10 +197,10 @@
                    :else
                    (c [:bg :green-200])
                    )]
-    [(c :flex :flex-col [:mb 2] [:p 2]) bg-class]))
+    [(c :flex :flex-col [:p 2]) bg-class]))
 
 (defn render-step-root [step index result editor-state]
-  [:div {:class (c :relative)}
+  [:div {:class (c :relative [:my 2])}
    [step-controls step index (:editing editor-state)]
    (if (:editing editor-state)
      [:div {:class (default-step-style result)}
@@ -257,7 +257,7 @@
   )
 
 (defmethod render-step 'stresty.aidbox/desc-step [step]
-  [:div {:class (c [:mb 2])} (-> (:description step)
+  [:div {:class (c [:my 2] :text-base)} (-> (:description step)
                md/md->hiccup
                md/component)])
 
