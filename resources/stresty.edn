@@ -3,8 +3,8 @@
  ;; boring
 
  uri {:zen/tags #{zen/schema}
-      :type zen/string
-      :regex "^/.*"}
+      :type     zen/string
+      :regex    "^/.*"}
 
  predicate {:zen/tags #{zen/tag}
             :zen/desc "Register predicate function"}
@@ -18,90 +18,89 @@
 
  case {:zen/tags #{zen/schema zen/tag}
        :zen/desc "Schema for case"
-       :type zen/map
-       :require #{:steps}
-       :keys {:title {:type zen/string}
-              :desc {:type zen/string}
-              :steps {:type zen/vector
-                      :every {:confirms #{step}}}}}
+       :type     zen/map
+       :require  #{:steps}
+       :keys     {:title {:type zen/string}
+                  :desc  {:type zen/string}
+                  :steps {:type  zen/vector
+                          :every {:confirms #{step}}}}}
 
  ;; TBD
  matcho {:zen/tags #{zen/schema}
-         :type zen/case
-         :case [{:when {:type zen/map :values {:type zen/any}}
-                 :then {:type zen/map
-                        :key {:type zen/keyword}
-                        :values {:confirms #{matcho}}}}
-                {:when {:type zen/vector}
-                 :then {:type zen/vector
-                        :every {:confirms #{matcho}}}}
-                {:when {:type zen/symbol}
-                 :then {:type zen/symbol :tags #{predicate}}}
-                {:when {:type zen/any}}]}
+         :type     zen/case
+         :case     [{:when {:type zen/map :values {:type zen/any}}
+                     :then {:type   zen/map
+                            :key    {:type zen/keyword}
+                            :values {:confirms #{matcho}}}}
+                    {:when {:type zen/vector}
+                     :then {:type  zen/vector
+                            :every {:confirms #{matcho}}}}
+                    {:when {:type zen/symbol}
+                     :then {:type zen/symbol :tags #{predicate}}}
+                    {:when {:type zen/any}}]}
 
  response
  {:zen/tags #{zen/schema}
-  :type zen/map
-  :keys {:status {:type zen/case
-                  :case [{:when {:type zen/integer}}
-                         {:when {:type zen/symbol :tags #{predicate}}}]}
-         :headers {:type zen/map
-                   :key {:type zen/string}
-                   :values {:confirms #{matcho}}}
-         :body {:confirms #{matcho}}}}
+  :type     zen/map
+  :keys     {:status  {:type zen/case
+                       :case [{:when {:type zen/integer}}
+                              {:when {:type zen/symbol :tags #{predicate}}}]}
+             :headers {:type   zen/map
+                       :key    {:type zen/string}
+                       :values {:confirms #{matcho}}}
+             :body    {:confirms #{matcho}}}}
 
  config
- {:zen/tags #{zen/tag}
-  :type zen/map
-  :require #{:url :agents}
-  :keys {:url {:type zen/string}
-         :agents {:type zen/map
-                  :require #{:default}
-                  :key {:type zen/keyword}
-                  :values {:confirms #{auth-method}}}}
-  }
+ {:zen/tags #{zen/tag zen/schema}
+  :type     zen/map
+  :require  #{:url :agents}
+  :keys     {:url    {:type zen/string}
+             :agents {:type    zen/map
+                      :require #{:default}
+                      :key     {:type zen/keyword}
+                      :values  {:confirms #{auth-method}}}}}
 
  ;; FIXME: think about middleware mechanism instead of auth-method
  auth-method
- {:zen/tags #{zen/schema zen/tag}
-  :type zen/map
-  :require #{:type}
+ {:zen/tags   #{zen/schema zen/tag}
+  :type       zen/map
+  :require    #{:type}
   :schema-key {:key :type}
-  :keys {:type {:type zen/symbol}}}
+  :keys       {:type {:type zen/symbol}}}
 
  basic-auth
  {:zen/tags #{zen/schema auth-method}
-  :type zen/map
-  :keys {:client-id {:type zen/string}
-         :client-secret {:type zen/string}}}
+  :type     zen/map
+  :keys     {:client-id     {:type zen/string}
+             :client-secret {:type zen/string}}}
 
  step
- {:zen/tags #{zen/schema zen/tag}
-  :type zen/map
-  :require #{:type} ;; FIXME: make stresty/http-step default schema
+ {:zen/tags   #{zen/schema zen/tag}
+  :type       zen/map
+  :require    #{:type} ;; FIXME: make stresty/http-step default schema
   :schema-key {:key :type}
-  :keys {:type {:type zen/symbol}
-         :id {:type zen/keyword}
-         :desc {:type zen/string}}}
+  :keys       {:type {:type zen/symbol}
+               :id   {:type zen/keyword}
+               :desc {:type zen/string}}}
 
  http-step
- {:zen/tags #{zen/schema step}
-  :type zen/map
-  :require #{#{:GET :POST :PUT :PATCH :DELETE :OPTIONS :HEAD}}
+ {:zen/tags       #{zen/schema step}
+  :type           zen/map
+  :require        #{#{:GET :POST :PUT :PATCH :DELETE :OPTIONS :HEAD}}
   :exclusive-keys #{#{:GET :POST :PUT :PATCH :DELETE :OPTIONS} #{:GET :body} #{:HEAD :body} #{:OPTIONS :body}}
-  :keys {:type {:type zen/symbol}
-         :GET {:confirms #{uri}}
-         :POST {:confirms #{uri}}
-         :PUT {:confirms #{uri}}
-         :PATCH {:confirms #{uri}}
-         :DELETE {:confirms #{uri}}
-         :OPTIONS {:confirms #{uri}}
-         :agent {:type zen/keyword}
-         :headers {:type zen/map
-                   :key {:type zen/string}
-                   :values {:type zen/string}}
-         :body {:type zen/any}
-         :match {:confirms #{response}}}}
+  :keys           {:type    {:type zen/symbol}
+                   :GET     {:confirms #{uri}}
+                   :POST    {:confirms #{uri}}
+                   :PUT     {:confirms #{uri}}
+                   :PATCH   {:confirms #{uri}}
+                   :DELETE  {:confirms #{uri}}
+                   :OPTIONS {:confirms #{uri}}
+                   :agent   {:type zen/keyword}
+                   :headers {:type   zen/map
+                             :key    {:type zen/string}
+                             :values {:type zen/string}}
+                   :body    {:type zen/any}
+                   :match   {:confirms #{response}}}}
 
 
  }

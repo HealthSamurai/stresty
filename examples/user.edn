@@ -19,7 +19,7 @@
   :desc     "This scenario shows you, how to create a new Patient resource in Aidbox"
   :steps    [{:type     stresty.aidbox/truncate-step
               :truncate [:Patient]}
-             {:type stresty.aidbox/desc-step
+             {:type        stresty.aidbox/desc-step
               :description "
 # Let's create patient with name John Smith
 
@@ -57,7 +57,20 @@ Inline `code`
              {:type stresty.aidbox/sql-step
               :sql "SELECT * FROM Patient"}]}
 
- put-patient
+ put-patient-1
+ {:zen/tags #{stresty/case}
+  :title    "Put Patient"
+  :desc     "Let's learn how to update Patient resource"
+  :steps    [{:type  stresty/http-step
+              :PUT   "/Patient/pt-1"
+              :body  {:name [{:family "Smith" :given ["John"]}]}
+              :match {:status 201}}
+             {:type  stresty/http-step
+              :GET   "/Patient/pt-1"
+              :match {:status 200
+                      :body   {:name [{:family "Smith" :given ["John"]}]}}}]}
+
+ put-patient-2
  {:zen/tags #{stresty/case}
   :title    "Put Patient"
   :desc     "Let's learn how to update Patient resource"
@@ -162,4 +175,6 @@ Inline `code`
               :match {:status 200}}]}
  
  }
+
+
 

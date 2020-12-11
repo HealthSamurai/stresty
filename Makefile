@@ -1,4 +1,11 @@
+.PHONY: clean repl npm resource/VERSION build-native build docker oub jar deploy all
 .EXPORT_ALL_VARIABLES:
+
+VERSION=$(shell cat VERSION)
+DATE = $(shell date)
+
+IMAGE_NAME=aidbox/stresty
+IMG=${IMAGE_NAME}:${VERSION}
 
 clean:
 	rm pom.xml && rm -rf .cpcache
@@ -18,12 +25,23 @@ build-native: resources/VERSION
 	clojure -M:native-image
 
 build: resources/VERSION
-	clojure -A:run-test && clojure -M:ui:build -m build  && cp target/uberjar/stresty-*-standalone.jar target/stresty.jar
+	clojure -M:run-test && clojure -M:ui:build -m build  && cp target/uberjar/stresty-*-standalone.jar target/stresty.jar
 	rm resources/VERSION
+
+docker:
+	docker build -t ${IMG} .
+
+pub:
+	docker push ${IMG}
 
 jar:
 	clj -M:ui:build -m build
 
 deploy:
-	VERSION="${DATE}" kustomize build deploy | kubectl apply -f -
-	kubectl get pod -n stresty-ui
+	cd deploy && envsubst < kustomization.template.yaml > kustomization.yaml && kubectl apply -k .
+	kubectl rollout restart deployment stresty-app -n stresty
+	kubectl get pod -n stresty
+
+all: jar docker pub deploy
+	echo "Done"
+

@@ -11,4 +11,4 @@ resources:
 images:
   - name: stresty
     newName: aidbox/stresty
-    newTag: 0.1.5
+    newTag: ${VERSION}

@@ -10,6 +10,18 @@
             [auth])
   (:gen-class))
 
+(defn fetch-edn
+  [path]
+  (let [grammar-matcher (.getPathMatcher
+                          (java.nio.file.FileSystems/getDefault)
+                          "glob:*.{edn}")]
+    (->> path
+         clojure.java.io/file
+         file-seq
+         (filter #(.isFile %))
+         (filter #(.matches grammar-matcher (.getFileName (.toPath %))))
+         (mapv #(.getPath %)))))
+
 (defn load-edn ;; TODO: refactor loading
   [ztx filename]
   (->> filename
@@ -23,6 +35,9 @@
    ["-f" "--file NAME" "File names with test cases"
     :default []
     :parse-fn #(str/split % #",")]
+   ["-d" "--dir DIRECTORY" "Directory to read test cases from"
+    :default (fetch-edn "examples")
+    :parse-fn fetch-edn]
    [nil "--ui" "Start test server with UI"]
    ["-v" nil "Verbosity level"
     :id :verbosity
@@ -55,21 +70,24 @@
 
     (when (-> opts :options :version)
       (println "Stresty. CLI Tool for REST Tests.")
-      (println "Version" (slurp (io/resource "VERSION")))
+      (println "Version" (slurp "VERSION"))
       (System/exit 0))
 
-    (let [ztx        (zen/new-context)
+    (let [files      (concat
+                       (get-in opts [:options :file])
+                       (get-in opts [:options :dir]))
+          ztx        (zen/new-context)
           _          (load-edn ztx (get-in opts [:options :config]))
           config     (->> (zen/get-tag ztx 'stresty/config)
                           first
                           (zen/get-symbol ztx))
-          _          (doseq [f (get-in opts [:options :file])]
-                       (load-edn ztx f))
+          _          (doseq [f files] (load-edn ztx f))
           test-cases (mapv #(zen/get-symbol ztx %)
                            (zen/get-tag ztx 'stresty/case))
           ctx        (-> (opts :options)
                          (assoc :config config)
                          (assoc :test-cases test-cases))]
+      (prn "opts: " files)
       (if (-> opts :options :ui)
         (do
           (swap! *ctx assoc :ztx ztx)
@@ -78,14 +96,17 @@
           (println "UI started on localhost:8080"))
         ;; print only responses with errors
         (->> (runner/run ctx)
-            first
-            (filterv #(seq (:errors %)))
-            clojure.pprint/pprint)
+             first
+             (filterv #(seq (:errors %)))
+             clojure.pprint/pprint)
         ))))
 
 (comment
-  (-main "--config" "resources/user.edn" "--file" "resources/user.edn")
-
-  (parse-opts ["--config" "resources/user.edn" "--file" "wow/file.txt,some-file.end"] cli-options))
+  (-main)
+  (parse-opts ["--config" "resources/user.edn"
+               "--file" "wow/file.txt,some-file.end"
+               "--dir" "resources/examples"]
+              cli-options)
+  (parse-opts [] cli-options))
 
 

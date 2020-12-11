@@ -31,7 +31,8 @@ spec:
     spec:
       containers:
       - name: stresty-app
-        image: u473t8/stresty:latest
+        image: stresty
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           protocol: TCP

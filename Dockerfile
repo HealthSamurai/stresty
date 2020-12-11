@@ -1,7 +1,9 @@
 FROM openjdk:11-jre
 
-COPY target/uberjar/stresty-1.0.0-standalone.jar /app.jar
+COPY target/stresty.jar /stresty.jar
 
 COPY config.edn config.edn
 
-CMD java -XX:-OmitStackTraceInFastThrow -jar /app.jar --ui
+COPY examples examples
+
+CMD java -XX:-OmitStackTraceInFastThrow -jar /stresty.jar --ui 
