@@ -119,11 +119,10 @@
   {})
 
 (defmethod run-step 'stresty.aidbox/sql-step [ctx step]
-  (prn "SQL: " (str (:sql step)))
   (run-step ctx {:type  'stresty/http-step
                  :POST  "/$sql"
                  :body  (pr-str (:sql step))
-                 :match {:status 200}}))
+                 :match (merge {:status 200} (:match step))}))
 
 (defmethod run-step 'stresty.aidbox/truncate-step [ctx step]
   (let [sql (str "TRUNCATE "
