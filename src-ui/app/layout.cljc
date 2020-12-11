@@ -16,10 +16,12 @@
   [:div {:class (c :flex :flex-col [:p 4] [:h "100%"] :justify-between [:w-min 50])}
    [:div
     (for [scenario scenarios]
-      ^{:key (:zen/name scenarios)}
-      [:a {:class (c [:mb 2])
-           :href (href "scenario" (namespace (:zen/name scenario)) (name (:zen/name scenario)))}
-       [:div {:class (c :text-base)} (:title scenario)]
+      ^{:key (:zen/name scenario)}
+      [:a {:href (href "scenario" (namespace (:zen/name scenario)) (name (:zen/name scenario)))}
+       [:div {:class (c :text-base :flex :flex-row :items-center [:py 1])}
+        [:i.fas.fa-circle {:class (c {:font-size "8px" }[:pr 2])}]
+        (:title scenario)
+        ]
        ]
       )
     ]

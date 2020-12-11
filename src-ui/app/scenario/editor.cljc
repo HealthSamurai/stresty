@@ -13,8 +13,12 @@
 
 (zrf/defx change-value
   [{db :db} [_ path value]]
-  (prn (cljs.reader/read-string value))
-  {:db (assoc-in db path (cljs.reader/read-string value))})
+  (let [old-value (get-in db path)
+        edn-value (edn/parse-string value)
+        db* (cond-> db
+              (not= old-value edn-value)
+              (assoc-in path edn-value))]
+   {:db db*}))
 
 (defn iobj? [x]
   #?(:clj (instance? clojure.lang.IObj x)
@@ -60,15 +64,12 @@
 
 (defn set-model-markers [^js/monaco.editor.ICodeeditor editor value errors]
   (let [error-models (get-error-models value errors)
-        _ (prn "Error models" error-models)
         {:keys [markers decorations]} error-models
         text-model (.getModel editor)]
     (.deltaDecorations editor [] (clj->js decorations))
     (monaco/editor.setModelMarkers text-model
                                    "jslint"
-                                   (clj->js markers))
-    
-    )  )
+                                   (clj->js markers))))
 
 (defn on-change-value [monaco path]
   (let [value (.getValue monaco)]
@@ -87,35 +88,53 @@
   (get-in db path))
 
 
-(defn zf-editor [path errors]
-  (let [data @(rf/subscribe [::ed-sub-dynamic path])
-        ]
+(defn zf-editor-inner []
+  (let []
     (r/create-class
      {:component-did-mount
       (fn [this]
         (let [el (dom/dom-node this)
+              {:keys [path errors text]} (r/props this)
               monaco (monaco/editor.create el
                                            (clj->js {:tabSize 2
                                                      :language "clojure"
                                                      :scrollBeyondLastLine false
                                                      :minimap {:enabled false}}))
-              text (-> data
-                       (pp/write :pretty true :right-margin 60)
-                       with-out-str
-                       (str/replace "\\n" "\n"))
+              
               _ (.setValue monaco text)
               on-change-editor ((.-onDidChangeModelDecorations monaco) #(update-height monaco el))
-              on-change ((.-onDidChangeModelContent monaco) #(on-change-value monaco path))
-              ]
+              on-change ((.-onDidChangeModelContent monaco) #(on-change-value monaco path))]
+          (aset this :editor monaco)
           (if errors
             (set-model-markers monaco text errors)
             )
           ))
+      :component-did-update
+      (fn [this old-argv]
+        (let [^js/monaco.editor.ICodeEditor monaco (aget this :editor)
+              model (.getModel monaco)
+              model-value (.getValue model)
+              {:keys [text]} (r/props this)]
+          (when (not= model-value text)
+            (.setValue monaco text))
+          )
+        )
       :reagent-render
-      (fn [stresty-case]
+      (fn []
         [:div {:class (c [:h 100])}])
       }
-     ))
+     )))
+
+(defn zf-editor [path errors]
+  (let [data (rf/subscribe [::ed-sub-dynamic path])]
+    (fn []
+      (let [text (-> @data
+                       (pp/write :pretty true :right-margin 60)
+                       with-out-str
+                       (str/replace "\\n" "\n"))]
+        [zf-editor-inner {:text text :path path :errors errors}])
+      )
+    )
   )
 
 (comment

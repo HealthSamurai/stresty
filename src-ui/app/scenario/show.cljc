@@ -252,10 +252,10 @@
 (zrf/defview view [scenario case-ctx editors-state]
   [:div {:class (c :flex :flex-col :items-center)}
    
-   [:div {:class (c [:p 6] :flex :flex-col :w-max-4xl)}
+   [:div {:class (c [:p 6] :flex :flex-col :w-max-4xl :w-full)}
     
-    [:div {:on-click #(rf/dispatch [create-ctx])} "Create CTX"]
-    [:pre (str case-ctx)]
+    #_[:div {:on-click #(rf/dispatch [create-ctx])} "Create CTX"]
+    #_[:pre (str case-ctx)]
 
 
     [:h1 {:class (c :text-2xl [:mb 2])} (:title scenario)]
