@@ -165,25 +165,23 @@
              (assoc-in [::db :ctx :data :stresty/step-results] results*))}))
 
 (defn step-controls [step index editing]
-  [:div {:class (c :flex :flex-col :absolute [:right "100%"] :items-end)}
-   [:div {:class (c :flex :flex-row :items-start)}
+  [:<>
+   [:div {:class (c :flex :flex-row :absolute [:left "100%"]:items-start)}
     [zf-button {:on-click [::add-step index]
                 :type "text"} [:i.fas.fa-plus]]
-    
-    [zf-button {:on-click [::delete-step index]
-                :type "text"
-                :class (c [:text :red-300])} [:i.fas.fa-trash]]]
-   [:div {:class (c :flex :flex-row :items-end)}
-    (if (not (= (:type step) 'stresty.aidbox/desc-step))
-      [zf-button {:on-click [::run-step step index]
-                  :type "text"
-                  :class (c [:text :green-300])} [:i.fas.fa-play]])
     [zf-button {:on-click [::edit-step index]
                 :type "text"}
      (if editing
        [:i.fas.fa-save]
        [:i.fas.fa-pencil-alt])]
-    ]])
+    [zf-button {:on-click [::delete-step index]
+                :type "text"
+                :class (c [:text :red-300])} [:i.fas.fa-trash]]]
+   [:div {:class (c :flex :flex-col :absolute [:right "100%"] :items-start)}
+    (if (not (= (:type step) 'stresty.aidbox/desc-step))
+      [zf-button {:on-click [::run-step step index]
+                  :type "text"
+                  :class (c [:text :green-300])} [:i.fas.fa-play]])]])
 
 (def bg-color :red-300)
 
@@ -225,7 +223,10 @@
   (if result
     [:div
      "Response"
-     [zf-editor [::db :ctx :data :stresty/step-results index :response] (:errors result)]]))
+     [zf-editor
+      [::db :ctx :data :stresty/step-results index :response]
+      (:errors result)
+      true]]))
 
 (defmethod render-step 'stresty/http-step [step index result]
   (let [method (first (filter meths (keys step)))]

@@ -94,12 +94,14 @@
      {:component-did-mount
       (fn [this]
         (let [el (dom/dom-node this)
-              {:keys [path errors text]} (r/props this)
+              {:keys [path errors text read-only]} (r/props this)
               monaco (monaco/editor.create el
                                            (clj->js {:tabSize 2
                                                      :language "clojure"
                                                      :scrollBeyondLastLine false
-                                                     :minimap {:enabled false}}))
+                                                     :minimap {:enabled false}
+                                                     :readOnly read-only
+                                                     :scrollbar {:alwaysConsumeMouseWheel false}}))
               
               _ (.setValue monaco text)
               on-change-editor ((.-onDidChangeModelDecorations monaco) #(update-height monaco el))
@@ -125,14 +127,14 @@
       }
      )))
 
-(defn zf-editor [path errors]
+(defn zf-editor [path errors read-only]
   (let [data (rf/subscribe [::ed-sub-dynamic path])]
     (fn []
       (let [text (-> @data
                        (pp/write :pretty true :right-margin 60)
                        with-out-str
                        (str/replace "\\n" "\n"))]
-        [zf-editor-inner {:text text :path path :errors errors}])
+        [zf-editor-inner {:text text :path path :errors errors :read-only read-only}])
       )
     )
   )
@@ -148,10 +150,4 @@
   
 
   
-  (def path [:body :status])
-  
- 
-  
-  
-  
-  )
+  (def path [:body :status]))
