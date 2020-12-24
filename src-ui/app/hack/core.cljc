@@ -169,6 +169,7 @@
                      first
                      (str/split " ")
                      first
+                     str/lower-case
                      keyword)
           uri (-> content
                   (str/split "\n")
@@ -181,10 +182,9 @@
       (cond-> {:uri (str (:url config) uri)
                :method method
                :format "json"}
-        (> (count body) 1)
+        (#{:post :put :patch} method)
         (assoc :body (interop/from-yaml (last body)))
         ))
-    
     :else
     (throw (ex-info "no such step type" {}))))
 
