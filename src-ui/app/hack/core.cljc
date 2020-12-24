@@ -284,30 +284,26 @@
   (let [show? (zrf/ratom true)]
     (fn [step]
       (let [is-ok (= (:status step) "ok")
-            type (step-type step)
-            class (if is-ok
-                    (c [:pl 2] [:border :green-400] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])
-                    (c [:pl 2] [:border :red-400] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0]))]
-        [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
-         (when (:status step)
-           [:<>
-            [:div
-             [:div (when is-ok [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")])]]
-            [:div {:class class}
-             (if @show?
-               [:pre (interop/to-yaml (get step :result))]
-               #_(cond
-                 (= "http" type)
-                 [:pre (interop/to-yaml (get step :result))]
-                 (= "sql" type)
-                 [render-sql-result-table (:result step)]
-                 :else
-                 [:div "Some result from aidbox"]
-                 )
-               [:pre "..."])
+            type (step-type step)]
+        (when (:result step)
+          [:<>
+           [:div
+            [:div (when (:result step) [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")])]]
+           [:div {:class (if is-ok (c [:border-l :green-400]) (c [:border-l :red-400]))}
+            (if @show?
+              [:pre (interop/to-yaml (get step :result))]
+              #_(cond
+                  (= "http" type)
+                  [:pre (interop/to-yaml (get step :result))]
+                  (= "sql" type)
+                  [render-sql-result-table (:result step)]
+                  :else
+                  [:div "Some result from aidbox"]
+                  )
+              [:pre "..."])
 
 
-             ]])]))))
+            ]])))))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
@@ -324,42 +320,50 @@
 
 
 (zrf/defview view [stresty-case steps]
-  [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:w 300] [:p 2] {:grid-template-columns "1fr 7fr"})}
-   [:div "wow"]
+  [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:p 2] {:grid-template-columns "1fr 7fr"})}
+   [:div
+    [:h1 {:class (c :text-lg)} "Researcher's Console"]]
    [:div
     [config-view]
 
     [:div {:class (c [:p 2])}
      [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :request :last])}]]
 
-    (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
-      (if-let [step (get steps step-id)]
-        ^{:key step-id}
-        [:div
-         [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
-          [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])}
-           [:div (step-type step)]
-           [:div
-            [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
+    (let [left-css (c :font-light [:p 1] [:text :gray-600] [:text-right])
+          right-css (c [:pl 2] [:border-l :gray-600])]
+      (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
+        (if-let [step (get steps step-id)]
+          ^{:key step-id}
           [:div
-           {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
-           [render-step step]]]
-         (when (:result step)
-           [render-result step])
-         [:div {:class (c [:ml "32.5px"] [:mb 1])}
-          [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
-                 :on-click #(rf/dispatch [create-step :request idx])
-                 :class (c
-                         :inline-block
-                         :cursor-pointer
+           [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
+            [:div {:class left-css}]
+            [:div {:class right-css} "comment"]
+            [:div {:class left-css}
+             [:div (step-type step)]
+             [:div
+              [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
+            [:div
+             {:class right-css}
+             [render-step step]]
+            #_[:div {:class left-css}]
+            #_[:div {:class right-css}]
+            (when (:result step)
+              [render-result step])]
+
+           [:div {:class (c [:ml "32.5px"] [:mb 1])}
+            [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
+                   :on-click #(rf/dispatch [create-step :request idx])
+                   :class (c
+                           :inline-block
+                           :cursor-pointer
                            [:hover
                             [:text :green-500]]
                            [:active
                             [:text :blue-500]]
                            {:stroke-width 1 :stroke-linecap "round"})}
-           [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
-           [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]]
-        [:div "loading..."]))]])
+             [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
+             [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]]
+          [:div "loading..."])))]])
 
 
 

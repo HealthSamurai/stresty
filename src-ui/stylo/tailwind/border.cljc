@@ -71,11 +71,23 @@
 ;; TODO: add colors
 (defmethod rule :border-t
   ([_] (rule :border-t 1))
-  ([_ x] [[:& {:border-top-width (as-unit x :px)}]]))
+  ([_ & props]
+   [[:& (->> props
+             (reduce (fn [acc x]
+                       (if (int? x)
+                         (assoc acc :border-top-width (as-unit x :px))
+                         (assoc acc :border-color (with-alpha (colors x) :--border-opacity) :--border-opacity 1)))
+                     {:border-top-width (as-unit 1 :px)}))]]))
 
 (defmethod rule :border-r
   ([_] (rule :border-r 1))
-  ([_ x] [[:& {:border-right-width (as-unit x :px)}]]))
+  ([_ & props]
+   [[:& (->> props
+             (reduce (fn [acc x]
+                       (if (int? x)
+                         (assoc acc :border-right-width (as-unit x :px))
+                         (assoc acc :border-color (with-alpha (colors x) :--border-opacity) :--border-opacity 1)))
+                     {:border-right-width (as-unit 1 :px)}))]]))
 
 (defmethod rule :border-b
   ([_] (rule :border-b 1))
@@ -89,7 +101,13 @@
 
 (defmethod rule :border-l
   ([_] (rule :border-l 1))
-  ([_ x] [[:& {:border-left-width (as-unit x :px)}]]))
+  ([_ & props]
+   [[:& (->> props
+             (reduce (fn [acc x]
+                       (if (int? x)
+                         (assoc acc :border-left-width (as-unit x :px))
+                         (assoc acc :border-color (with-alpha (colors x) :--border-opacity) :--border-opacity 1)))
+                     {:border-left-width (as-unit 1 :px)}))]]))
 
 
 ;; https://tailwindcss.com/docs/border-opacity/#app
