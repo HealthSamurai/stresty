@@ -19,3 +19,11 @@
   #?(:cljs (if inline
              (js/JSON.stringify (clj->js x :keyword-fn stringify-key-preserve-ns))
              (js/JSON.stringify (clj->js x :keyword-fn stringify-key-preserve-ns) nil " "))))
+
+(defn to-pretty-edn [x]
+  (with-out-str #?(:cljs (cljs.pprint/pprint x)
+                   :clj (clojure.pprint/pprint x))))
+
+
+
+

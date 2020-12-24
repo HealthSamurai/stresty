@@ -285,22 +285,57 @@
                 ]) result)]])))
 
 (defn render-result [step]
-  (let [show? (zrf/ratom true)]
+  (let [show? (zrf/ratom true)
+        render-type (zrf/ratom nil)]
     (fn [step]
       (let [is-ok (= (:status step) "ok")
-            type (step-type step)]
+            type (step-type step)
+            result (:result step)
+            allowed-render-types (cond->> [:yaml :json :edn]
+                                   (and (= type "sql")
+                                        (sequential? result))
+                                   (cons :table))]
+        (if (not @render-type)
+          (reset! render-type (first allowed-render-types))
+          (if (-> allowed-render-types
+                  set
+                  (contains? @render-type)
+                  not)
+            (reset! render-type (first allowed-render-types)))) 
         (when (:result step)
-          [:<>
-           [:div
-            [:div (when (:result step) [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")])]]
+          [:<>           
+           [:div (when (:result step)
+                   [:div {:class (c :flex :flex-col [:space-y 4] :text-right [:pr 1] [:text :gray-600] :font-light)}
+                    [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")]
+                    (when @show?
+                      [:div {:class (c :flex :flex-col)}
+                       (for [r allowed-render-types]
+                         ^{:key (str (:id step) "-" (name r))}
+                         [:a {:class [(c :cursor-pointer)
+                                      (when (= @render-type r)
+                                        (c :underline)
+                                        )]
+                              :on-click (fn [] (reset! render-type r))} (name r)]
+                         )
+                       ])
+                    ])]
+           
            [:div {:class (if is-ok (c [:border-l :green-400]) (c [:border-l :red-400]))}
             (if @show?
-              (cond
-                (= "sql" type)
+              (case @render-type
+                :table
                 [render-sql-result-table step]
-                :else
-                [:pre (interop/to-yaml (get step :result))])
-              [:pre "..."])]])))))
+                :yaml
+                [:pre (interop/to-yaml result)]
+                :json
+                [:pre (interop/to-json result)]
+                :edn
+                [:pre (interop/to-pretty-edn result)]
+                )
+              [:pre "..."])
+
+
+            ]])))))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
