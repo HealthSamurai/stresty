@@ -10,14 +10,14 @@
   )
 
 
-(zrf/defx change-value
-  [{db :db} [_ path value]]
-  (let [old-value (get-in db path)
-        edn-value (cljs.reader/read-string value)
-        db* (cond-> db
-              (not= old-value edn-value)
-              (assoc-in path edn-value))]
-   {:db db*}))
+;; (zrf/defx change-value
+;;   [{db :db} [_ path value]]
+;;   (let [old-value (get-in db path)
+;;         edn-value (cljs.reader/read-string value)
+;;         db* (cond-> db
+;;               (not= old-value edn-value)
+;;               (assoc-in path edn-value))]
+;;    {:db db*}))
 
 (defn iobj? [x]
   #?(:clj (instance? clojure.lang.IObj x)
@@ -72,37 +72,38 @@
 
 
 (defn zf-editor []
-  (let []
-    (r/create-class
-     {:component-did-mount
-      (fn [this]
-        (let [el (dom/dom-node this)
-              {:keys [on-change ctrl-enter value opts]} (r/props this)
-              cm (js/CodeMirror.
-                  el
-                  #js {:lineNumbers true
-                       :mode "clojure"
-                       :value value
-                       :lineWrapping true
-                       :theme "neo"
-                       })]                                        
-          (.setSize cm "100%" "100%")
-          (when (get opts "extraKeys")
-            (.setOption cm "extraKeys" (clj->js (get opts "extraKeys"))))
-          ;; (.setOption cm "extraKeys" {"Ctrl-Enter" ctrl-enter})
-          (.on cm "change"
-               (fn [] (on-change (.getValue cm))))))
+  #?(:cljs
+     (let []
+       (r/create-class
+        {:component-did-mount
+         (fn [this]
+           (let [el (dom/dom-node this)
+                 {:keys [on-change ctrl-enter value opts]} (r/props this)
+                 cm (js/CodeMirror.
+                     el
+                     #js {:lineNumbers true
+                          :mode "clojure"
+                          :value value
+                          :lineWrapping true
+                          :theme "neo"
+                          })]
+             (.setSize cm "100%" "100%")
+             (when (get opts "extraKeys")
+               (.setOption cm "extraKeys" (clj->js (get opts "extraKeys"))))
+             ;; (.setOption cm "extraKeys" {"Ctrl-Enter" ctrl-enter})
+             (.on cm "change"
+                  (fn [] (on-change (.getValue cm))))))
 
-      :component-did-update
-      (fn [this old-argv]
-        
-        )
+         :component-did-update
+         (fn [this old-argv]
 
-      :reagent-render
-      (fn []
-        [:div {:class (c :h-auto)}])
-      }
-  )))
+           )
+
+         :reagent-render
+         (fn []
+           [:div {:class (c :h-auto)}])
+         }
+        ))))
 
 (comment
   (def errors [{:path [:status] :but 308 :expected 200}])
