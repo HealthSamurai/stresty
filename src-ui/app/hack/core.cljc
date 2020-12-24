@@ -49,13 +49,19 @@
 (defn step-type [step]
   (cond
     (= "request" (:type step))
-    (if (contains?
-         #{"GET" "HEAD" "POST" "PUT" "DELETE" "CONNECT" "OPTIONS" "TRACE" "PATCH"}
-         (-> (or (:request step) "")
-             str/trim
-             (str/split #" " 2)
-             first
-             str/upper-case))
+    (if (and (contains?
+              #{"GET" "HEAD" "POST" "PUT" "DELETE" "CONNECT" "OPTIONS" "TRACE" "PATCH"}
+              (-> (or (:request step) "")
+                  str/trim
+                  (str/split #" " 2)
+                  first
+                  str/upper-case))
+             (== 2 (-> (or (:request step) "")
+                     str/trim
+                     (str/split #"\n")
+                     first
+                     (str/split #" ")
+                     count)))
       "http"
       "sql")
 
