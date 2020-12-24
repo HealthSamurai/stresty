@@ -39,13 +39,16 @@
                   :body setup-data
                   :path [::db :config-resp]}}))
 
+(zrf/defx get-steps-success [{db :db} [_ {data :data :as resp}]]
+  {:db (assoc-in db [::db :steps] (reduce (fn [steps step] (assoc steps (:id step) step)) {} data))})
+
 (zrf/defx get-steps [{db :db} _]
   {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep")
                 :params {:.case.id (get-in db [::db :id])}
                 :format "json"
                 :unbundle true
                 :headers {:content-type "application/json"}
-                :path [::db :steps]}})
+                :success {:event get-steps-success}}})
 
 (zrf/defx create-case [{db :db} _]
   {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
@@ -86,36 +89,95 @@
 
 
 
+(zrf/defx create-step-success [{db :db} [_ {idx :idx step :data}]]
+  (let [case (update (get-in db [::db :case :data]) :steps conj {:id (:id step) :resourceType "StrestyStep"})]
+    {:db (-> db
+             (assoc-in [::db :steps (:id step)] step)
+             (assoc-in [::db :case :data] case))
+     :http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
+                  :format "json"
+                  :method "put"
+                  :body case}}))
 
 (zrf/defx create-step [{db :db} [_ idx]]
-  (if (= :last idx)
-    {:db (update-in db [::db :steps :data] conj {:type "sql"
-                                                 :sql ""})}))
+  {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep")
+                :method "post"
+                :format "json"
+                :headers {:content-type "application/json"}
+                :body {:case {:id (get-in db [::db :id]) :resourceType "StrestyCase"}
+                       :type "sql"
+                       :sql ""}
+                :success {:event create-step-success
+                          :idx idx}}})
 
 
 (zrf/defs steps [db]
-  (get-in db [::db :steps :data]))
+  (get-in db [::db :steps]))
+
+(zrf/defs stresty-case [db]
+  (get-in db [::db :case :data]))
+
+(zrf/defx update-step-value [{db :db} [_ step-id field value]]
+  {:db (assoc-in db [::db :steps step-id field] value)})
 
 
-(zrf/defx update-step-value [{db :db} [_ step-idx field value]]
-  (prn (type (get-in db [::db :steps :data])))
-  {:db (assoc-in db [::db :steps :data step-idx field] value)})
+(defn get-http-fetch-for-step [config step]
 
-(zrf/defview view [steps]
+  (cond
+    (= "sql" (:type step))
+    {:uri (str (:url config) "/$sql")
+     :method "post"
+     :format "json"
+     :body [(:sql step)]}
+
+    :else
+    (throw (ex-info "no such step type" {}))))
+
+(zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data}]]
+  (let [step (-> (get-in db [::db :steps step-id])
+                 (assoc-in [:status] status)
+                 (assoc-in [:result] data))]
+    {:db (assoc-in db [::db :steps step-id] step)
+     :http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep/" step-id)
+                  :method "put"
+                  :format "json"
+                  :body (dissoc step :result)}}))
+
+
+(zrf/defx exec-step [{db :db} [_ step-id]]
+  (println "exec" (get-in db [::db :steps step-id]))
+  (let [step (get-in db [::db :steps step-id])
+        http-fetch (get-http-fetch-for-step (get-in db [::db :config]) step)
+        on-complete {:event on-exec-step
+                     :step-id step-id}]
+    {:http/fetch (merge http-fetch
+                        {:success (assoc on-complete ::status "ok")
+                         :error (assoc on-complete ::status "error")})}))
+
+(defn render-step [step]
+  [:div
+   (str step)
+   [:div (:id step)]
+   [:div (:sql step)]
+   [app.scenario.editor/zf-editor
+    {:opts {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}
+     :on-change #(rf/dispatch [update-step-value (:id step) :sql %])
+     :value (:sql step)}]])
+
+
+(zrf/defview view [stresty-case steps]
   [:<>
    [config-view]
-
 
    [:div {:class (c [:p 2])}
     [:input {:type "button" :value "Add" :on-click #(rf/dispatch [create-step :last])}]]
 
-   (for [[idx step] (map-indexed (fn [idx step] [idx step])  steps)]
-     [:div
-      (:type step)
-      [app.scenario.editor/zf-editor {:on-change #(rf/dispatch [update-step-value idx :sql %]) :value (:sql step)}]
-      ])
+   (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
+     ^{:key step-id}
+     (if-let [step (get steps step-id)]
+       [render-step step]
+       [:div "loading..."]))])
 
-   ])
 
 
 (pages/reg-page ctx view)

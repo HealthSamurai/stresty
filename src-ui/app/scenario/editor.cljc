@@ -77,7 +77,7 @@
      {:component-did-mount
       (fn [this]
         (let [el (dom/dom-node this)
-              {:keys [on-change value]} (r/props this)
+              {:keys [on-change ctrl-enter value opts]} (r/props this)
               cm (js/CodeMirror.
                   el
                   #js {:lineNumbers true
@@ -87,6 +87,9 @@
                        :theme "neo"
                        })]                                        
           (.setSize cm "100%" "100%")
+          (when (get opts "extraKeys")
+            (.setOption cm "extraKeys" (clj->js (get opts "extraKeys"))))
+          ;; (.setOption cm "extraKeys" {"Ctrl-Enter" ctrl-enter})
           (.on cm "change"
                (fn [] (on-change (.getValue cm))))))
 
