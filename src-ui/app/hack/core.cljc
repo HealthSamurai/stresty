@@ -211,17 +211,10 @@
                          :error (assoc on-complete ::status "error")})}))
 
 (defn render-step [step]
-  [:div
-   (let [content (cond
-                   (= "sql" (:type step))
-                   :sql
-                   (= "http" (:type step))
-                   (:http step)
-                   )]
-     ^{:key (:id step)}
-     [app.hack.codemirror/input
-      [::db :steps (:id step) (keyword (:type step))]
-      {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])])
+  ^{:key (:id step)}
+  [app.hack.codemirror/input
+   [::db :steps (:id step) (keyword (:type step))]
+   {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])
 
 (defn render-result [step]
   (let [show? (zrf/ratom true)]
@@ -260,7 +253,6 @@
    [:div
     [config-view]
 
-
     [:div {:class (c [:p 2])}
      [:input {:type "button" :value "Add sql" :on-click #(rf/dispatch [create-step :sql :last])}]]
     [:div {:class (c [:p 2])}
@@ -277,24 +269,22 @@
             [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
           [:div
            {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
-           [render-step step]]
-          
-          
-          ]
+           [render-step step]]]
          (if (:result step)
            [render-result step])
-         [:div {:class (c [:ml "32.5px"])}
+         [:div {:class (c [:ml "32.5px"] [:mb 1])}
           [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
                  :on-click #(rf/dispatch [create-step :http idx])
-                 :class (c :cursor-pointer
+                 :class (c
+                         :inline-block
+                         :cursor-pointer
                            [:hover
                             [:text :green-500]]
                            [:active
                             [:text :blue-500]]
                            {:stroke-width 1 :stroke-linecap "round"})}
            [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
-           [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]
-           ]]]
+           [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]]
         [:div "loading..."]))]])
 
 
