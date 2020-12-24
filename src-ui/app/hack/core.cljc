@@ -178,10 +178,9 @@
           body (-> content
                    (str/split "\n\n"))
           ]
-      (println "BODY:\n" (interop/from-yaml (last body)))
-      (cond-> {:uri (str (:uri config) uri)
+      (cond-> {:uri (str (:url config) uri)
                :method method
-               :format "yaml"}
+               :format "json"}
         (>= (count body) 1)
         (assoc :body (interop/from-yaml (last body)))
         ))
@@ -190,6 +189,7 @@
     (throw (ex-info "no such step type" {}))))
 
 (zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data}]]
+  (println "DATA: " data)
   (let [step (-> (get-in db [::db :steps step-id])
                  (assoc-in [:status] status)
                  (assoc-in [:result] data))]
@@ -225,6 +225,24 @@
       {:opts {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}
        :on-change #(rf/dispatch [update-step-value (:id step) (keyword (:type step)) %])
        :value content}])])
+
+(defn render-result [step]
+  (let [is-ok (= (:status step) "ok")
+        class (if is-ok
+                (c [:pl 2] [:border :green-400] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])
+                (c [:pl 2] [:border :red-400] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0]))]
+    [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
+     [:div ""]
+     [:div {:class class}
+      
+      (if is-ok
+        [:div (interop/to-yaml (get step :result))]
+        [:div (get-in step [:result :text :div])]
+        )
+      
+      ]])
+  )
+
 
 
 
@@ -264,7 +282,13 @@
             [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
           [:div
            {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
-           [render-step step]]]
+           [render-step step]]
+          
+          
+          ]
+         (if (:result step)
+           [render-result step]
+           )
          [:div {:class (c [:ml "32.5px"])}
           [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
                  :on-click #(rf/dispatch [create-step :http idx])
