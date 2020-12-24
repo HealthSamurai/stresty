@@ -178,12 +178,12 @@
           body (-> content
                    (str/split "\n\n"))
           ]
-      (println "BODY" (interop/from-yaml "id: new-body"))
+      (println "BODY:\n" (interop/from-yaml (last body)))
       (cond-> {:uri (str (:uri config) uri)
                :method method
                :format "yaml"}
         (>= (count body) 1)
-        (assoc :body (interop/from-yaml "id: new-body"))
+        (assoc :body (interop/from-yaml (last body)))
         ))
     
     :else
