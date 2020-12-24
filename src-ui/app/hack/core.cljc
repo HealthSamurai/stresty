@@ -262,23 +262,30 @@
    {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])
 
 
-
-(defn render-sql-result-table [result]
-  (let [ths (keys (first result))
-        style (c [:border :black] [:p 2])]
-    [:table {:class [(c :w-full) style] }
-     [:thead
-      (map (fn [e] [:th {:class style}
-                    e]) ths)
-      ]
-     [:tbody
-      (map (fn [e] [:tr
-                    (map (fn [e] [:td {:class style}
-                                  (if (or (seq? e) (coll? e))
-                                    [:pre (interop/to-yaml e)]
-                                    e)
-                                  ]) (vals e))
-                    ]) result)]]))
+(defn render-sql-result-table [step]
+  (when (vector? (:result step))
+    (let [{:keys [step-id result]} step
+          ths (keys (first result))
+          style (c [:border :black] [:p 2])]
+      [:table {:class [(c :w-full :border-collapse) style] }
+       [:thead
+        [:tr 
+         (map-indexed (fn [i e]
+                        ^{:key (str step-id "-th-" i)}
+                        [:th {:class style} e]) ths)]
+        ]
+       [:tbody
+        (map-indexed (fn [idx e]
+               ^{:key (str step-id "-tr-" idx)}
+               [:tr 
+                (map-indexed (fn [idx-td e]
+                       ^{:key (str step-id "-tr-" idx "-td-" idx-td)}
+                       [:td {:class style}
+                              (if (or (seq? e) (coll? e))
+                                [:pre (interop/to-yaml e)]
+                                e)
+                              ]) (vals e))
+                ]) result)]])))
 
 (defn render-result [step]
   (let [show? (zrf/ratom true)]
@@ -291,15 +298,12 @@
             [:div (when (:result step) [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")])]]
            [:div {:class (if is-ok (c [:border-l :green-400]) (c [:border-l :red-400]))}
             (if @show?
-              [:pre (interop/to-yaml (get step :result))]
-              #_(cond
-                  (= "http" type)
-                  [:pre (interop/to-yaml (get step :result))]
-                  (= "sql" type)
-                  [render-sql-result-table (:result step)]
-                  :else
-                  [:div "Some result from aidbox"]
-                  )
+              (cond
+                (= "sql" type)
+                [render-sql-result-table step]
+                :else
+                [:pre (interop/to-yaml (get step :result))]
+                )
               [:pre "..."])
 
 
