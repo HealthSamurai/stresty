@@ -236,7 +236,6 @@
     (throw (ex-info "no such step type" {}))))
 
 (zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data}]]
-  (println "DATA: " data)
   (let [step (-> (get-in db [::db :steps step-id])
                  (assoc-in [:status] status)
                  (assoc-in [:result] data))]
@@ -248,7 +247,6 @@
 
 
 (zrf/defx exec-step [{db :db} [_ step-id]]
-  (println "exec" (get-in db [::db :steps step-id]))
   (let [step (get-in db [::db :steps step-id])
         http-fetch (get-http-fetch-for-step (get-in db [::db :config]) step)
         _ (prn "http" http-fetch)
@@ -290,6 +288,7 @@
   )
 
 (defn render-result [step]
+  (prn "render" step)
   (let [show? (zrf/ratom true)
         {:keys [type result]} step]
     (println "Result: " result)
@@ -343,8 +342,8 @@
      [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :request :last])}]]
 
     (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
-      ^{:key step-id}
       (if-let [step (get steps step-id)]
+        ^{:key step-id}
         [:<>
          [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
           [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])}
@@ -354,7 +353,9 @@
           [:div
            {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
            [render-step step]]]
-         (if (:result step)
+         (when (:result step)
+           (println ">>>>>>>>>>>>>>")
+           (prn (:result step))
            [render-result step])
          [:div {:class (c [:ml "32.5px"] [:mb 1])}
           [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"

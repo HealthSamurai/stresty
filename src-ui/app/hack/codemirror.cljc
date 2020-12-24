@@ -37,7 +37,6 @@
               {:reagent-render (fn [path & [attrs]]
                                  (reset! st attrs)
                                  @value ;; This code is needed to update textarea value on db update
-                                 (println "wow")
                                  [:div.zen-codemirror])
 
                :component-did-mount
