@@ -49,5 +49,5 @@
 (defn layout [content]
   [:div {:class (c :flex :items-stretch :h-screen)}
    [:style "body {padding: 0; margin: 0;}"]
-   [quick-menu]
-   [:div {:class (c :flex-1 :overflow-y-auto)} content]])
+   [:div {:class (c :flex-1 :overflow-y-auto)}
+    content]])

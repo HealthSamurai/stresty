@@ -200,19 +200,24 @@
 
 
 (zrf/defview view [stresty-case steps]
-  [:<>
-   [config-view]
+  [:div {:class (c [:grid] [:bg :gray-200] [:m-auto] [:w 300] [:p 2] {:grid-template-columns "1fr 7fr"})}
+   [:div "wow"]
+   [:div
+    [config-view]
 
-   [:div {:class (c [:p 2])}
-    [:input {:type "button" :value "Add sql" :on-click #(rf/dispatch [create-step :last])}]]
-   [:div {:class (c [:p 2])}
-    [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :http :last])}]]
 
-   (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
-     ^{:key step-id}
-     (if-let [step (get steps step-id)]
-       [render-step step]
-       [:div "loading..."]))])
+    [:div {:class (c [:p 2])}
+     [:input {:type "button" :value "Add sql" :on-click #(rf/dispatch [create-step :last])}]]
+    [:div {:class (c [:p 2])}
+     [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :http :last])}]]
+
+    (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
+      ^{:key step-id}
+      (if-let [step (get steps step-id)]
+        [:div
+         {:class (c [:border-l])}
+         [render-step step]]
+        [:div "loading..."]))]])
 
 
 
