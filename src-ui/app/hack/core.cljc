@@ -11,7 +11,7 @@
 (zrf/defs get-value [db [_ path]]
   (get-in db path))
 
-(zrf/defd set-value [db [path v]]
+(zrf/defd set-value [db [_ path v]]
   (assoc-in db path v))
 
 (zrf/defx ctx
@@ -222,7 +222,8 @@
                    )]
      [app.hack.codemirror/input
       [::db :steps (:id step) (keyword (:type step))]
-      {:opts {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}
+      {:step-id (:id step)
+       :opts {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}
        :on-change #(rf/dispatch [update-step-value (:id step) (keyword (:type step)) %])
        :value content}])])
 

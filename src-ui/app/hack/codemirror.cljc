@@ -54,6 +54,7 @@
 
          :component-did-update
          (fn [this [_ old-props]]
+           (prn ">>>" old-props)
            (let [*cm @cm
                  vvalue (or @value "")]
 
