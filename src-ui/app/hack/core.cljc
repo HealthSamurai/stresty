@@ -90,8 +90,31 @@
 
 
 
+(comment
+
+  (let [x '(1 2 3 4 5 6)]
+    (into
+     (into (vec (take 2 x)) [0])
+     (drop 2 x)
+     ))
+
+
+  )
+
+
 (zrf/defx create-step-success [{db :db} [_ {idx :idx step :data}]]
-  (let [case (update (get-in db [::db :case :data]) :steps conj {:id (:id step) :resourceType "StrestyStep"})]
+  (let [case
+        (if (= :last idx)
+          (update (get-in db [::db :case :data]) :steps conj {:id (:id step) :resourceType "StrestyStep"})
+          (update (get-in db [::db :case :data]) :steps (fn [steps]
+                                                          (let [position (inc idx)]
+                                                            (println "insert into" position)
+                                                            (prn (take position steps))
+                                                            (into
+                                                             (into
+                                                              (vec (take position steps))
+                                                              [{:id (:id step) :resourceType "StrestyStep"}])
+                                                             (drop position steps))))))]
     {:db (-> db
              (assoc-in [::db :steps (:id step)] step)
              (assoc-in [::db :case :data] case))
@@ -213,11 +236,24 @@
     (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
       ^{:key step-id}
       (if-let [step (get steps step-id)]
-        [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
-         [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])} (:type step)]
-         [:div
-          {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
-          [render-step step]]]
+        [:<>
+         [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
+          [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])} (:type step)]
+          [:div
+           {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
+           [render-step step]]]
+         [:div {:class (c [:ml "32.5px"])}
+          [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
+                 :on-click #(rf/dispatch [create-step :http idx])
+                 :class (c :cursor-pointer
+                           [:hover
+                            [:text :green-500]]
+                           [:active
+                            [:text :blue-500]]
+                           {:stroke-width 1 :stroke-linecap "round"})}
+           [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
+           [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]
+           ]]]
         [:div "loading..."]))]])
 
 
