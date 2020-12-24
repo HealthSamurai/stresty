@@ -199,7 +199,7 @@
 
 
 (zrf/defview view [stresty-case steps]
-  [:div {:class (c [:grid] [:bg :gray-200] [:m-auto] [:w 300] [:p 2] {:grid-template-columns "1fr 7fr"})}
+  [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:w 300] [:p 2] {:grid-template-columns "1fr 7fr"})}
    [:div "wow"]
    [:div
     [config-view]
@@ -213,9 +213,11 @@
     (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
       ^{:key step-id}
       (if-let [step (get steps step-id)]
-        [:div
-         {:class (c [:border-l])}
-         [render-step step]]
+        [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
+         [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])} (:type step)]
+         [:div
+          {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
+          [render-step step]]]
         [:div "loading..."]))]])
 
 
