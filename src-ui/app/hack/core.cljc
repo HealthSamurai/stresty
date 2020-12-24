@@ -222,10 +222,7 @@
                    )]
      [app.hack.codemirror/input
       [::db :steps (:id step) (keyword (:type step))]
-      {:step-id (:id step)
-       :opts {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}
-       :on-change #(rf/dispatch [update-step-value (:id step) (keyword (:type step)) %])
-       :value content}])])
+      {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])])
 
 (defn render-result [step]
   (let [is-ok (= (:status step) "ok")

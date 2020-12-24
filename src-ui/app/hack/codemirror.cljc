@@ -34,33 +34,32 @@
         ]
     #?(:cljs
        (r/create-class
-        {:reagent-render (fn [path & [attrs]]
-                           (reset! st attrs)
-                           @value ;; This code is needed to update textarea value on db update
-                           (println "wow")
-                           [:div.zen-codemirror])
+              {:reagent-render (fn [path & [attrs]]
+                                 (reset! st attrs)
+                                 @value ;; This code is needed to update textarea value on db update
+                                 (println "wow")
+                                 [:div.zen-codemirror])
 
-         :component-did-mount
-         (fn [this]
-           (let [*cm (codemirror (dom/dom-node this) cm-opts)
-                 sv (aget *cm "setValue")
-                 gv (aget *cm "getValue")
-                 on (aget *cm "on")]
-             (reset! cm *cm)
-             (.call sv *cm (.toString (or @value (get cm-opts "value") "")))
-             ;; (.setValue *cm (.toString (or @value "")))
-             (.call on *cm "change"
-                    (fn [& _] (rf/dispatch [:app.hack.core/set-value path (.call gv *cm)])))))
+               :component-did-mount
+               (fn [this]
+                 (let [*cm (codemirror (dom/dom-node this) cm-opts)
+                       sv (aget *cm "setValue")
+                       gv (aget *cm "getValue")
+                       on (aget *cm "on")]
+                   (reset! cm *cm)
+                   (.call sv *cm (.toString (or @value (get cm-opts "value") "")))
+                   ;; (.setValue *cm (.toString (or @value "")))
+                   (.call on *cm "change"
+                          (fn [& _] (rf/dispatch [:app.hack.core/set-value path (.call gv *cm)])))))
 
-         :component-did-update
-         (fn [this [_ old-props]]
-           (prn ">>>" old-props)
-           (let [*cm @cm
-                 vvalue (or @value "")]
+               :component-did-update
+               (fn [this [_ old-props]]
+                 (let [*cm @cm
+                       vvalue (or @value "")]
 
-             (if-not (= vvalue (.call (aget *cm "getValue") *cm))
-               (.setOption ^js/CodeMirror *cm "value" vvalue))
+                   (if-not (= vvalue (.call (aget *cm "getValue") *cm))
+                     (.setOption ^js/CodeMirror *cm "value" vvalue))
 
-             (doseq [[k v] @st]
-               (if (not= k "extraKeys")
-                 (.setOption ^js/CodeMirror *cm k v)))))}))))
+                   (doseq [[k v] @st]
+                     (if (not= k "extraKeys")
+                       (.setOption ^js/CodeMirror *cm k v)))))}))))
