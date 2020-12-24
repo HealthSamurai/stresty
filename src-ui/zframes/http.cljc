@@ -109,6 +109,5 @@
                                          (zrf/dispatch [http-ok opts resp doc])
                                          (zrf/dispatch [http-error opts resp doc]))))))))
                (.catch (fn [error]
-                         (println "wwowoowo")
                          (zrf/dispatch [(get-in opts [:error :event])])
                          (zrf/dispatch [fetch-error opts error])))))))))

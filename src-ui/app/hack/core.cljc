@@ -212,8 +212,6 @@
 
 (defn render-step [step]
   [:div
-   [:div (:id step)]
-   [:div (:type step)]
    (let [content (cond
                    (= "sql" (:type step))
                    :sql
@@ -233,16 +231,9 @@
     [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
      [:div ""]
      [:div {:class class}
-      
       (if is-ok
         [:pre (interop/to-yaml (get step :result))]
-        [:div (get-in step [:result :text :div])]
-        )
-      
-      ]])
-  )
-
-
+        [:div (get-in step [:result :text :div])])]]))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
