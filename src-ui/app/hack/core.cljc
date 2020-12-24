@@ -295,6 +295,7 @@
     (println "Result: " result)
     (fn []
       (let [is-ok (= (:status step) "ok")
+            type (step-type step)
             class (if is-ok
                     (c [:pl 2] [:border :green-400] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])
                     (c [:pl 2] [:border :red-400] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0]))]
