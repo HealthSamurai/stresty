@@ -298,12 +298,8 @@
                 (= "sql" type)
                 [render-sql-result-table step]
                 :else
-                [:pre (interop/to-yaml (get step :result))]
-                )
-              [:pre "..."])
-
-
-            ]])))))
+                [:pre (interop/to-yaml (get step :result))])
+              [:pre "..."])]])))))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
