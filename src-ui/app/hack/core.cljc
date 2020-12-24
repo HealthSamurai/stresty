@@ -184,7 +184,6 @@
 
 (defn render-step [step]
   [:div
-   
    [:div (:id step)]
    [:div (:type step)]
    (let [content (cond
@@ -207,7 +206,7 @@
 
 
     [:div {:class (c [:p 2])}
-     [:input {:type "button" :value "Add sql" :on-click #(rf/dispatch [create-step :last])}]]
+     [:input {:type "button" :value "Add sql" :on-click #(rf/dispatch [create-step :sql :last])}]]
     [:div {:class (c [:p 2])}
      [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :http :last])}]]
 
