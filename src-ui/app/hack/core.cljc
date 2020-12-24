@@ -4,7 +4,8 @@
             [re-frame.core :as rf]
             [zframes.re-frame :as zrf]
             [app.scenario.editor]
-            ))
+
+            [clojure.string :as str]))
 
 
 (zrf/defx ctx
@@ -99,16 +100,20 @@
                   :method "put"
                   :body case}}))
 
-(zrf/defx create-step [{db :db} [_ idx]]
-  {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep")
-                :method "post"
-                :format "json"
-                :headers {:content-type "application/json"}
-                :body {:case {:id (get-in db [::db :id]) :resourceType "StrestyCase"}
-                       :type "sql"
-                       :sql ""}
-                :success {:event create-step-success
-                          :idx idx}}})
+(zrf/defx create-step [{db :db} [_ step-type idx]]
+  (let [step (cond-> {:case {:id (get-in db [::db :id]) :resourceType "StrestyCase"}}
+               (= step-type :sql)
+               (assoc :type "sql" :sql "")
+               (= step-type :http)
+               (assoc :type "http" :http "")
+               )]
+    {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep")
+                  :method "post"
+                  :format "json"
+                  :headers {:content-type "application/json"}
+                  :body step
+                  :success {:event create-step-success
+                            :idx idx}}}))
 
 
 (zrf/defs steps [db]
@@ -129,7 +134,30 @@
      :method "post"
      :format "json"
      :body [(:sql step)]}
-
+    (= "http" (:type step))
+    (let [content (:http step)
+          method (-> content
+                     (str/split "\n")
+                     first
+                     (str/split " ")
+                     first
+                     keyword)
+          uri (-> content
+                  (str/split "\n")
+                  first
+                  (str/split " ")
+                  second)
+          body (-> content
+                   (str/split "\n\n"))
+          ]
+      (println (type body))
+      (cond-> {:uri (str (:uri config) uri)
+               :method method
+               :format "yaml"}
+        (>= (count body) 1)
+        (assoc-in :body (last body))
+        ))
+    
     :else
     (throw (ex-info "no such step type" {}))))
 
@@ -156,13 +184,19 @@
 
 (defn render-step [step]
   [:div
-   (str step)
+   
    [:div (:id step)]
-   [:div (:sql step)]
-   [app.scenario.editor/zf-editor
-    {:opts {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}
-     :on-change #(rf/dispatch [update-step-value (:id step) :sql %])
-     :value (:sql step)}]])
+   [:div (:type step)]
+   (let [content (cond
+                   (= "sql" (:type step))
+                   (:sql step)
+                   (= "http" (:type step))
+                   (:http step)
+                   )]
+     [app.scenario.editor/zf-editor
+      {:opts {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}
+       :on-change #(rf/dispatch [update-step-value (:id step) (keyword (:type step)) %])
+       :value content}])])
 
 
 (zrf/defview view [stresty-case steps]
@@ -170,7 +204,9 @@
    [config-view]
 
    [:div {:class (c [:p 2])}
-    [:input {:type "button" :value "Add" :on-click #(rf/dispatch [create-step :last])}]]
+    [:input {:type "button" :value "Add sql" :on-click #(rf/dispatch [create-step :last])}]]
+   [:div {:class (c [:p 2])}
+    [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :http :last])}]]
 
    (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
      ^{:key step-id}
