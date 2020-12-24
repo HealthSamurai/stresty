@@ -71,48 +71,35 @@
   (get-in db path))
 
 
-(defn zf-editor-inner []
+(defn zf-editor []
   (let []
     (r/create-class
      {:component-did-mount
       (fn [this]
         (let [el (dom/dom-node this)
-              {:keys [path errors text read-only]} (r/props this)
+              {:keys [on-change value]} (r/props this)
               cm (js/CodeMirror.
                   el
                   #js {:lineNumbers true
-                       :readOnly read-only
                        :mode "clojure"
-                       :value text
+                       :value value
                        :lineWrapping true
                        :theme "neo"
                        })]                                        
           (.setSize cm "100%" "100%")
           (.on cm "change"
-               (fn []
-                 (if-let [edn-value (cljs.reader/read-string (.getValue cm))]
-                   (rf/dispatch [::change-value path edn-value]))))))
+               (fn [] (on-change (.getValue cm))))))
+
       :component-did-update
       (fn [this old-argv]
         
         )
+
       :reagent-render
       (fn []
         [:div {:class (c :h-auto)}])
       }
   )))
-
-(defn zf-editor [path errors read-only]
-  (let [data (rf/subscribe [::ed-sub-dynamic path])]
-    (fn []
-      (let [text (-> @data
-                       (pp/write :pretty true :right-margin 60)
-                       with-out-str
-                       (str/replace "\\n" "\n"))]
-        [zf-editor-inner {:text text :path path :errors errors :read-only read-only}])
-      )
-    )
-  )
 
 (comment
   (def errors [{:path [:status] :but 308 :expected 200}])

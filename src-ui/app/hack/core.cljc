@@ -1,9 +1,10 @@
 (ns app.hack.core
   (:require [app.pages :as pages]
-                        [stylo.core :refer [c]]
-
- [re-frame.core :as rf]           [zframes.re-frame :as zrf]
-))
+            [stylo.core :refer [c]]
+            [re-frame.core :as rf]
+            [zframes.re-frame :as zrf]
+            [app.scenario.editor]
+            ))
 
 
 (zrf/defx ctx
@@ -86,17 +87,33 @@
 
 
 
-(zrf/defview view []
+(zrf/defx create-step [{db :db} [_ idx]]
+  (if (= :last idx)
+    {:db (update-in db [::db :steps :data] conj {:type "sql"
+                                                 :sql ""})}))
+
+
+(zrf/defs steps [db]
+  (get-in db [::db :steps :data]))
+
+
+(zrf/defx update-step-value [{db :db} [_ step-idx field value]]
+  (prn (type (get-in db [::db :steps :data])))
+  {:db (assoc-in db [::db :steps :data step-idx field] value)})
+
+(zrf/defview view [steps]
   [:<>
    [config-view]
 
 
    [:div {:class (c [:p 2])}
-    [:input {:type "button" :value "Add"}]]
+    [:input {:type "button" :value "Add" :on-click #(rf/dispatch [create-step :last])}]]
 
-
-
-   [:div]
+   (for [[idx step] (map-indexed (fn [idx step] [idx step])  steps)]
+     [:div
+      (:type step)
+      [app.scenario.editor/zf-editor {:on-change #(rf/dispatch [update-step-value idx :sql %]) :value (:sql step)}]
+      ])
 
    ])
 
