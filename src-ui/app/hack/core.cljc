@@ -321,6 +321,7 @@
 
 (zrf/defview view [stresty-case steps]
   [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:p 2] {:grid-template-columns "1fr 7fr"})}
+   ;; [:style ".CodeMirror {background-color: #f7fafc;}"]
    [:div
     [:h1 {:class (c :text-lg)} "Researcher's Console"]]
    [:div
@@ -330,7 +331,7 @@
      [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :request :last])}]]
 
     (let [left-css (c :font-light [:p 1] [:text :gray-600] [:text-right])
-          right-css (c [:pl 2] [:border-l :gray-600])]
+          right-css (c [:pl 8] [:border-l :gray-600])]
       (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
         (if-let [step (get steps step-id)]
           ^{:key step-id}
@@ -340,13 +341,9 @@
             [:div {:class right-css} "comment"]
             [:div {:class left-css}
              [:div (step-type step)]
-             [:div
-              [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
-            [:div
-             {:class right-css}
+             [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
+            [:div {:class [right-css (c [:p 0])]}
              [render-step step]]
-            #_[:div {:class left-css}]
-            #_[:div {:class right-css}]
             (when (:result step)
               [render-result step])]
 
