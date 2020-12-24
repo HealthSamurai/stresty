@@ -89,7 +89,6 @@
        ])])
 
 
-
 (comment
 
   (let [x '(1 2 3 4 5 6)]
@@ -173,12 +172,12 @@
           body (-> content
                    (str/split "\n\n"))
           ]
-      (println (type body))
+      (println "BODY" (interop/from-yaml "id: new-body"))
       (cond-> {:uri (str (:uri config) uri)
                :method method
                :format "yaml"}
         (>= (count body) 1)
-        (assoc-in :body (last body))
+        (interop/from-yaml "id: new-body")
         ))
     
     :else
