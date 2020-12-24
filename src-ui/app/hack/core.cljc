@@ -4,7 +4,7 @@
             [re-frame.core :as rf]
             [zframes.re-frame :as zrf]
             [app.scenario.editor]
-
+            [app.hack.interop :as interop]
             [clojure.string :as str]))
 
 

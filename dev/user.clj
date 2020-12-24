@@ -44,9 +44,7 @@
     (swap! *context assoc :ztx ztx)
 
     (zen.core/read-ns ztx 'user)
-    (zen.core/read-ns ztx 'config)
-
-    )
+    (zen.core/read-ns ztx 'config))
   
   (restart *context)
 

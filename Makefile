@@ -14,7 +14,7 @@ repl:
 	mkdir -p target/shadow/dev && mkdir -p target/stylo/dev && clj -M:nrepl:ui:build -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
 
 npm:
-	npm install && npx webpack --config webpack.config.js --mode=production
+	npm install
 
 resources/VERSION:
 	cp VERSION resources/VERSION
