@@ -14,13 +14,6 @@
 (zrf/defd set-value [db [_ path v]]
   (assoc-in db path v))
 
-(zrf/defx ctx
-  [{db :db} [_ phase params]]
-  (cond
-    (= :init phase)
-    {:db (-> db
-             (assoc-in [::db :id] (:id params))
-             (assoc-in [::db :config] {:url "https://little.aidbox.app"}))}))
 
 (zrf/defx update-config [{db :db} [_ field value]]
   {:db (assoc-in db [::db :config field] value)})
@@ -92,35 +85,31 @@
 
 
 
+
 (zrf/defs page-sub [db] (get db ::db))
 
-(zrf/defs config [db] (get-in db [::db :config]))
+(zrf/defs config [db]
+  (println "DEPRECATED: config")
+  {:url (get-in db [:zframes.routing/db :route :params :params :url])})
 
-(zrf/defview config-view [config]
+(zrf/defs aidbox-url [db]
+  (get-in db [:zframes.routing/db :route :params :params :url]))
+
+(zrf/defs aidbox-auth-header [db]
+  (get-in db [:zframes.routing/db :route :params :params :auth_header]))
+
+(zrf/defview config-view [aidbox-url aidbox-auth-header]
   [:div
-    (let [input-cls (c [:border])]
+   (let [input-cls (c [:border] [:w 50] [:ml 1] [:py 0.5] [:px 2])]
       [:div {:class (c [:p 2])}
-       [:div
-        [:span "Aidbox URL"]
-        [:input {:class [input-cls] :value (:url config) :on-change #(rf/dispatch [update-config :url (.-value (.-target %))])}]]
-       [:div
-        [:span "Auth header"]
-        [:input {:class [input-cls] :value (:auth config) :on-change #(rf/dispatch [update-config :auth (.-value (.-target %))])}]]
+       [:span
+        [:span "Aidbox URL:"]
+        [:input {:class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]]
+       [:span
+        [:span {:class (c [:ml 2])} "Auth Header:"]
+        [:input {:class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]
        [:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]
-       [:input {:class (c [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [get-or-create-case])}]
-       ])])
-
-
-(comment
-
-  (let [x '(1 2 3 4 5 6)]
-    (into
-     (into (vec (take 2 x)) [0])
-     (drop 2 x)
-     ))
-
-
-  )
+       [:input {:class (c [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [get-or-create-case])}]])])
 
 
 (zrf/defx create-step-success [{db :db} [_ {idx :idx step :data}]]
@@ -129,8 +118,6 @@
           (update (get-in db [::db :case :data]) :steps conj {:id (:id step) :resourceType "StrestyStep"})
           (update (get-in db [::db :case :data]) :steps (fn [steps]
                                                           (let [position (inc idx)]
-                                                            (println "insert into" position)
-                                                            (prn (take position steps))
                                                             (into
                                                              (into
                                                               (vec (take position steps))
@@ -165,6 +152,15 @@
 (zrf/defx update-step-value [{db :db} [_ step-id field value]]
   {:db (assoc-in db [::db :steps step-id field] value)})
 
+
+(zrf/defx ctx
+  [{db :db} [_ phase params]]
+  (cond
+    (= :init phase)
+    {:db (-> db
+             (assoc-in [::db :id] (:id params))
+             (assoc-in [::db :config] {:url "https://little.aidbox.app"}))
+     :dispatch [get-or-create-case]}))
 
 (defn get-http-fetch-for-step [config step]
   (cond
@@ -340,18 +336,17 @@
         (if-let [step (get steps step-id)]
           ^{:key step-id}
           [:div
-           [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
+           [:div {:class (c :grid [:py 1] {:grid-template-columns "70px 1fr"})}
             [:div {:class left-css}]
             [:div {:class right-css} "comment"]
             [:div {:class left-css}
              [:div (step-type step)]
-             [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
+             [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "remove"]]]
             [:div {:class [right-css (c [:p 0])]}
              [render-step step]]
             (when (:result step)
               [render-result step])]
-
-           [:div {:class (c [:ml "32.5px"] [:mb 1])}
+           [:div {:class (c [:ml "62.5px"] [:mb 1])}
             [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
                    :on-click #(rf/dispatch [create-step :request idx])
                    :class (c
@@ -364,8 +359,7 @@
                            {:stroke-width 1 :stroke-linecap "round"})}
              [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
              [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]]
+
           [:div "loading..."])))]])
-
-
 
 (pages/reg-page ctx view)
