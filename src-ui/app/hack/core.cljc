@@ -216,8 +216,35 @@
    [::db :steps (:id step) (keyword (:type step))]
    {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])
 
+
+
+
+(defn render-sql-result-table [result]
+  (let [ths (keys (first result))
+        style (c [:border :black] [:p 2])]
+    [:table {:class [(c :w-full) style] }
+     [:thead
+      (map (fn [e] [:th {:class style}
+                    e]) ths)
+      ]
+     [:tbody
+      (map (fn [e] [:tr
+                    (map (fn [e] [:td {:class style}
+                                  (if (or (seq? e) (coll? e))
+                                    [:pre (interop/to-yaml e)]
+                                    e)
+                                  ]) (vals e))
+                    ]) result)
+      ] 
+     ]
+    
+    )
+  )
+
 (defn render-result [step]
-  (let [show? (zrf/ratom true)]
+  (let [show? (zrf/ratom true)
+        {:keys [type result]} step]
+    (println "Result: " result)
     (fn []
       (let [is-ok (= (:status step) "ok")
             class (if is-ok
@@ -227,11 +254,21 @@
          (when (:status step)
            [:<>
             [:div
-             [:div [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")]]]
+             [:div (when is-ok [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")])]]
             [:div {:class class}
-             (if @show?
-               [:pre (interop/to-yaml (get step :result))]
-               [:pre "..."])]])]))))
+             (if is-ok 
+               (if @show?
+                 (cond (= "http" type)
+                       [:pre (interop/to-yaml (get step :result))]
+                       (= "sql" type)
+                       [render-sql-result-table result]
+                       :else
+                       [:div "Some result from aidbox"]
+                       )
+                 [:pre "..."])
+               [:pre (get-in step [:result :text :div])]
+      
+               )]])]))))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
