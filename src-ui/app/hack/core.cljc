@@ -220,6 +220,7 @@
                    (= "http" (:type step))
                    (:http step)
                    )]
+     ^{:key (:id step)}
      [app.hack.codemirror/input
       [::db :steps (:id step) (keyword (:type step))]
       {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])])
