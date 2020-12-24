@@ -299,13 +299,15 @@
              [:div (when is-ok [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")])]]
             [:div {:class class}
              (if @show?
-               (cond (= "http" type)
-                     [:pre (interop/to-yaml (get step :result))]
-                     (= "sql" type)
-                     [render-sql-result-table (:result step)]
-                     :else
-                     [:div "Some result from aidbox"]
-                     )
+               [:pre (interop/to-yaml (get step :result))]
+               #_(cond
+                 (= "http" type)
+                 [:pre (interop/to-yaml (get step :result))]
+                 (= "sql" type)
+                 [render-sql-result-table (:result step)]
+                 :else
+                 [:div "Some result from aidbox"]
+                 )
                [:pre "..."])
 
 
