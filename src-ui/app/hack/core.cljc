@@ -280,12 +280,7 @@
                                     [:pre (interop/to-yaml e)]
                                     e)
                                   ]) (vals e))
-                    ]) result)
-      ] 
-     ]
-    
-    )
-  )
+                    ]) result)]]))
 
 (defn render-result [step]
   (prn "render" step)
@@ -352,8 +347,6 @@
            {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
            [render-step step]]]
          (when (:result step)
-           (println ">>>>>>>>>>>>>>")
-           (prn (:result step))
            ^{:key (hash step)} [render-result step])
          [:div {:class (c [:ml "32.5px"] [:mb 1])}
           [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
