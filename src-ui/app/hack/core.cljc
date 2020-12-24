@@ -14,9 +14,16 @@
 (zrf/defd set-value [db [_ path v]]
   (assoc-in db path v))
 
+(zrf/defs config [db]
+  (println "DEPRECATED: config")
+  {:url (get-in db [:zframes.routing/db :route :params :params :url])})
 
-(zrf/defx update-config [{db :db} [_ field value]]
-  {:db (assoc-in db [::db :config field] value)})
+(zrf/defs aidbox-url [db]
+  (get-in db [:zframes.routing/db :route :params :params :url]))
+
+(zrf/defs aidbox-auth-header [db]
+  (get-in db [:zframes.routing/db :route :params :params :auth_header]))
+
 
 (def setup-data
   {:resourceType "Bundle"
@@ -31,8 +38,8 @@
                        :isOpen true}}]})
 
 (zrf/defx setup-aidbox [{db :db} _]
-  (let [config (get-in db [::db :config])]
-    {:http/fetch {:uri (str (:url config) "/")
+  (let [url (aidbox-url-sub db)]
+    {:http/fetch {:uri (str url "/")
                   :method "post"
                   :format "json"
                   :headers {:content-type "application/json"}
@@ -88,16 +95,6 @@
 
 (zrf/defs page-sub [db] (get db ::db))
 
-(zrf/defs config [db]
-  (println "DEPRECATED: config")
-  {:url (get-in db [:zframes.routing/db :route :params :params :url])})
-
-(zrf/defs aidbox-url [db]
-  (get-in db [:zframes.routing/db :route :params :params :url]))
-
-(zrf/defs aidbox-auth-header [db]
-  (get-in db [:zframes.routing/db :route :params :params :auth_header]))
-
 (zrf/defview config-view [aidbox-url aidbox-auth-header]
   [:div
    (let [input-cls (c [:border] [:w 50] [:ml 1] [:py 0.5] [:px 2])]
@@ -151,6 +148,10 @@
 
 (zrf/defx update-step-value [{db :db} [_ step-id field value]]
   {:db (assoc-in db [::db :steps step-id field] value)})
+
+;; create Entities
+;; get cases
+;; get-or-create-case
 
 
 (zrf/defx ctx
