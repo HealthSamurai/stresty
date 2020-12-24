@@ -8,7 +8,11 @@
 
 (zrf/defx ctx
   [{db :db} [_ phase params]]
-  )
+  (cond
+    (= :init phase)
+    {:db (-> db
+             (assoc-in [::db :id] (:id params))
+             (assoc-in [::db :config] {:url "https://little.aidbox.app"}))}))
 
 (zrf/defx update-config [{db :db} [_ field value]]
   {:db (assoc-in db [::db :config field] value)})
@@ -34,6 +38,32 @@
                   :body setup-data
                   :path [::db :config-resp]}}))
 
+(zrf/defx get-steps [{db :db} _]
+  {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep")
+                :params {:.case.id (get-in db [::db :id])}
+                :format "json"
+                :unbundle true
+                :headers {:content-type "application/json"}
+                :path [::db :steps]}})
+
+(zrf/defx create-case [{db :db} _]
+  {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
+                :method "put"
+                :format "json"
+                :headers {:content-type "application/json"}
+                :success {:event get-steps}
+                :body {:type "tutorial" :steps []}
+                :path [::db :case]}})
+
+(zrf/defx get-or-create-case [{db :db} _]
+  {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
+                :format "json"
+                :headers {:content-type "application/json"}
+                :error {:event create-case}
+                :success {:event get-steps}
+                :path [::db :case]}})
+
+
 
 (zrf/defs page-sub [db] (get db ::db))
 
@@ -48,16 +78,21 @@
         [:input {:class [input-cls] :value (:url config) :on-change #(rf/dispatch [update-config :url (.-value (.-target %))])}]]
        [:div
         [:span "Auth header"]
-        [:input {:class [input-cls] :value (:auth config) :on-change #(rf/dispatch [update-config :auth (.-value (.-target %))])}]
-        ]
-       [:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]])
+        [:input {:class [input-cls] :value (:auth config) :on-change #(rf/dispatch [update-config :auth (.-value (.-target %))])}]]
+       [:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]
+       [:input {:class (c [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [get-or-create-case])}]
+       ])])
 
 
-    ])
+
 
 (zrf/defview view []
   [:<>
    [config-view]
+
+
+   [:div {:class (c [:p 2])}
+    [:input {:type "button" :value "Add"}]]
 
 
 

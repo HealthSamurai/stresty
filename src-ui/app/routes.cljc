@@ -12,7 +12,7 @@
              "scenario" {:. :app.scenario.core/index
                          [:ns] {[:name] {:. :app.scenario.show/index}}}
              "config" {:. :app.config.core/index}
-             "hack" {:. :app.hack.core/ctx}
+             "hack" {[:id] {:. :app.hack.core/ctx}}
              })
 
 (defn to-query-params [params]
