@@ -46,6 +46,22 @@
                   :body setup-data
                   :path [::db :config-resp]}}))
 
+(defn step-type [step]
+  (cond
+    (= "request" (:type step))
+    (if (contains?
+         #{"GET" "HEAD" "POST" "PUT" "DELETE" "CONNECT" "OPTIONS" "TRACE" "PATCH"}
+         (-> (or (:request step) "")
+             str/trim
+             (str/split #" " 2)
+             first
+             str/upper-case))
+      "http"
+      "sql")
+
+    :else
+    (:type step)))
+
 (zrf/defx get-steps-success [{db :db} [_ {data :data :as resp}]]
   {:db (assoc-in db [::db :steps] (reduce (fn [steps step] (assoc steps (:id step) step)) {} data))})
 
@@ -129,12 +145,8 @@
                   :body case}}))
 
 (zrf/defx create-step [{db :db} [_ step-type idx]]
-  (let [step (cond-> {:case {:id (get-in db [::db :id]) :resourceType "StrestyCase"}}
-               (= step-type :sql)
-               (assoc :type "sql" :sql "")
-               (= step-type :http)
-               (assoc :type "http" :http "")
-               )]
+  (println "create step" step-type)
+  (let [step (cond-> {:case {:id (get-in db [::db :id]) :resourceType "StrestyCase"} :type (name step-type)})]
     {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep")
                   :method "post"
                   :format "json"
@@ -155,13 +167,48 @@
 
 
 (defn get-http-fetch-for-step [config step]
-
   (cond
+    (= "request" (:type step))
+    (let [t (step-type step)]
+      (cond
+        (= "sql" t)
+        {:uri (str (:url config) "/$sql")
+         :method "post"
+         :format "json"
+         :body [(:request step)]}
+
+        (= "http" t)
+        (let [content (:request step)
+              method (-> content
+                         (str/split "\n")
+                         first
+                         (str/split " ")
+                         first
+                         str/lower-case
+                         keyword)
+              uri (-> content
+                      (str/split "\n")
+                      first
+                      (str/split " ")
+                      second)
+              body (-> content
+                       (str/split "\n\n"))
+              ]
+          (cond-> {:uri (str (:url config) uri)
+                   :method method
+                   :format "json"}
+            (#{:post :put :patch} method)
+            (assoc :body (interop/from-yaml (last body)))
+            ))
+
+        ))
+
     (= "sql" (:type step))
     {:uri (str (:url config) "/$sql")
      :method "post"
      :format "json"
      :body [(:sql step)]}
+
     (= "http" (:type step))
     (let [content (:http step)
           method (-> content
@@ -204,6 +251,7 @@
   (println "exec" (get-in db [::db :steps step-id]))
   (let [step (get-in db [::db :steps step-id])
         http-fetch (get-http-fetch-for-step (get-in db [::db :config]) step)
+        _ (prn "http" http-fetch)
         on-complete {:event on-exec-step
                      :step-id step-id}]
     {:http/fetch (merge http-fetch
@@ -291,9 +339,7 @@
     [config-view]
 
     [:div {:class (c [:p 2])}
-     [:input {:type "button" :value "Add sql" :on-click #(rf/dispatch [create-step :sql :last])}]]
-    [:div {:class (c [:p 2])}
-     [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :http :last])}]]
+     [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :request :last])}]]
 
     (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
       ^{:key step-id}
@@ -301,7 +347,7 @@
         [:<>
          [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
           [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])}
-           [:div (:type step)]
+           [:div (step-type step)]
            [:div
             [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
           [:div
@@ -311,7 +357,7 @@
            [render-result step])
          [:div {:class (c [:ml "32.5px"] [:mb 1])}
           [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
-                 :on-click #(rf/dispatch [create-step :http idx])
+                 :on-click #(rf/dispatch [create-step :request idx])
                  :class (c
                          :inline-block
                          :cursor-pointer
