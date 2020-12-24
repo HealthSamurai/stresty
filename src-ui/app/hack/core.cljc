@@ -57,11 +57,11 @@
                   first
                   str/upper-case))
              (== 2 (-> (or (:request step) "")
-                     str/trim
-                     (str/split #"\n")
-                     first
-                     (str/split #" ")
-                     count)))
+                       str/trim
+                       (str/split #"\n")
+                       first
+                       (str/split #" ")
+                       count)))
       "http"
       "sql")
 
@@ -183,19 +183,19 @@
         (= "http" t)
         (let [content (:request step)
               method (-> content
-                         (str/split "\n")
+                         (str/split #"\n")
                          first
-                         (str/split " ")
+                         (str/split #" ")
                          first
                          str/lower-case
                          keyword)
               uri (-> content
-                      (str/split "\n")
+                      (str/split #"\n")
                       first
-                      (str/split " ")
+                      (str/split #" ")
                       second)
               body (-> content
-                       (str/split "\n\n"))
+                       (str/split #"\n\n"))
               ]
           (cond-> {:uri (str (:url config) uri)
                    :method method
@@ -307,10 +307,10 @@
                   set
                   (contains? @render-type)
                   not)
-            (reset! render-type (first allowed-render-types)))) 
-        (when (:result step)
+            (reset! render-type (first allowed-render-types))))
+        (when result
           [:<>           
-           [:div (when (:result step)
+           [:div (when (seq result)
                    [:div {:class (c :flex :flex-col [:space-y 4] :text-right [:pr 1] [:text :gray-600] :font-light)}
                     [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")]
                     (when @show?
@@ -324,21 +324,22 @@
                               :on-click (fn [] (reset! render-type r))} (name r)]
                          )
                        ])
-                    ])]
-           
+                    ])]           
            [:div {:class (if is-ok (c [:border-l :green-400]) (c [:border-l :red-400]))}
-            (if @show?
-              (case @render-type
-                :table
-                [render-sql-result-table step]
-                :yaml
-                [:pre (interop/to-yaml result)]
-                :json
-                [:pre (interop/to-json result)]
-                :edn
-                [:pre (interop/to-pretty-edn result)]
-                )
-              [:pre "..."])
+            (if (empty? result)
+              [:span "Empty result"]
+              (if @show?
+                (case @render-type
+                  :table
+                  [render-sql-result-table step]
+                  :yaml
+                  [:pre (interop/to-yaml result)]
+                  :json
+                  [:pre (interop/to-json result)]
+                  :edn
+                  [:pre (interop/to-pretty-edn result)]
+                  )
+                [:pre "..."]))
 
 
             ]])))))
