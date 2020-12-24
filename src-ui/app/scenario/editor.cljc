@@ -42,25 +42,25 @@
    :endColumn end-col
    :message (str "Expected " (:expected error) ", but " (:but error))})
 
-(defn get-error-models [text errors]
-  (let [edn-meta (read-edn-with-meta text)
-        markers (map #(-> edn-meta
-                          (get-in (:path %))
-                          meta
-                          (get-error-marker %)) errors)
-        decorations (map #(-> edn-meta
-                              (get-in (:path %))
-                              meta
-                              (get-error-decoration %)) errors)]
-    {:markers markers :decorations decorations}
-    ))
+;; (defn get-error-models [text errors]
+;;   (let [edn-meta (read-edn-with-meta text)
+;;         markers (map #(-> edn-meta
+;;                           (get-in (:path %))
+;;                           meta
+;;                           (get-error-marker %)) errors)
+;;         decorations (map #(-> edn-meta
+;;                               (get-in (:path %))
+;;                               meta
+;;                               (get-error-decoration %)) errors)]
+;;     {:markers markers :decorations decorations}
+;;     ))
 
-(defn set-model-markers [^js/monaco.editor.ICodeeditor editor value errors]
-  (let [error-models (get-error-models value errors)
-        {:keys [markers decorations]} error-models
-        text-model (.getModel editor)]
-    (.deltaDecorations editor [] (clj->js decorations))
-    ))
+;; (defn set-model-markers [^js/monaco.editor.ICodeeditor editor value errors]
+;;   (let [error-models (get-error-models value errors)
+;;         {:keys [markers decorations]} error-models
+;;         text-model (.getModel editor)]
+;;     (.deltaDecorations editor [] (clj->js decorations))
+;;     ))
 
 (defn on-change-value [monaco path]
   (let [value (.getValue monaco)]

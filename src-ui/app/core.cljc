@@ -18,7 +18,6 @@
             [app.anti]
             [app.layout]
 
-            [app.case.core]
             [app.scenario.core]
             [app.scenario.show]
             [app.config.core]

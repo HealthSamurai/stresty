@@ -10,7 +10,7 @@
             [anti.util :refer [block]]
             [reagent.core :as r]
             [reagent.dom :as dom]
-            [monaco]))
+            ))
 
 (def meths #{:GET :POST :PUT :DELETE :HEAD :PATCH :OPTION})
 
