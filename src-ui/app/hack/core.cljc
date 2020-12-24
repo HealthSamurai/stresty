@@ -304,19 +304,18 @@
             [:div
              [:div (when is-ok [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")])]]
             [:div {:class class}
-             (if is-ok 
-               (if @show?
-                 (cond (= "http" type)
-                       [:pre (interop/to-yaml (get step :result))]
-                       (= "sql" type)
-                       [render-sql-result-table result]
-                       :else
-                       [:div "Some result from aidbox"]
-                       )
-                 [:pre "..."])
-               [:pre (get-in step [:result :text :div])]
-      
-               )]])]))))
+             (if @show?
+               (cond (= "http" type)
+                     [:pre (interop/to-yaml (get step :result))]
+                     (= "sql" type)
+                     [render-sql-result-table result]
+                     :else
+                     [:div "Some result from aidbox"]
+                     )
+               [:pre "..."])
+
+
+             ]])]))))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
@@ -344,7 +343,7 @@
     (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
       (if-let [step (get steps step-id)]
         ^{:key step-id}
-        [:<>
+        [:div
          [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
           [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])}
            [:div (step-type step)]
