@@ -289,9 +289,8 @@
 
 (defn render-result [step]
   (prn "render" step)
-  (let [show? (zrf/ratom true)
-        {:keys [type result]} step]
-    (println "Result: " result)
+  (let [show? (zrf/ratom true)]
+    (println "Result: " (:result step))
     (fn []
       (let [is-ok (= (:status step) "ok")
             type (step-type step)
@@ -308,7 +307,7 @@
                (cond (= "http" type)
                      [:pre (interop/to-yaml (get step :result))]
                      (= "sql" type)
-                     [render-sql-result-table result]
+                     [render-sql-result-table (:result step)]
                      :else
                      [:div "Some result from aidbox"]
                      )
@@ -355,7 +354,7 @@
          (when (:result step)
            (println ">>>>>>>>>>>>>>")
            (prn (:result step))
-           [render-result step])
+           ^{:key (hash step)} [render-result step])
          [:div {:class (c [:ml "32.5px"] [:mb 1])}
           [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
                  :on-click #(rf/dispatch [create-step :request idx])
