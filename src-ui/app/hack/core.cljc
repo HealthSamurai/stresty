@@ -5,8 +5,14 @@
             [zframes.re-frame :as zrf]
             [app.scenario.editor]
             [app.hack.interop :as interop]
+            [app.hack.codemirror]
             [clojure.string :as str]))
 
+(zrf/defs get-value [db [_ path]]
+  (get-in db path))
+
+(zrf/defd set-value [db [path v]]
+  (assoc-in db path v))
 
 (zrf/defx ctx
   [{db :db} [_ phase params]]
@@ -210,11 +216,12 @@
    [:div (:type step)]
    (let [content (cond
                    (= "sql" (:type step))
-                   (:sql step)
+                   :sql
                    (= "http" (:type step))
                    (:http step)
                    )]
-     [app.scenario.editor/zf-editor
+     [app.hack.codemirror/input
+      [::db :steps (:id step) (keyword (:type step))]
       {:opts {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}
        :on-change #(rf/dispatch [update-step-value (:id step) (keyword (:type step)) %])
        :value content}])])
