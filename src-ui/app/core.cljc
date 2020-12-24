@@ -23,6 +23,8 @@
             [app.scenario.show]
             [app.config.core]
 
+            [app.hack.core]
+
             #?(:cljs [zframes.http])
             #?(:cljs [app.reagent])
             #?(:cljs [reagent.dom])))
@@ -48,7 +50,7 @@
                                            :password "admin"
                                            :client-id "myapp"
                                            :client-secret "verysecret"}}})
-    :dispatch [:zframes.routing/page-redirect {:uri "#/scenario"}]}))
+    }))
 
 (defn mount-root []
   (rf/clear-subscription-cache!)

@@ -13,7 +13,8 @@
 
 (defn index [_ req]
   {:status  302
-   :headers {"location" "static/index.html"}})
+   :headers {"location" "static/index.html"
+             "access-control-allow-origin" "*"}})
 
 (defn healthcheck [_ _]
   {:status 200})
@@ -76,8 +77,11 @@
                   :index-files? true
                   :allow-symlinks? true}
             path (subs (ring.util.codec/url-decode (:uri req)) 8)]
-        (-> (ring.util.response/resource-response path opts)
-            (ring.middleware.head/head-response req)))
+        (let [a (-> (ring.util.response/resource-response path opts)
+                    (ring.middleware.head/head-response req))]
+
+          (assoc-in a [:headers  "access-control-allow-origin"] "*")
+          ))
       (h req))))
 
 (defn wrap-content-type [h]

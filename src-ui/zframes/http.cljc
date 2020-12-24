@@ -67,6 +67,8 @@
                                                    "Cache-Control" "no-cache")
                                true (merge headers))
 
+               _ (println headers)
+
                init (-> (merge {:method "get" :mode "cors"} opts)
                         (dissoc :uri :headers :success :error :params :files)
                         (assoc :headers headers)
