@@ -177,7 +177,7 @@
                :method method
                :format "yaml"}
         (>= (count body) 1)
-        (interop/from-yaml "id: new-body")
+        (assoc :body (interop/from-yaml "id: new-body"))
         ))
     
     :else
@@ -220,6 +220,20 @@
        :value content}])])
 
 
+
+(zrf/defx remove-step [{db :db} [_ idx]]
+  (let [case (get-in db [::db :case :data])
+        case (update case :steps (fn [steps]
+                                   (into
+                                    (vec (take idx steps))
+                                    (drop (inc idx) steps))))]
+    {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
+                  :method "put"
+                  :format "json"
+                  :body case
+                  :path [::db :case]}}))
+
+
 (zrf/defview view [stresty-case steps]
   [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:w 300] [:p 2] {:grid-template-columns "1fr 7fr"})}
    [:div "wow"]
@@ -237,7 +251,10 @@
       (if-let [step (get steps step-id)]
         [:<>
          [:div {:class (c :grid [:py 1] {:grid-template-columns "40px 1fr"})}
-          [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])} (:type step)]
+          [:div {:class (c :font-light [:p 1] [:text :gray-600] [:text-right])}
+           [:div (:type step)]
+           [:div
+            [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "del"]]]
           [:div
            {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
            [render-step step]]]
