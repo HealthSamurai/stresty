@@ -249,7 +249,6 @@
 (zrf/defx exec-step [{db :db} [_ step-id]]
   (let [step (get-in db [::db :steps step-id])
         http-fetch (get-http-fetch-for-step (get-in db [::db :config]) step)
-        _ (prn "http" http-fetch)
         on-complete {:event on-exec-step
                      :step-id step-id}]
     {:http/fetch (merge http-fetch
@@ -261,7 +260,6 @@
   [app.hack.codemirror/input
    [::db :steps (:id step) (keyword (:type step))]
    {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])
-
 
 
 
@@ -283,10 +281,8 @@
                     ]) result)]]))
 
 (defn render-result [step]
-  (prn "render" step)
   (let [show? (zrf/ratom true)]
-    (println "Result: " (:result step))
-    (fn []
+    (fn [step]
       (let [is-ok (= (:status step) "ok")
             type (step-type step)
             class (if is-ok
@@ -349,7 +345,7 @@
            {:class (c [:pl 2] [:border :gray-600] [:border-l 1] [:border-r 0] [:border-t 0] [:border-b 0])}
            [render-step step]]]
          (when (:result step)
-           ^{:key (hash step)} [render-result step])
+           [render-result step])
          [:div {:class (c [:ml "32.5px"] [:mb 1])}
           [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
                  :on-click #(rf/dispatch [create-step :request idx])
