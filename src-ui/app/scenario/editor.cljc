@@ -2,7 +2,6 @@
   (:require [reagent.core :as r]
             #?(:cljs [reagent.dom :as dom])
             [stylo.core :refer [c]]
-            #?(:cljs [monaco])
             #?(:cljs [cljs.pprint :as pp :refer [pprint]])
             [zframes.re-frame :as zrf]
             [re-frame.core :as rf]
@@ -41,13 +40,7 @@
    :endLineNumber end-row
    :startColumn col
    :endColumn end-col
-   :severity monaco/MarkerSeverity.Error
    :message (str "Expected " (:expected error) ", but " (:but error))})
-
-(defn get-error-decoration [{:keys [row end-row col end-col :as meta]} error]
-  {:range (new monaco.Range row col end-row end-col)
-   :options {:inlineClassName (c [:bg :red-200]) :isWholeLine true}}
-  )
 
 (defn get-error-models [text errors]
   (let [edn-meta (read-edn-with-meta text)
@@ -67,21 +60,11 @@
         {:keys [markers decorations]} error-models
         text-model (.getModel editor)]
     (.deltaDecorations editor [] (clj->js decorations))
-    (monaco/editor.setModelMarkers text-model
-                                   "jslint"
-                                   (clj->js markers))))
+    ))
 
 (defn on-change-value [monaco path]
   (let [value (.getValue monaco)]
     (zrf/dispatch [::change-value path value])))
-
-(defn update-height [^js/monaco.editor.ICodeEditor editor dom-el]
-  (let [line-height (.getOption editor (.-lineHeight (.-EditorOption (.-editor monaco))))
-        line-count (.getLineCount (.getModel editor))
-        height (+ (.getTopForLineNumber editor (+ line-count 1)) line-height)]
-    (set! (.-height (.-style dom-el)) (str height "px"))
-    (.layout editor)
-    ))
 
 (zrf/defs ed-sub-dynamic
   [db [_ path]]
@@ -95,37 +78,29 @@
       (fn [this]
         (let [el (dom/dom-node this)
               {:keys [path errors text read-only]} (r/props this)
-              monaco (monaco/editor.create el
-                                           (clj->js {:tabSize 2
-                                                     :language "clojure"
-                                                     :scrollBeyondLastLine false
-                                                     :minimap {:enabled false}
-                                                     :readOnly read-only
-                                                     :scrollbar {:alwaysConsumeMouseWheel false}}))
-              
-              _ (.setValue monaco text)
-              on-change-editor ((.-onDidChangeModelDecorations monaco) #(update-height monaco el))
-              on-change ((.-onDidBlurEditorText monaco) #(on-change-value monaco path))]
-          (aset this :editor monaco)
-          (if errors
-            (set-model-markers monaco text errors)
-            )
-          ))
+              cm (js/CodeMirror.
+                  el
+                  #js {:lineNumbers true
+                       :readOnly read-only
+                       :mode "clojure"
+                       :value text
+                       :lineWrapping true
+                       :theme "neo"
+                       })]                                        
+          (.setSize cm "100%" "100%")
+          (.on cm "change"
+               (fn []
+                 (if-let [edn-value (cljs.reader/read-string (.getValue cm))]
+                   (rf/dispatch [::change-value path edn-value]))))))
       :component-did-update
       (fn [this old-argv]
-        (let [^js/monaco.editor.ICodeEditor monaco (aget this :editor)
-              model (.getModel monaco)
-              model-value (.getValue model)
-              {:keys [text]} (r/props this)]
-          (when (not= model-value text)
-            (.setValue monaco text))
-          )
+        
         )
       :reagent-render
       (fn []
-        [:div {:class (c [:h 100])}])
+        [:div {:class (c :h-auto)}])
       }
-     )))
+  )))
 
 (defn zf-editor [path errors read-only]
   (let [data (rf/subscribe [::ed-sub-dynamic path])]
@@ -146,8 +121,5 @@
   (meta (get-in (edn/parse-string "{:body {:status 200}}") [:body :status]))
   (meta (get-in raw-edn [:body :status]))
   (clojure.pprint/pprint raw-edn)
-
-  
-
   
   (def path [:body :status]))
