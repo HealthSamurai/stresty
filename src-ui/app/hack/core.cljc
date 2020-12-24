@@ -235,7 +235,7 @@
      [:div {:class class}
       
       (if is-ok
-        [:div (interop/to-yaml (get step :result))]
+        [:pre (interop/to-yaml (get step :result))]
         [:div (get-in step [:result :text :div])]
         )
       

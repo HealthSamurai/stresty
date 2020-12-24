@@ -5,7 +5,7 @@
 
 (defn to-yaml [x]
   #?(:clj  (yaml/generate-string x)
-     :cljs (yaml/safeDump (clj->js x))))
+     :cljs (yaml/safeDump (clj->js x) #js {:indent 2})))
 
 
 (defn from-yaml [x]
