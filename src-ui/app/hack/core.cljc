@@ -181,7 +181,7 @@
       (cond-> {:uri (str (:url config) uri)
                :method method
                :format "json"}
-        (>= (count body) 1)
+        (> (count body) 1)
         (assoc :body (interop/from-yaml (last body)))
         ))
     
