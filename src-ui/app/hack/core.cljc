@@ -13,7 +13,7 @@
   (clojure.walk/postwalk
    (fn [x]
      (if (and (:id x) (:resourceType x))
-       (assoc x :id (str "<a style=\"border-bottom: 1px solid #40a9ff;\" target=\"blank\" href=\"" url "/static/console.html#/rest?req=GET%20/" (:resourceType x) "/" (:id x) "" \"">" (:id x)  "</a>"))
+       (assoc x :id (str "<a style=\"border-bottom: 1px solid #40a9ff;\" target=\"_blank\" href=\"" url "/static/console.html#/rest?req=GET%20/" (:resourceType x) "/" (:id x) "" \"">" (:id x)  "</a>"))
        x))
    o))
 
