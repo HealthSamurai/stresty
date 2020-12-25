@@ -319,7 +319,7 @@
        :mode mode}]]))
 
 (defn render-sql-result-table [url result]
-  (when (vector? result)
+  (if (vector? result)
     (let [ths (keys (first result))
           style (c [:border :gray-400] [:p 2])]
       [:table {:class [(c :w-full :border-collapse) style] }
@@ -339,7 +339,9 @@
                                 [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
                                 [:div {:dangerouslySetInnerHTML {:__html e}}])
                               ]) (vals e))
-                ]) result)]])))
+                ]) result)]])
+    [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
+    ))
 
 (defn render-result-row [result url render-type]
   (if (empty? result)
@@ -363,7 +365,8 @@
         allowed-render-types (cond->> ["yaml" "json" "edn"]
                                (and (sequential? result))
                                (cons "table"))
-        render-type (or (:render-type step) (if (and (not (map? result)) (coll? result)) "table" "yaml"))]
+        render-type (or ((set allowed-render-types) (:render-type step))
+                        (first allowed-render-types))]
     (when result
       [:<>
        [:div {:class [(c [:space-y 2] [:pl 4] [:pr 2])]}
@@ -376,9 +379,8 @@
             [:a {:class [(c :cursor-pointer [:mr 2])
                          (when (= render-type r)
                            (c :underline))]
-                 :on-click (fn []
-                             (rf/dispatch [update-step-value (:id step) :render-type r true])
-                             (reset! render-type r))} r])]]
+                 :on-click #(rf/dispatch [update-step-value (:id step) :render-type r true])}
+             r ])]]
         (cond
           (and (vector? result) (= type "sql"))
           (map-indexed
