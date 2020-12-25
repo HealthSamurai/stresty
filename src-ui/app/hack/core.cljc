@@ -418,7 +418,7 @@
     [config-view]]
 
    [:div {:class (c :flex :flex-row [:py 1])}
-    [:div {:class (c [:w-max "40%"] [:w-min "40%"])}
+    [:div {:class (c [:w "40vw"])}
      (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
         (if-let [step (get steps step-id)]
           ^{:key step-id}
@@ -459,7 +459,7 @@
           [:div "loading..."]))
      [add-step-button :last]]
     
-    [:div {:class (c [:w "100%"] [:overflow-x-auto])}
+    [:div {:class (c [:w "60vw"] :overflow-x-auto)}
      (when (:result active-step)
        [render-result aidbox-url active-step])
      ]]
