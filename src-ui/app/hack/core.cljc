@@ -9,6 +9,16 @@
             [app.hack.codemirror]
             [clojure.string :as str]))
 
+(defn can-save-to-db [o]
+  (let [size (atom 0)
+        max-size (* 1024 1024)]
+    (clojure.walk/postwalk
+     (fn [e]
+       (when (string? e)
+         (swap! size + (* 2 (count e)))
+         )) o)
+    (< @size max-size)))
+
 (defn enrich-with-link [url o]
   (clojure.walk/postwalk
    (fn [x]
@@ -138,13 +148,7 @@
                 :success {:event get-steps}
                 :path [::db :case]}})
 
-
-
-
 (zrf/defs page-sub [db] (get db ::db))
-
-
-
 
 (zrf/defs steps [db]
   (get-in db [::db :steps]))
@@ -255,8 +259,7 @@
     (throw (ex-info "no such step type" {}))))
 
 (zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data response :response}]]
-  (println "Type: " (type 12) (type "ss") (type true) (type {}) (type []))
-  (let [        step (-> (get-in db [::db :steps step-id])
+  (let [step (-> (get-in db [::db :steps step-id])
                  (assoc-in [:status-code] (.-status response))
                  (assoc-in [:status] status)
                  (assoc-in [:result] data))]
@@ -264,7 +267,9 @@
      :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep/" step-id)
                   :method "put"
                   :format "json"
-                  :body (dissoc step :result)}}))
+                  :body (if (can-save-to-db data)
+                          step
+                          (assoc step :result {:message "Response too large to save in DB"}))}}))
 
 
 (zrf/defx exec-step [{db :db} [_ step-id]]
