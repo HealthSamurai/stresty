@@ -47,6 +47,13 @@
 (defn rand-str [len]
   (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
 
+
+(zrf/defx root [{db :db}]
+  {:dispatch [:zframes.routing/redirect {:uri (str "/hack/" (rand-str 10))
+                                         :params {:url (get-in db [:zframes.routing/db :route :params :params :url])
+                                                  :auth_header (get-in db [:zframes.routing/db :route :params :params :auth_header])}}]})
+
+
 (zrf/defs get-value [db [_ path]]
   (get-in db path))
 

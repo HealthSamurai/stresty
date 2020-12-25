@@ -5,7 +5,8 @@
 
 (def global-contexts {})
 
-(def routes {"anti"          {:. :app.anti/index}
+(def routes {:. :app.hack.core/root
+             "anti"          {:. :app.anti/index}
              "reagent"  {:. :app.reagent/ctx}
              "reframe" {:. :app.reframe/ctx}
              "case" {:. :app.case.core/ctx}
