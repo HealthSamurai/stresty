@@ -13,7 +13,7 @@
   (clojure.walk/postwalk
    (fn [x]
      (if (and (:id x) (:resourceType x))
-       (assoc x :id (str "<a target=\"blank\" href=\"" url "/static/console.html#/rest?req=GET%20/" (:resourceType x) "/" (:id x) "" \"">" (:id x)  "</a>"))
+       (assoc x :id (str "<a style=\"border-bottom: 1px solid #40a9ff;\" target=\"blank\" href=\"" url "/static/console.html#/rest?req=GET%20/" (:resourceType x) "/" (:id x) "" \"">" (:id x)  "</a>"))
        x))
    o))
 
@@ -357,9 +357,9 @@
                     :yaml
                     [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
                     :json
-                    [:pre (interop/to-json result)]
+                    [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result)}}]
                     :edn
-                    [:pre (interop/to-pretty-edn result)]
+                    [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result)}}]
                     )
                   [:pre "..."])))
 
@@ -402,8 +402,6 @@
     [:h1 {:class (c :text-lg)} "Researcher's Console"]
     [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
    [:div
-
-    [:div {:dangerouslySetInnerHTML {:__html "<a>wow</a>"}}]
 
     [config-view]
 
