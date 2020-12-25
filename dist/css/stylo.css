@@ -1769,63 +1769,68 @@ img, video {
   padding: 2.0rem;
 }
 
-.app_hack_core-304-17 {
+.app_hack_core-324-17 {
   border-width: 1px;
   border-color: rgba(203,213,224,var(--border-opacity));
   --border-opacity: 1;
   padding: 0.5rem;
 }
 
-.app_hack_core-305-24 {
+.app_hack_core-325-24 {
   width: 100%;
   border-collapse: collapse;
 }
 
-.app_hack_core-334-23>*+* {
+.app_hack_core-369-23>*+* {
   --space-y-reverse: 0;
   margin-bottom: calc(0.5rem * var(--space-y-reverse));
   margin-top: calc(0.5rem * calc(1 - var(--space-y-reverse)));
 }
 
-.app_hack_core-334-23 {
+.app_hack_core-369-23 {
   padding-left: 1.0rem;
   padding-right: 0.5rem;
 }
 
-.app_hack_core-335-23 {
+.app_hack_core-370-23 {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.app_hack_core-336-53 {
+.app_hack_core-371-53 {
   color: rgba(72,187,120,var(--text-opacity));
   --text-opacity: 1;
 }
 
-.app_hack_core-336-76 {
+.app_hack_core-371-76 {
   color: rgba(245,101,101,var(--text-opacity));
   --text-opacity: 1;
 }
 
-.app_hack_core-338-25 {
+.app_hack_core-373-25 {
   margin-right: 0.5rem;
 }
 
-.app_hack_core-341-26 {
+.app_hack_core-376-26 {
   cursor: pointer;
   margin-right: 0.5rem;
 }
 
-.app_hack_core-343-28 {
+.app_hack_core-378-28 {
   text-decoration: underline;
 }
 
-.app_hack_core-374-17 {
-  position: relative;
+.app_hack_core-387-30 {
+  font-size: .875rem;
 }
 
-.app_hack_core-377-18 {
+.app_hack_core-409-17 {
+  position: relative;
+  top: -0.25rem;
+}
+
+.app_hack_core-412-18 {
   position: absolute;
   right: -7px;
   bottom: 100%;
@@ -1835,144 +1840,162 @@ img, video {
   stroke-linecap: round;
 }
 
-.app_hack_core-377-18:hover {
-  color: rgba(72,187,120,var(--text-opacity));
+.app_hack_core-412-18:hover {
+  color: rgba(56,161,105,var(--text-opacity));
   --text-opacity: 1;
-  background-color: rgba(226,232,240,var(--bg-opacity));
+  border-radius: 0.25rem;
+  background-color: rgba(237,242,247,var(--bg-opacity));
   --bg-opacity: 1;
 }
 
-.app_hack_core-377-18:active {
+.app_hack_core-412-18:active {
   color: rgba(66,153,225,var(--text-opacity));
   --text-opacity: 1;
 }
 
-.app_hack_core-395-19 {
-  border-width: 1px;
-  width: 12.5rem;
-  margin-left: 0.25rem;
-  padding-top: 0.125rem;
-  padding-bottom: 0.125rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-
-.app_hack_core-396-20 {
-  padding: 0.5rem;
-}
-
-.app_hack_core-401-22 {
-  margin-left: 0.5rem;
-}
-
-.app_hack_core-404-22 {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  margin-left: 0.5rem;
-}
-
-.app_hack_core-414-17 {
+.app_hack_core-441-17 {
   display: grid;
   background-color: rgba(247,250,252,var(--bg-opacity));
   --bg-opacity: 1;
   margin: auto;
 }
 
-.app_hack_core-415-18 {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-  background-color: rgba(226,232,240,var(--bg-opacity));
-  --bg-opacity: 1;
-  display: flex;
+.app_hack_core-442-18 {
+  padding-bottom: 0.75rem;
   justify-content: space-between;
+  --bg-opacity: 1;
   align-items: center;
+  background-color: rgba(226,232,240,var(--bg-opacity));
+  padding-right: 1.0rem;
+  display: flex;
+  padding-left: 1.0rem;
+  padding-top: 0.75rem;
 }
 
-.app_hack_core-417-19 {
-  padding-left: 1.0rem;
+.app_hack_core-444-22 {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  margin-right: 0.25rem;
+}
+
+.app_hack_core-447-24 {
+  background-color: rgba(72,187,120,var(--bg-opacity));
+  --bg-opacity: 1;
+}
+
+.app_hack_core-449-24 {
+  background-color: rgba(236,201,75,var(--bg-opacity));
+  --bg-opacity: 1;
+}
+
+.app_hack_core-451-24 {
+  background-color: rgba(245,101,101,var(--bg-opacity));
+  --bg-opacity: 1;
+}
+
+.app_hack_core-452-19 {
   padding-right: 1.0rem;
   font-size: 1.125rem;
   display: inline-block;
 }
 
-.app_hack_core-421-18 {
+.app_hack_core-454-21 {
+  border-width: 1px;
+  width: 15.0rem;
+  margin-left: 0.25rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+}
+
+.app_hack_core-456-22 {
+  border-radius: 0.25rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  padding-left: 0.625rem;
+  padding-right: 0.625rem;
+  margin-left: 0.5rem;
+}
+
+.app_hack_core-460-18 {
   display: flex;
   flex-direction: row;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
 }
 
-.app_hack_core-422-19 {
+.app_hack_core-461-19 {
   width: 40vw;
 }
 
-.app_hack_core-426-25 {
+.app_hack_core-465-24 {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
 }
 
-.app_hack_core-430-22 {
+.app_hack_core-469-21 {
   border-bottom-width: 1px;
   border-color: rgba(203,213,224,var(--border-opacity));
   --border-opacity: 1;
   border-right-width: 1px;
 }
 
-.app_hack_core-430-22:hover {
+.app_hack_core-469-21:hover {
   border-bottom-width: 1px;
   border-color: rgba(113,128,150,var(--border-opacity));
   --border-opacity: 1;
   border-right-width: 1px;
 }
 
-.app_hack_core-433-24 {
+.app_hack_core-472-23 {
   border-bottom-width: 1px;
   border-color: rgba(113,128,150,var(--border-opacity));
   --border-opacity: 1;
   border-right-width: 1px;
 }
 
-.app_hack_core-434-27 {
+.app_hack_core-473-26 {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
 }
 
-.app_hack_core-435-36 {
+.app_hack_core-474-35 {
   width: 93%;
 }
 
-.app_hack_core-444-28 {
+.app_hack_core-484-27 {
   display: flex;
   flex-direction: row;
   align-self: flex-start;
 }
 
-.app_hack_core-447-43 {
+.app_hack_core-487-42 {
   margin-left: 0.25rem;
   margin-right: 0.25rem;
   color: rgba(254,178,178,var(--text-opacity));
   --text-opacity: 1;
 }
 
-.app_hack_core-447-43:hover {
+.app_hack_core-487-42:hover {
   color: rgba(252,129,129,var(--text-opacity));
   --text-opacity: 1;
 }
 
-.app_hack_core-453-40 {
+.app_hack_core-492-39 {
   margin-left: 0.25rem;
   margin-right: 0.25rem;
   color: rgba(154,230,180,var(--text-opacity));
   --text-opacity: 1;
 }
 
-.app_hack_core-453-40:hover {
+.app_hack_core-492-39:hover {
   color: rgba(104,211,145,var(--text-opacity));
   --text-opacity: 1;
 }
 
-.app_hack_core-463-19 {
+.app_hack_core-501-19 {
   width: 60vw;
   overflow-x: auto;
 }
@@ -2022,6 +2045,8 @@ img, video {
 }
 
 .app_layout-50-17 {
+  background-color: rgba(247,250,252,var(--bg-opacity));
+  --bg-opacity: 1;
   display: flex;
   align-items: stretch;
   height: 100vh;

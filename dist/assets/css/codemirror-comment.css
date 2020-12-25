@@ -13,4 +13,7 @@
 .cm-s-comment.CodeMirror-empty {
     color: #9CA3AF;
 }
-    
+
+.cm-s-default.CodeMirror-empty {
+    color: #9CA3AF;
+}
