@@ -91,7 +91,7 @@
         (if (= :last idx)
           (update (get-in db [::db :case :data]) :steps conj {:id (:id step) :resourceType "StrestyStep"})
           (update (get-in db [::db :case :data]) :steps (fn [steps]
-                                                          (let [position (inc idx)]
+                                                          (let [position idx]
                                                             (into
                                                              (into
                                                               (vec (take position steps))
@@ -332,7 +332,7 @@
           (reset! render-type :yaml))
         (when result
           [:<>
-           [:div {:class [(c [:space-y 2] [:pl 2])]}
+           [:div {:class [(c [:space-y 2] [:pl 4] [:pr 2])]}
             [:div {:class (c :flex :justify-between :items-center)}
              [:span {:class (if (= "ok" (:status step)) (c [:text :green-500]) (c [:text :red-500]))}
               (str "Status: " (:status-code step))]
@@ -369,6 +369,27 @@
                   :body case
                   :path [::db :case]}}))
 
+(defn add-step-button [idx]
+  [:div {:class (c :relative )}
+   [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
+          :on-click #(rf/dispatch [create-step :request idx])
+          :class (c                 
+                  :absolute
+                  [:right "-7px"]
+                  [:bottom "100%"]
+                  :inline-block
+                  :cursor-pointer
+                           [:hover
+                            [:text :green-500]
+                            [:bg :gray-300]
+                            ]
+                           [:active
+                            [:text :blue-500]]
+                           {:stroke-width 1 :stroke-linecap "round"})}
+    [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
+    [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]
+  )
+
 (zrf/defview config-view [aidbox-url aidbox-auth-header]
   (let [input-cls (c [:border] [:w 50] [:ml 1] [:py 0.5] [:px 2])]
     [:span {:class (c [:p 2])}
@@ -401,46 +422,44 @@
      (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
         (if-let [step (get steps step-id)]
           ^{:key step-id}
-          [:div
-           {:on-click #(rf/dispatch [set-active-step step-id])
-            :class [(c [:mb 4] [:border-b :gray-400] [:border-r :gray-400]
-                       [:hover [:border-b :gray-600] [:border-r :gray-600]])
-                    (when (= (:id active-step) (:id step))
-                      (c [:border-b :gray-600] [:border-r :gray-600]))]}
-           [:div {:class (c :flex :justify-between :items-center)}
-            [:div.comment
-             [:style ".comment .CodeMirror {height: auto;}"]
-             [app.hack.codemirror/input
-              [::db :steps (:id step) :comment]
-              {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
-               :lineNumbers false
-               :placeholder "Add comment here..."
-               :mode "markdown"
-               :theme "comment"}]
-             ]
-            [:div
-             (when (< 1 (count (:steps stresty-case)))
-               [:a {:on-click #(rf/dispatch [remove-step idx])}
-                [:i.fas.fa-trash {:class (c
-                                          [:mx 1]
-                                          [:text :red-300]
-                                          [:hover [:text :red-400]])}]])
+          [:div {:class (c [:mt 6] [:mb 6])}
+           [add-step-button idx]
+           [:div
+            {:on-click #(rf/dispatch [set-active-step step-id])
+             :class [(c  [:border-b :gray-400] [:border-r :gray-400]
+                        [:hover [:border-b :gray-600] [:border-r :gray-600]])
+                     (when (= (:id active-step) (:id step))
+                       (c [:border-b :gray-600] [:border-r :gray-600]))]}
+            [:div {:class (c :flex :justify-between :items-center)}
+             [:div.comment {:class (c :w-full)}
+              [:style ".comment .CodeMirror {height: auto;}"]
+              [app.hack.codemirror/input
+               [::db :steps (:id step) :comment]
+               {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
+                :lineNumbers false
+                :placeholder "Add comment here..."
+                :mode "markdown"
+                :theme "comment"}]
+              ]
+             [:div {:class (c :flex :flex-row :self-start)}
+              (when (< 1 (count (:steps stresty-case)))
+                [:a {:on-click #(rf/dispatch [remove-step idx])}
+                 [:i.fas.fa-trash {:class (c
+                                           [:mx 1]
+                                           [:text :red-300]
+                                           [:hover [:text :red-400]])}]])
 
-             [:a {:on-click #(rf/dispatch [exec-step (:id step)])}
-              [:i.fas.fa-play {:class (c
-                                       [:mx 1]
-                                       [:text :green-300]
-                                         [:hover [:text :green-400]])}]]
+              [:a {:on-click #(rf/dispatch [exec-step (:id step)])}
+               [:i.fas.fa-play {:class (c
+                                        [:mx 1]
+                                        [:text :green-300]
+                                        [:hover [:text :green-400]])}]]
+              ]]
 
-
-             [:a {:on-click #(prn "plus")}
-                [:i.fas.fa-plus {:class (c
-                                          [:mx 1]
-                                          [:text :green-300]
-                                          [:hover [:text :green-400]])}]]]]
-
-           [render-step step]]
-          [:div "loading..."]))]
+            [render-step step]]]
+          [:div "loading..."]))
+     [add-step-button :last]]
+    
     [:div {:class (c [:w "100%"] [:overflow-x-auto])}
      (when (:result active-step)
        [render-result aidbox-url active-step])
