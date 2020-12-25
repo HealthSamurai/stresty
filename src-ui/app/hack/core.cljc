@@ -203,9 +203,9 @@
     (let [t (step-type step)]
       (cond
         (= "sql" t)
-        {:uri "/$sql"
+        {:uri "/$psql"
          :method "post"
-         :body [(:request step)]}
+         :body {:query (:request step)}}
 
         (= "http" t)
         (let [content (:request step)
@@ -267,6 +267,7 @@
     (throw (ex-info "no such step type" {}))))
 
 (zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data response :response}]]
+  (println "Duration: " (.get (.-headers response) "duration"))
   (let [step (-> (get-in db [::db :steps step-id])
                  (assoc-in [:status-code] (.-status response))
                  (assoc-in [:status] status)
@@ -306,29 +307,43 @@
        :placeholder "Put your request here..."
        :mode mode}]]))
 
-(defn render-sql-result-table [url step]
-  (when (vector? (:result step))
-    (let [{:keys [step-id result]} step
-          ths (keys (first result))
+(defn render-sql-result-table [url result]
+  (when (vector? result)
+    (let [ths (keys (first result))
           style (c [:border :gray-400] [:p 2])]
       [:table {:class [(c :w-full :border-collapse) style] }
        [:thead
         [:tr 
          (map-indexed (fn [i e]
-                        ^{:key (str step-id "-th-" i)}
+                        ^{:key (str  "th-" i)}
                         [:th {:class style} e]) ths)]]
        [:tbody
         (map-indexed (fn [idx e]
-                       ^{:key (str step-id "-tr-" idx)}
-                       [:tr
-                        (map-indexed (fn [idx-td e]
-                                       ^{:key (str step-id "-tr-" idx "-td-" idx-td)}
-                                       [:td {:class style}
-                                        (if (or (seq? e) (coll? e))
-                                          [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
-                                          [:div {:dangerouslySetInnerHTML {:__html e}}])
-                                        ]) (vals e))
-                        ]) result)]])))
+               ^{:key (str "tr-" idx)}
+               [:tr 
+                (map-indexed (fn [idx-td e]
+                       ^{:key (str "tr-" idx "-td-" idx-td)}
+                       [:td {:class style}
+                              (if (or (seq? e) (coll? e))
+                                [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
+                                [:div {:dangerouslySetInnerHTML {:__html e}}])
+                              ]) (vals e))
+                ]) result)]])))
+
+(defn render-result-row [result url render-type]
+  (if (empty? result)
+    [:span "Empty result"]
+    (let [result (enrich-with-link url result)]
+      (case render-type
+        "table"
+        [render-sql-result-table url result]
+        "yaml"
+        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
+        "json"
+        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result)}}]
+        "edn"
+        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result)}}])))
+  )
 
 (defn render-result [url step]
   (let [render-type (or (:render-type step) "yaml")
@@ -353,18 +368,25 @@
                  :on-click (fn []
                              (rf/dispatch [update-step-value (:id step) :render-type r true])
                              (reset! render-type r))} r])]]
-        (if (empty? result)
-          [:span "Empty result"]
-          (let [result (enrich-with-link url result)]
-            (case render-type
-              "table"
-              [render-sql-result-table url step]
-              "yaml"
-              [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
-              "json"
-              [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result)}}]
-              "edn"
-              [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result)}}])))]])))
+        (cond
+          (and (vector? result) (= type "sql"))
+          (do
+            (cljs.pprint/pprint result)
+            (map-indexed
+               (fn [i e]
+                 [:<>
+                  [:span {:class (c :text-sm)} (str (:query e) " [" (:duration e) "ms]")]
+                  [:hr]
+                  [render-result-row (:result e) url render-type]
+                  ])
+               result
+               ))
+          :else
+          [:<>
+           
+           [render-result-row result url render-type]]
+          )
+        ]])))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
