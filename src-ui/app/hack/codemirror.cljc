@@ -50,7 +50,10 @@
                    (.call sv *cm (.toString (or @value (get cm-opts "value") "")))
                    ;; (.setValue *cm (.toString (or @value "")))
                    (.call on *cm "change"
-                          (fn [& _] (rf/dispatch [:app.hack.core/set-value path (.call gv *cm)])))))
+                          (fn [& _]
+                            (rf/dispatch [:app.hack.core/set-value path (.call gv *cm)])
+                            (when-let [on-change-fn (:on-change attrs)]
+                              (on-change-fn (.call gv *cm)))))))
 
                :component-did-update
                (fn [this [_ old-props]]

@@ -47,7 +47,7 @@
 
 
 (defn layout [content]
-  [:div {:class (c :flex :items-stretch :h-screen)}
+  [:div {:class (c [:bg :gray-100] :flex :items-stretch :h-screen)}
    [:style "body {padding: 0; margin: 0;}"]
    [:div {:class (c :flex-1 :overflow-y-auto)}
     content]])

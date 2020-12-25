@@ -200,6 +200,11 @@
                                 :path [::db :config-resp]
                                 :error {:event init-failed}
                                 :success {:event get-or-create-case}}]}
+      (= :params phase)
+      {:db (-> db
+               (update ::db dissoc :case)
+               (update ::db dissoc :status))}
+
       (= :deinit phase)
       {:db (dissoc db ::db)})))
 
@@ -310,7 +315,7 @@
       [::db :steps (:id step) (keyword (:type step))]
       {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
        :lineNumbers false
-       :placeholder "Put your request here..."
+       :placeholder "GET /Patient or sql"
        :mode mode}]]))
 
 (defn render-sql-result-table [url result]
@@ -376,23 +381,16 @@
                              (reset! render-type r))} r])]]
         (cond
           (and (vector? result) (= type "sql"))
-          (do
-            (cljs.pprint/pprint result)
-            (map-indexed
-               (fn [i e]
-                 [:<>
-                  [:span {:class (c :text-sm)} (str (:query e) " [" (:duration e) "ms]")]
-                  [:hr]
-                  [render-result-row (:result e) url render-type]
-                  ])
-               result
-               ))
+          (map-indexed
+           (fn [i e]
+             [:<>
+              [:span {:class (c :text-sm)} (str (:query e) " [" (:duration e) "ms]")]
+              [:hr]
+              [render-result-row (:result e) url render-type]
+              ])
+           result)
           :else
-          [:<>
-           
-           [render-result-row result url render-type]]
-          )
-        ]])))
+          [render-result-row result url render-type])]])))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
@@ -408,32 +406,23 @@
                               :path [::db :case]}]}))
 
 (defn add-step-button [idx]
-  [:div {:class (c :relative )}
+  [:div {:class (c :relative [:top -1])}
    [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
           :on-click #(rf/dispatch [create-step :request idx])
-          :class (c                 
-                  :absolute
-                  [:right "-7px"]
-                  [:bottom "100%"]
-                  :inline-block
-                  :cursor-pointer
-                  [:hover
-                   [:text :green-500]
-                   [:bg :gray-300]
-                   ]
-                  [:active
-                   [:text :blue-500]]
-                  {:stroke-width 1 :stroke-linecap "round"})}
+          :class (c :absolute
+                    [:right "-7px"]
+                    [:bottom "100%"]
+                    :inline-block
+                    :cursor-pointer
+                    [:hover
+                     [:text :green-600]
+                     :rounded
+                     [:bg :gray-200]]
+                    [:active
+                     [:text :blue-500]]
+                    {:stroke-width 1 :stroke-linecap "round"})}
     [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
-    [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]
-  )
-
-(zrf/defview config-view [aidbox-url aidbox-auth-header]
-  (let [input-cls (c [:border] [:w 60] [:ml 1] [:py 0.5])]
-    [:span
-     [:input {:class (c [:px 2] [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]
-     [:input {:placeholder "Aidbox URL" :class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]
-     [:input {:placeholder "Auth Header":class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]))
+    [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]])
 
 (zrf/defx set-active-step [{db :db} [_ step-id]]
   {:db (assoc-in db [::db :active-step] step-id)})
@@ -442,25 +431,38 @@
   (when-let [step-id (or (get-in db [::db :active-step]) (:id (first (get-in db [::db :case :data :steps]))))]
     (get-in db [::db :steps step-id])))
 
+
+(zrf/defx patch-step [{db :db} [_ step-id field value]]
+  {:dispatch [aidbox-fetch {:uri (str "/StrestyStep/" step-id)
+                            :method "put"
+                            :body (get-in db [::db :steps step-id])}]})
+
 (zrf/defview view [stresty-case steps aidbox-url aidbox-auth-header active-step connection-status]
-  [:div {:class (c [:grid] [:bg :gray-100] [:m-auto])}
+  [:div {:class (c  [:grid] [:bg :gray-100] [:m-auto])}
    [:div {:class (c [:py 3] [:px 4] [:bg :gray-300] :flex :justify-between :items-center)}
     [:div
      [:span {:class [(c :inline-block [:w "10px"] [:h "10px"] [:rounded :full] [:mr 1])
-                     (if (= connection-status :online)
+                     (cond
+                       (= connection-status :online)
                        (c [:bg :green-500])
-                       (c [:bg :red-500])
-                       )]}]
+                       (= connection-status :connecting)
+                       (c [:bg :yellow-500])
+                       :else
+                       (c [:bg :red-500]))]}]
      [:h1 {:class (c  [:pr 4] :text-lg :inline-block) } "Researcher's Console"]
      [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
-    [config-view]]
+    (let [input-cls (c [:border] [:w 60] [:ml 1] [:py 0.5])]
+    [:span
+     [:input {:class (c :rounded [:py 0.5] [:px 2.5] [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]
+     [:input {:id "aidbox-url" :placeholder "Aidbox URL" :class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]
+     [:input {:id "aidbox-auth-header" :placeholder "Auth Header":class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]])]
 
    [:div {:class (c :flex :flex-row [:py 1])}
     [:div {:class (c [:w "40vw"])}
      (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
        (if-let [step (get steps step-id)]
          ^{:key step-id}
-         [:div {:class (c [:mt 6] [:mb 6])}
+         [:div {:class (c [:my 6])}
           [add-step-button idx]
           [:div
            {:on-click #(rf/dispatch [set-active-step step-id])
@@ -475,7 +477,7 @@
               [::db :steps (:id step) :comment]
               {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
                :lineNumbers false
-               :on-change (fn [] (prn "wow"))
+               :on-change #(rf/dispatch [patch-step step-id :comment %])
                :placeholder "Add comment here..."
                :mode "markdown"
                :theme "comment"}]]
@@ -486,23 +488,19 @@
                                           [:mx 1]
                                           [:text :red-300]
                                           [:hover [:text :red-400]])}]])
-
              [:a {:on-click #(rf/dispatch [exec-step (:id step)])}
               [:i.fas.fa-play {:class (c
                                        [:mx 1]
                                        [:text :green-300]
-                                       [:hover [:text :green-400]])}]]
-             ]]
-
+                                       [:hover [:text :green-400]])}]]]]
            [render-step step]]]
          [:div "loading..."]))
-     [add-step-button :last]]
+     (when stresty-case
+       [add-step-button :last])]
     
     [:div {:class (c [:w "60vw"] :overflow-x-auto)}
      (when (:result active-step)
-       [render-result aidbox-url active-step])
-     ]]
-   ])
+       [render-result aidbox-url active-step])]]])
 
 
 

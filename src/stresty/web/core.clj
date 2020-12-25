@@ -14,6 +14,7 @@
 (defn index [_ req]
   {:status  302
    :headers {"location" "static/index.html"
+             "access-control-allow-methods" "*"
              "access-control-allow-origin" "*"}})
 
 (defn healthcheck [_ _]
@@ -79,9 +80,9 @@
             path (subs (ring.util.codec/url-decode (:uri req)) 8)]
         (let [a (-> (ring.util.response/resource-response path opts)
                     (ring.middleware.head/head-response req))]
-
-          (assoc-in a [:headers  "access-control-allow-origin"] "*")
-          ))
+          (-> a
+              (assoc-in [:headers "access-control-allow-origin"] "*")
+              (assoc-in [:headers "access-control-allow-methods"] "*"))))
       (h req))))
 
 (defn wrap-content-type [h]
