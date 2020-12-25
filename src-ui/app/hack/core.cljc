@@ -58,9 +58,10 @@
 (zrf/defx setup-aidbox [{db :db} _]
   (let [url (aidbox-url-sub db)]
     {:http/fetch {:uri (str url "/")
+                  :headers {:content-type "application/json"
+                            "authorization" (aidbox-auth-header-sub db)}
                   :method "post"
                   :format "json"
-                  :headers {:content-type "application/json"}
                   :body setup-data
                   :path [::db :config-resp]}}))
 
@@ -101,6 +102,8 @@
              (assoc-in [::db :steps (:id step)] step)
              (assoc-in [::db :case :data] case))
      :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
+                  :headers {"authorization" (aidbox-auth-header-sub db)}
+
                   :format "json"
                   :method "put"
                   :body case}}))
@@ -109,9 +112,10 @@
   (println "create step" step-type)
   (let [step (cond-> {:case {:id (get-in db [::db :id]) :resourceType "StrestyCase"} :type (name step-type)})]
     {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep")
+                  :headers {:content-type "application/json"
+                            "authorization" (aidbox-auth-header-sub db)}
                   :method "post"
                   :format "json"
-                  :headers {:content-type "application/json"}
                   :body step
                   :success {:event create-step-success
                             :idx idx}}}))
@@ -123,14 +127,16 @@
 
 (zrf/defx get-steps [{db :db} _]
   {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep")
+                :headers {:content-type "application/json"
+                          "authorization" (aidbox-auth-header-sub db)}
                 :params {:.case.id (get-in db [::db :id])}
                 :format "json"
                 :unbundle true
-                :headers {:content-type "application/json"}
                 :success {:event get-steps-success}}})
 
 (zrf/defx create-case [{db :db} _]
   {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
+                :headers {"authorization" (aidbox-auth-header-sub db)}
                 :method "put"
                 :format "json"
                 :success {:event get-steps}
@@ -139,6 +145,7 @@
 
 (zrf/defx get-or-create-case [{db :db} _]
   {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
+                :headers {"authorization" (aidbox-auth-header-sub db)}
                 :format "json"
                 :error {:event create-case}
                 :success {:event get-steps}
@@ -152,8 +159,18 @@
 (zrf/defs stresty-case [db]
   (get-in db [::db :case :data]))
 
-(zrf/defx update-step-value [{db :db} [_ step-id field value]]
-  {:db (assoc-in db [::db :steps step-id field] value)})
+(zrf/defx update-step-value [{db :db} [_ step-id field value update?]]
+  (let [step (get-in db [::db :steps step-id])
+        step (assoc step field value)]
+    (cond-> {:db (assoc-in db [::db :steps step-id] step)}
+      update?
+      (assoc :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep/" step-id)
+                          :headers {"authorization" (aidbox-auth-header-sub db)}
+                          :method "put"
+                          :format "json"
+                          :body (if (can-save-to-db (:result step))
+                                  step
+                                  (assoc step :result {:message "Response too large to save in DB"}))}))))
 
 ;; create Entities
 ;; get cases
@@ -172,12 +189,14 @@
        :http/fetch {:uri (str url "/")
                     :method "post"
                     :format "json"
-                    :headers {:content-type "application/json"}
+                    :headers {:content-type "application/json"
+                              "authorization" (aidbox-auth-header-sub db)}
                     :body setup-data
                     :path [::db :config-resp]
                     :error {:event init-failed}
                     :success {:event :http/fetch
                               :uri (str url "/StrestyCase")
+                              :headers {"authorization" (aidbox-auth-header-sub db)}
                               :params {:_sort "-lastUpdated"}
                               :format "json"
                               :unbundle true
@@ -187,13 +206,14 @@
       (= :deinit phase)
       {:db (dissoc db ::db)})))
 
-(defn get-http-fetch-for-step [aidbox-url step]
+(defn get-http-fetch-for-step [aidbox-url aidbox-auth-header step]
   (cond
     (= "request" (:type step))
     (let [t (step-type step)]
       (cond
         (= "sql" t)
         {:uri (str aidbox-url "/$sql")
+         :headers {"authorization" aidbox-auth-header}
          :method "post"
          :format "json"
          :body [(:request step)]}
@@ -216,6 +236,8 @@
                        (str/split #"\n\n"))
               ]
           (cond-> {:uri (str aidbox-url uri)
+                   :headers {"authorization" aidbox-auth-header}
+
                    :method method
                    :format "json"}
             (#{:post :put :patch} method)
@@ -226,6 +248,8 @@
 
     (= "sql" (:type step))
     {:uri (str aidbox-url "/$sql")
+     :headers {"authorization" aidbox-auth-header}
+
      :method "post"
      :format "json"
      :body [(:sql step)]}
@@ -248,6 +272,8 @@
                    (str/split "\n\n"))
           ]
       (cond-> {:uri (str aidbox-url uri)
+               :headers {"authorization" aidbox-auth-header}
+
                :method method
                :format "json"}
         (#{:post :put :patch} method)
@@ -263,6 +289,8 @@
                  (assoc-in [:result] data))]
     {:db (assoc-in db [::db :steps step-id] step)
      :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep/" step-id)
+                  :headers {"authorization" (aidbox-auth-header-sub db)}
+
                   :method "put"
                   :format "json"
                   :body (if (can-save-to-db data)
@@ -272,7 +300,7 @@
 
 (zrf/defx exec-step [{db :db} [_ step-id]]
   (let [step (get-in db [::db :steps step-id])
-        http-fetch (get-http-fetch-for-step (aidbox-url-sub db) step)
+        http-fetch (get-http-fetch-for-step (aidbox-url-sub db) (aidbox-auth-header-sub db) step)
         on-complete {:event on-exec-step
                      :step-id step-id}]
     {:http/fetch (merge http-fetch
@@ -310,16 +338,16 @@
                         [:th {:class style} e]) ths)]]
        [:tbody
         (map-indexed (fn [idx e]
-               ^{:key (str step-id "-tr-" idx)}
-               [:tr 
-                (map-indexed (fn [idx-td e]
-                       ^{:key (str step-id "-tr-" idx "-td-" idx-td)}
-                       [:td {:class style}
-                              (if (or (seq? e) (coll? e))
-                                [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
-                                [:div {:dangerouslySetInnerHTML {:__html e}}])
-                              ]) (vals e))
-                ]) result)]])))
+                       ^{:key (str step-id "-tr-" idx)}
+                       [:tr
+                        (map-indexed (fn [idx-td e]
+                                       ^{:key (str step-id "-tr-" idx "-td-" idx-td)}
+                                       [:td {:class style}
+                                        (if (or (seq? e) (coll? e))
+                                          [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
+                                          [:div {:dangerouslySetInnerHTML {:__html e}}])
+                                        ]) (vals e))
+                        ]) result)]])))
 
 (defn render-result [url step]
   (let [render-type (or (:render-type step) "yaml")
@@ -342,7 +370,7 @@
                          (when (= render-type r)
                            (c :underline))]
                  :on-click (fn []
-                             (rf/dispatch [update-step-value (:id step) :render-type r])
+                             (rf/dispatch [update-step-value (:id step) :render-type r true])
                              (reset! render-type r))} r])]]
         (if (empty? result)
           [:span "Empty result"]
@@ -365,6 +393,8 @@
                                     (vec (take idx steps))
                                     (drop (inc idx) steps))))]
     {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
+                  :headers {"authorization" (aidbox-auth-header-sub db)}
+
                   :method "put"
                   :format "json"
                   :body case
@@ -380,13 +410,13 @@
                   [:bottom "100%"]
                   :inline-block
                   :cursor-pointer
-                           [:hover
-                            [:text :green-500]
-                            [:bg :gray-300]
-                            ]
-                           [:active
-                            [:text :blue-500]]
-                           {:stroke-width 1 :stroke-linecap "round"})}
+                  [:hover
+                   [:text :green-500]
+                   [:bg :gray-300]
+                   ]
+                  [:active
+                   [:text :blue-500]]
+                  {:stroke-width 1 :stroke-linecap "round"})}
     [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
     [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]
   )
@@ -421,43 +451,44 @@
    [:div {:class (c :flex :flex-row [:py 1])}
     [:div {:class (c [:w "40vw"])}
      (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
-        (if-let [step (get steps step-id)]
-          ^{:key step-id}
-          [:div {:class (c [:mt 6] [:mb 6])}
-           [add-step-button idx]
-           [:div
-            {:on-click #(rf/dispatch [set-active-step step-id])
-             :class [(c  [:border-b :gray-400] [:border-r :gray-400]
+       (if-let [step (get steps step-id)]
+         ^{:key step-id}
+         [:div {:class (c [:mt 6] [:mb 6])}
+          [add-step-button idx]
+          [:div
+           {:on-click #(rf/dispatch [set-active-step step-id])
+            :class [(c  [:border-b :gray-400] [:border-r :gray-400]
                         [:hover [:border-b :gray-600] [:border-r :gray-600]])
-                     (when (= (:id active-step) (:id step))
-                       (c [:border-b :gray-600] [:border-r :gray-600]))]}
-            [:div {:class (c :flex :justify-between :items-start)}
-             [:div.comment {:class (c [:w "93%"])}
-              [:style ".comment .CodeMirror {height: auto;}"]
-              [app.hack.codemirror/input
-               [::db :steps (:id step) :comment]
-               {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
-                :lineNumbers false
-                :placeholder "Add comment here..."
-                :mode "markdown"
-                :theme "comment"}]]
-             [:div {:class (c :flex :flex-row :self-start)}
-              (when (< 1 (count (:steps stresty-case)))
-                [:a {:on-click #(rf/dispatch [remove-step idx])}
-                 [:i.fas.fa-trash {:class (c
-                                           [:mx 1]
-                                           [:text :red-300]
-                                           [:hover [:text :red-400]])}]])
+                    (when (= (:id active-step) (:id step))
+                      (c [:border-b :gray-600] [:border-r :gray-600]))]}
+           [:div {:class (c :flex :justify-between :items-start)}
+            [:div.comment {:class (c [:w "93%"])}
+             [:style ".comment .CodeMirror {height: auto;}"]
+             [app.hack.codemirror/input
+              [::db :steps (:id step) :comment]
+              {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
+               :lineNumbers false
+               :on-change (fn [] (prn "wow"))
+               :placeholder "Add comment here..."
+               :mode "markdown"
+               :theme "comment"}]]
+            [:div {:class (c :flex :flex-row :self-start)}
+             (when (< 1 (count (:steps stresty-case)))
+               [:a {:on-click #(rf/dispatch [remove-step idx])}
+                [:i.fas.fa-trash {:class (c
+                                          [:mx 1]
+                                          [:text :red-300]
+                                          [:hover [:text :red-400]])}]])
 
-              [:a {:on-click #(rf/dispatch [exec-step (:id step)])}
-               [:i.fas.fa-play {:class (c
-                                        [:mx 1]
-                                        [:text :green-300]
-                                        [:hover [:text :green-400]])}]]
-              ]]
+             [:a {:on-click #(rf/dispatch [exec-step (:id step)])}
+              [:i.fas.fa-play {:class (c
+                                       [:mx 1]
+                                       [:text :green-300]
+                                       [:hover [:text :green-400]])}]]
+             ]]
 
-            [render-step step]]]
-          [:div "loading..."]))
+           [render-step step]]]
+         [:div "loading..."]))
      [add-step-button :last]]
     
     [:div {:class (c [:w "60vw"] :overflow-x-auto)}
