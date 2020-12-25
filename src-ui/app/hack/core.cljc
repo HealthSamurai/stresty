@@ -282,7 +282,7 @@
    {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])
 
 
-(defn render-sql-result-table [step]
+(defn render-sql-result-table [url step]
   (when (vector? (:result step))
     (let [{:keys [step-id result]} step
           ths (keys (first result))
@@ -292,8 +292,7 @@
         [:tr 
          (map-indexed (fn [i e]
                         ^{:key (str step-id "-th-" i)}
-                        [:th {:class style} e]) ths)]
-        ]
+                        [:th {:class style} e]) ths)]]
        [:tbody
         (map-indexed (fn [idx e]
                ^{:key (str step-id "-tr-" idx)}
@@ -302,8 +301,8 @@
                        ^{:key (str step-id "-tr-" idx "-td-" idx-td)}
                        [:td {:class style}
                               (if (or (seq? e) (coll? e))
-                                [:pre (interop/to-yaml e)]
-                                e)
+                                [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
+                                [:div {:dangerouslySetInnerHTML {:__html e}}])
                               ]) (vals e))
                 ]) result)]])))
 
@@ -353,7 +352,7 @@
 
                   (case @render-type
                     :table
-                    [render-sql-result-table step]
+                    [render-sql-result-table url step]
                     :yaml
                     [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
                     :json
