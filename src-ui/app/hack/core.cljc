@@ -278,7 +278,6 @@
 
 (defn render-step [step]
   ^{:key (:id step)}
-  
   (let [step-type (step-type step)
         mode (cond (= "sql" step-type)
                    "sql"
@@ -286,10 +285,15 @@
                    "yaml"
                    :else
                    "javascript")]
-    [app.hack.codemirror/input
-     [::db :steps (:id step) (keyword (:type step))]
-     {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
-      :mode mode}]))
+    [:div.step
+     [:style ".step .CodeMirror {min-height: 150px; height: auto;}"]
+
+     [app.hack.codemirror/input
+      [::db :steps (:id step) (keyword (:type step))]
+      {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
+       :lineNumbers false
+       :placeholder "wow"
+       :mode mode}]]))
 
 (defn render-sql-result-table [url step]
   (when (vector? (:result step))
@@ -405,7 +409,6 @@
 
 (zrf/defview view [stresty-case steps aidbox-url aidbox-auth-header]
   [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:p 2] {:grid-template-columns "1fr 7fr"})}
-   [:style ".CodeMirror {height: auto;}"]
    [:div
     [:h1 {:class (c :text-lg)} "Researcher's Console"]
     [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
@@ -426,6 +429,7 @@
                [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} [:i.fas.fa-trash {:class (c [:text :red-300])}]]])]
 
             [:div.comment {:class right-css}
+             [:style ".comment .CodeMirror {height: auto;}"]
              [app.hack.codemirror/input
               [::db :steps (:id step) :comment]
               {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
