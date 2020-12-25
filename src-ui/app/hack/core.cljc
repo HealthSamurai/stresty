@@ -183,7 +183,9 @@
                               :unbundle true
                               :path [::db :cases]
                               :error {:event init-failed}
-                              :success {:event get-or-create-case}}}})))
+                              :success {:event get-or-create-case}}}}
+      (= :deinit phase)
+      {:db (dissoc db ::db)})))
 
 (defn get-http-fetch-for-step [aidbox-url step]
   (cond

@@ -26,6 +26,9 @@ build-native: resources/VERSION
 
 build: resources/VERSION
 	clojure -M:run-test && clojure -M:ui:build -m build  && cp target/uberjar/stresty-*-standalone.jar target/stresty.jar
+	cp -R resources/public/* dist
+	cp -R target/stylo/release/public/* dist
+	cp -R target/shadow/release/public/* dist
 	rm resources/VERSION
 
 docker:

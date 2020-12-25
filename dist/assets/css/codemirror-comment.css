@@ -1,0 +1,16 @@
+.cm-s-comment.CodeMirror {
+    background-color: transparent;
+    color: #374151;
+    font-weight: lighter;
+}
+
+.cm-s-comment.CodeMirror-focused {
+    background-color: transparent;
+    transition: background-color 0.1s ease-in;
+    color: black;
+}
+
+.cm-s-comment.CodeMirror-empty {
+    color: #9CA3AF;
+}
+    

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	<link rel="stylesheet" type="text/css" href="/static/editor/styles.css">
+	<link href="//fonts.googleapis.com/css?family=Montserrat|Roboto&amp;display=swap" rel="stylesheet">
+</head>
+
+<body>
+		<nav>
+			<h3 id="whereami"> Patient: Basic </h3>
+			<h2 class="post"> Profile Editor</h2>
+			<div class="links">
+				<a class="btn" href="javascript:saveProfile()">Save</a>
+				<a class="btn" href="javascript:exit()">Save&Exit</a>
+				<div class="theme-switch-wrapper">
+					<label class="theme-switch" for="checkbox">
+		 	 			<input type="checkbox" id="checkbox" />
+		 	 			<div class="slider round"></div>
+					</label>
+			  		<em>Enable Dark Mode!</em>
+				</div>
+			</div>
+		</nav>
+ 
+	  <section>
+		  <article class="post">
+	   <div id="container" class="post"></div>
+		</article>
+	  </section>
+
+	<script type="text/javascript" src="/static/editor/scripts.js"></script>
+	<script src="/static/editor/main.bundle.js"></script>
+</html>
