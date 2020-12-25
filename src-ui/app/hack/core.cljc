@@ -417,8 +417,8 @@
      [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
     [config-view]]
 
-   [:div {:class (c :grid [:py 1] {:grid-template-columns "3fr 7fr"})}
-    [:div {:class (c)}
+   [:div {:class (c :flex :flex-row [:py 1])}
+    [:div {:class (c [:w-max "40%"] [:w-min "40%"])}
      (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
         (if-let [step (get steps step-id)]
           ^{:key step-id}

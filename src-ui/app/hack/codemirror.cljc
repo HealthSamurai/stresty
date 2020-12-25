@@ -45,6 +45,7 @@
                        sv (aget *cm "setValue")
                        gv (aget *cm "getValue")
                        on (aget *cm "on")]
+                   (.setSize *cm "100%" "100%")
                    (reset! cm *cm)
                    (.call sv *cm (.toString (or @value (get cm-opts "value") "")))
                    ;; (.setValue *cm (.toString (or @value "")))
