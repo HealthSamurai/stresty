@@ -36,10 +36,6 @@
 (zrf/defd set-value [db [_ path v]]
   (assoc-in db path v))
 
-(zrf/defs config [db]
-  (println "DEPRECATED: config")
-  {:url (get-in db [:zframes.routing/db :route :params :params :url])})
-
 (zrf/defs aidbox-url [db]
   (get-in db [:zframes.routing/db :route :params :params :url]))
 
@@ -189,13 +185,13 @@
                               :error {:event init-failed}
                               :success {:event get-or-create-case}}}})))
 
-(defn get-http-fetch-for-step [config step]
+(defn get-http-fetch-for-step [aidbox-url step]
   (cond
     (= "request" (:type step))
     (let [t (step-type step)]
       (cond
         (= "sql" t)
-        {:uri (str (:url config) "/$sql")
+        {:uri (str aidbox-url "/$sql")
          :method "post"
          :format "json"
          :body [(:request step)]}
@@ -217,7 +213,7 @@
               body (-> content
                        (str/split #"\n\n"))
               ]
-          (cond-> {:uri (str (:url config) uri)
+          (cond-> {:uri (str aidbox-url uri)
                    :method method
                    :format "json"}
             (#{:post :put :patch} method)
@@ -227,7 +223,7 @@
         ))
 
     (= "sql" (:type step))
-    {:uri (str (:url config) "/$sql")
+    {:uri (str aidbox-url "/$sql")
      :method "post"
      :format "json"
      :body [(:sql step)]}
@@ -249,7 +245,7 @@
           body (-> content
                    (str/split "\n\n"))
           ]
-      (cond-> {:uri (str (:url config) uri)
+      (cond-> {:uri (str aidbox-url uri)
                :method method
                :format "json"}
         (#{:post :put :patch} method)
