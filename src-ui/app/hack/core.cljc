@@ -430,7 +430,7 @@
                         [:hover [:border-b :gray-600] [:border-r :gray-600]])
                      (when (= (:id active-step) (:id step))
                        (c [:border-b :gray-600] [:border-r :gray-600]))]}
-            [:div {:class (c :flex :justify-between :items-center)}
+            [:div {:class (c :flex :justify-between :items-start)}
              [:div.comment {:class (c :w-full)}
               [:style ".comment .CodeMirror {height: auto;}"]
               [app.hack.codemirror/input
