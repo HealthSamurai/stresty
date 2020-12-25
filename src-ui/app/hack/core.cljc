@@ -9,6 +9,23 @@
             [app.hack.codemirror]
             [clojure.string :as str]))
 
+(zrf/defs aidbox-url [db]
+  (get-in db [:zframes.routing/db :route :params :params :url]))
+
+(zrf/defs aidbox-auth-header [db]
+  (get-in db [:zframes.routing/db :route :params :params :auth_header]))
+
+(zrf/defx aidbox-fetch [{db :db} [_ data]]
+  {:http/fetch (cond-> data
+                 (seq (get-in db [:zframes.routing/db :route :params :params :url]))
+                 (assoc :uri (str (get-in db [:zframes.routing/db :route :params :params :url]) (:uri data)))
+
+                 (and (get-in db [:zframes.routing/db :route :params :params :auth_header]) (seq (get-in db [:zframes.routing/db :route :params :params :auth_header])))
+                 (assoc-in [:headers "authorization"] (get-in db [:zframes.routing/db :route :params :params :auth_header]))
+
+                 true
+                 (assoc :format "json"))})
+
 (defn can-save-to-db [o]
   (let [size (atom 0)
         max-size (* 1024 1024)]
@@ -36,12 +53,6 @@
 (zrf/defd set-value [db [_ path v]]
   (assoc-in db path v))
 
-(zrf/defs aidbox-url [db]
-  (get-in db [:zframes.routing/db :route :params :params :url]))
-
-(zrf/defs aidbox-auth-header [db]
-  (get-in db [:zframes.routing/db :route :params :params :auth_header]))
-
 
 (def setup-data
   {:resourceType "Bundle"
@@ -57,13 +68,10 @@
 
 (zrf/defx setup-aidbox [{db :db} _]
   (let [url (aidbox-url-sub db)]
-    {:http/fetch {:uri (str url "/")
-                  :headers {:content-type "application/json"
-                            "authorization" (aidbox-auth-header-sub db)}
-                  :method "post"
-                  :format "json"
-                  :body setup-data
-                  :path [::db :config-resp]}}))
+    {:dispatch [aidbox-fetch {:uri "/"
+                              :method "post"
+                              :body setup-data
+                              :path [::db :config-resp]}]}))
 
 (defn step-type [step]
   (cond
@@ -101,24 +109,19 @@
     {:db (-> db
              (assoc-in [::db :steps (:id step)] step)
              (assoc-in [::db :case :data] case))
-     :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
-                  :headers {"authorization" (aidbox-auth-header-sub db)}
-
-                  :format "json"
-                  :method "put"
-                  :body case}}))
+     :dispatch [aidbox-fetch {:uri (str "/StrestyCase/" (get-in db [::db :id]))
+                              :format "json"
+                              :method "put"
+                              :body case}]}))
 
 (zrf/defx create-step [{db :db} [_ step-type idx]]
   (println "create step" step-type)
   (let [step (cond-> {:case {:id (get-in db [::db :id]) :resourceType "StrestyCase"} :type (name step-type)})]
-    {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep")
-                  :headers {:content-type "application/json"
-                            "authorization" (aidbox-auth-header-sub db)}
-                  :method "post"
-                  :format "json"
-                  :body step
-                  :success {:event create-step-success
-                            :idx idx}}}))
+    {:dispatch [aidbox-fetch {:uri (str "/StrestyStep")
+                              :method "post"
+                              :body step
+                              :success {:event create-step-success
+                                        :idx idx}}]}))
 
 (zrf/defx get-steps-success [{db :db} [_ {data :data :as resp}]]
   (if (zero? (count data))
@@ -126,30 +129,25 @@
     {:db (assoc-in db [::db :steps] (reduce (fn [steps step] (assoc steps (:id step) step)) {} data))}))
 
 (zrf/defx get-steps [{db :db} _]
-  {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep")
-                :headers {:content-type "application/json"
-                          "authorization" (aidbox-auth-header-sub db)}
-                :params {:.case.id (get-in db [::db :id])}
-                :format "json"
-                :unbundle true
-                :success {:event get-steps-success}}})
+  {:dispatch [aidbox-fetch {:uri (str "/StrestyStep")
+                            :params {:.case.id (get-in db [::db :id])}
+                            :format "json"
+                            :unbundle true
+                            :success {:event get-steps-success}}]})
 
 (zrf/defx create-case [{db :db} _]
-  {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
-                :headers {"authorization" (aidbox-auth-header-sub db)}
-                :method "put"
-                :format "json"
-                :success {:event get-steps}
-                :body {:type "tutorial" :steps []}
-                :path [::db :case]}})
+  {:dispatch [aidbox-fetch {:uri (str "/StrestyCase/" (get-in db [::db :id]))
+                            :method "put"
+                            :success {:event get-steps}
+                            :body {:type "tutorial" :steps []}
+                            :path [::db :case]}]})
 
 (zrf/defx get-or-create-case [{db :db} _]
-  {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
-                :headers {"authorization" (aidbox-auth-header-sub db)}
-                :format "json"
-                :error {:event create-case}
-                :success {:event get-steps}
-                :path [::db :case]}})
+  {:dispatch [aidbox-fetch {:uri (str "/StrestyCase/" (get-in db [::db :id]))
+                            :format "json"
+                            :error {:event create-case}
+                            :success {:event get-steps}
+                            :path [::db :case]}]})
 
 (zrf/defs page-sub [db] (get db ::db))
 
@@ -164,13 +162,11 @@
         step (assoc step field value)]
     (cond-> {:db (assoc-in db [::db :steps step-id] step)}
       update?
-      (assoc :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep/" step-id)
-                          :headers {"authorization" (aidbox-auth-header-sub db)}
-                          :method "put"
-                          :format "json"
-                          :body (if (can-save-to-db (:result step))
-                                  step
-                                  (assoc step :result {:message "Response too large to save in DB"}))}))))
+      (assoc :dispatch [aidbox-fetch {:uri (str "/StrestyStep/" step-id)
+                                      :method "put"
+                                      :body (if (can-save-to-db (:result step))
+                                              step
+                                              (assoc step :result {:message "Response too large to save in DB"}))}]))))
 
 ;; create Entities
 ;; get cases
@@ -181,41 +177,27 @@
 
 (zrf/defx ctx
   [{db :db} [_ phase params]]
-  (let [url (aidbox-url-sub db)]
-    (cond
-      (= :init phase)
-      {:db (-> db
-               (assoc-in [::db :id] (:id params)))
-       :http/fetch {:uri (str url "/")
-                    :method "post"
-                    :format "json"
-                    :headers {:content-type "application/json"
-                              "authorization" (aidbox-auth-header-sub db)}
-                    :body setup-data
-                    :path [::db :config-resp]
-                    :error {:event init-failed}
-                    :success {:event :http/fetch
-                              :uri (str url "/StrestyCase")
-                              :headers {"authorization" (aidbox-auth-header-sub db)}
-                              :params {:_sort "-lastUpdated"}
-                              :format "json"
-                              :unbundle true
-                              :path [::db :cases]
+  (cond
+    (= :init phase)
+    {:db (-> db
+             (assoc-in [::db :id] (:id params)))
+     :dispatch [aidbox-fetch {:uri "/"
+                              :method "post"
+                              :body setup-data
+                              :path [::db :config-resp]
                               :error {:event init-failed}
-                              :success {:event get-or-create-case}}}}
-      (= :deinit phase)
-      {:db (dissoc db ::db)})))
+                              :success {:event get-or-create-case}}]}
+    (= :deinit phase)
+    {:db (dissoc db ::db)}))
 
-(defn get-http-fetch-for-step [aidbox-url aidbox-auth-header step]
+(defn get-http-fetch-for-step [step]
   (cond
     (= "request" (:type step))
     (let [t (step-type step)]
       (cond
         (= "sql" t)
-        {:uri (str aidbox-url "/$sql")
-         :headers {"authorization" aidbox-auth-header}
+        {:uri "/$sql"
          :method "post"
-         :format "json"
          :body [(:request step)]}
 
         (= "http" t)
@@ -235,23 +217,18 @@
               body (-> content
                        (str/split #"\n\n"))
               ]
-          (cond-> {:uri (str aidbox-url uri)
-                   :headers {"authorization" aidbox-auth-header}
-
-                   :method method
-                   :format "json"}
+          (cond-> {:uri uri
+                   :method method}
             (#{:post :put :patch} method)
             (assoc :body (interop/from-yaml (last body)))
             ))
 
         ))
 
-    (= "sql" (:type step))
-    {:uri (str aidbox-url "/$sql")
-     :headers {"authorization" aidbox-auth-header}
 
+    (= "sql" (:type step))
+    {:uri "/$sql"
      :method "post"
-     :format "json"
      :body [(:sql step)]}
 
     (= "http" (:type step))
@@ -288,24 +265,21 @@
                  (assoc-in [:status] status)
                  (assoc-in [:result] data))]
     {:db (assoc-in db [::db :steps step-id] step)
-     :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep/" step-id)
-                  :headers {"authorization" (aidbox-auth-header-sub db)}
-
-                  :method "put"
-                  :format "json"
-                  :body (if (can-save-to-db data)
-                          step
-                          (assoc step :result {:message "Response too large to save in DB"}))}}))
+     :dispatch [aidbox-fetch {:uri (str "/StrestyStep/" step-id)
+                              :method "put"
+                              :body (if (can-save-to-db data)
+                                      step
+                                      (assoc step :result {:message "Response too large to save in DB"}))}]}))
 
 
 (zrf/defx exec-step [{db :db} [_ step-id]]
   (let [step (get-in db [::db :steps step-id])
-        http-fetch (get-http-fetch-for-step (aidbox-url-sub db) (aidbox-auth-header-sub db) step)
+        http-fetch (get-http-fetch-for-step step)
         on-complete {:event on-exec-step
                      :step-id step-id}]
-    {:http/fetch (merge http-fetch
-                        {:success (assoc on-complete ::status "ok")
-                         :error (assoc on-complete ::status "error")})}))
+    {:dispatch [aidbox-fetch (merge http-fetch
+                                    {:success (assoc on-complete ::status "ok")
+                                     :error (assoc on-complete ::status "error")})]}))
 
 (defn render-step [step]
   ^{:key (:id step)}
@@ -392,13 +366,11 @@
                                    (into
                                     (vec (take idx steps))
                                     (drop (inc idx) steps))))]
-    {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
-                  :headers {"authorization" (aidbox-auth-header-sub db)}
-
-                  :method "put"
-                  :format "json"
-                  :body case
-                  :path [::db :case]}}))
+    {:dispatch [aidbox-fetch {:uri (str "/StrestyCase/" (get-in db [::db :id]))
+                              :method "put"
+                              :format "json"
+                              :body case
+                              :path [::db :case]}]}))
 
 (defn add-step-button [idx]
   [:div {:class (c :relative )}
