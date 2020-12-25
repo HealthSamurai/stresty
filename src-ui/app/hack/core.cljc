@@ -392,7 +392,7 @@
   (when-let [step-id (or (get-in db [::db :active-step]) (:id (first (get-in db [::db :case :data :steps]))))]
     (get-in db [::db :steps step-id])))
 
-(zrf/defview postman-view [stresty-case steps aidbox-url aidbox-auth-header active-step]
+(zrf/defview view [stresty-case steps aidbox-url aidbox-auth-header active-step]
   [:div {:class (c [:grid] [:bg :gray-100] [:m-auto])}
    [:div {:class (c [:py 1] [:bg :gray-300] :flex :justify-between :items-center)}
     [:span
@@ -454,4 +454,4 @@
 
 
 
-(pages/reg-page ctx postman-view)
+(pages/reg-page ctx view)
