@@ -423,7 +423,7 @@
             [:div {:class left-css}
              [:div (step-type step)]
              (when (< 1 (count (:steps stresty-case)))
-               [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "remove"]])]
+               [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} [:i.fas.fa-trash {:class (c [:text :red-300])}]]])]
 
             [:div.comment {:class right-css}
              [app.hack.codemirror/input
