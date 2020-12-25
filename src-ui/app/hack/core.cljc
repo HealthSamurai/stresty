@@ -3,10 +3,14 @@
             [stylo.core :refer [c]]
             [re-frame.core :as rf]
             [zframes.re-frame :as zrf]
+            [app.routes :refer [href]]
             [app.scenario.editor]
             [app.hack.interop :as interop]
             [app.hack.codemirror]
             [clojure.string :as str]))
+
+(defn rand-str [len]
+  (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
 
 (zrf/defs get-value [db [_ path]]
   (get-in db path))
@@ -68,53 +72,6 @@
     :else
     (:type step)))
 
-(zrf/defx get-steps-success [{db :db} [_ {data :data :as resp}]]
-  {:db (assoc-in db [::db :steps] (reduce (fn [steps step] (assoc steps (:id step) step)) {} data))})
-
-(zrf/defx get-steps [{db :db} _]
-  {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep")
-                :params {:.case.id (get-in db [::db :id])}
-                :format "json"
-                :unbundle true
-                :headers {:content-type "application/json"}
-                :success {:event get-steps-success}}})
-
-(zrf/defx create-case [{db :db} _]
-  {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
-                :method "put"
-                :format "json"
-                :headers {:content-type "application/json"}
-                :success {:event get-steps}
-                :body {:type "tutorial" :steps []}
-                :path [::db :case]}})
-
-(zrf/defx get-or-create-case [{db :db} _]
-  {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
-                :format "json"
-                :headers {:content-type "application/json"}
-                :error {:event create-case}
-                :success {:event get-steps}
-                :path [::db :case]}})
-
-
-
-
-(zrf/defs page-sub [db] (get db ::db))
-
-(zrf/defview config-view [aidbox-url aidbox-auth-header]
-  [:div
-   (let [input-cls (c [:border] [:w 50] [:ml 1] [:py 0.5] [:px 2])]
-      [:div {:class (c [:p 2])}
-       [:span
-        [:span "Aidbox URL:"]
-        [:input {:class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]]
-       [:span
-        [:span {:class (c [:ml 2])} "Auth Header:"]
-        [:input {:class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]
-       [:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]
-       [:input {:class (c [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [get-or-create-case])}]])])
-
-
 (zrf/defx create-step-success [{db :db} [_ {idx :idx step :data}]]
   (let [case
         (if (= :last idx)
@@ -129,7 +86,7 @@
     {:db (-> db
              (assoc-in [::db :steps (:id step)] step)
              (assoc-in [::db :case :data] case))
-     :http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
+     :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
                   :format "json"
                   :method "put"
                   :body case}}))
@@ -137,13 +94,48 @@
 (zrf/defx create-step [{db :db} [_ step-type idx]]
   (println "create step" step-type)
   (let [step (cond-> {:case {:id (get-in db [::db :id]) :resourceType "StrestyCase"} :type (name step-type)})]
-    {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep")
+    {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep")
                   :method "post"
                   :format "json"
                   :headers {:content-type "application/json"}
                   :body step
                   :success {:event create-step-success
                             :idx idx}}}))
+
+(zrf/defx get-steps-success [{db :db} [_ {data :data :as resp}]]
+  (if (zero? (count data))
+    {:dispatch [create-step :request 0]}
+    {:db (assoc-in db [::db :steps] (reduce (fn [steps step] (assoc steps (:id step) step)) {} data))}))
+
+(zrf/defx get-steps [{db :db} _]
+  {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep")
+                :params {:.case.id (get-in db [::db :id])}
+                :format "json"
+                :unbundle true
+                :headers {:content-type "application/json"}
+                :success {:event get-steps-success}}})
+
+(zrf/defx create-case [{db :db} _]
+  {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
+                :method "put"
+                :format "json"
+                :success {:event get-steps}
+                :body {:type "tutorial" :steps []}
+                :path [::db :case]}})
+
+(zrf/defx get-or-create-case [{db :db} _]
+  {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
+                :format "json"
+                :error {:event create-case}
+                :success {:event get-steps}
+                :path [::db :case]}})
+
+
+
+
+(zrf/defs page-sub [db] (get db ::db))
+
+
 
 
 (zrf/defs steps [db]
@@ -159,15 +151,31 @@
 ;; get cases
 ;; get-or-create-case
 
+(zrf/defx init-failed [{db :db} _]
+  (println "ERROR: failed init process"))
 
 (zrf/defx ctx
   [{db :db} [_ phase params]]
-  (cond
-    (= :init phase)
-    {:db (-> db
-             (assoc-in [::db :id] (:id params))
-             (assoc-in [::db :config] {:url "https://little.aidbox.app"}))
-     :dispatch [get-or-create-case]}))
+  (let [url (aidbox-url-sub db)]
+    (cond
+      (= :init phase)
+      {:db (-> db
+               (assoc-in [::db :id] (:id params)))
+       :http/fetch {:uri (str url "/")
+                    :method "post"
+                    :format "json"
+                    :headers {:content-type "application/json"}
+                    :body setup-data
+                    :path [::db :config-resp]
+                    :error {:event init-failed}
+                    :success {:event :http/fetch
+                              :uri (str url "/StrestyCase")
+                              :params {:_sort "-lastUpdated"}
+                              :format "json"
+                              :unbundle true
+                              :path [::db :cases]
+                              :error {:event init-failed}
+                              :success {:event get-or-create-case}}}})))
 
 (defn get-http-fetch-for-step [config step]
   (cond
@@ -243,7 +251,7 @@
                  (assoc-in [:status] status)
                  (assoc-in [:result] data))]
     {:db (assoc-in db [::db :steps step-id] step)
-     :http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyStep/" step-id)
+     :http/fetch {:uri (str (aidbox-url-sub db) "/StrestyStep/" step-id)
                   :method "put"
                   :format "json"
                   :body (dissoc step :result)}}))
@@ -251,7 +259,7 @@
 
 (zrf/defx exec-step [{db :db} [_ step-id]]
   (let [step (get-in db [::db :steps step-id])
-        http-fetch (get-http-fetch-for-step (get-in db [::db :config]) step)
+        http-fetch (get-http-fetch-for-step {:url (aidbox-url-sub db)} step)
         on-complete {:event on-exec-step
                      :step-id step-id}]
     {:http/fetch (merge http-fetch
@@ -351,23 +359,33 @@
                                    (into
                                     (vec (take idx steps))
                                     (drop (inc idx) steps))))]
-    {:http/fetch {:uri (str (get-in db [::db :config :url]) "/StrestyCase/" (get-in db [::db :id]))
+    {:http/fetch {:uri (str (aidbox-url-sub db) "/StrestyCase/" (get-in db [::db :id]))
                   :method "put"
                   :format "json"
                   :body case
                   :path [::db :case]}}))
 
+(zrf/defview config-view [aidbox-url aidbox-auth-header]
+  [:div
+   (let [input-cls (c [:border] [:w 50] [:ml 1] [:py 0.5] [:px 2])]
+      [:div {:class (c [:p 2])}
+       [:span
+        [:span "Aidbox URL:"]
+        [:input {:class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]]
+       [:span
+        [:span {:class (c [:ml 2])} "Auth Header:"]
+        [:input {:class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]
+       [:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]
+       [:input {:class (c [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]])])
 
-(zrf/defview view [stresty-case steps]
+(zrf/defview view [stresty-case steps aidbox-url aidbox-auth-header]
   [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:p 2] {:grid-template-columns "1fr 7fr"})}
    ;; [:style ".CodeMirror {background-color: #f7fafc;}"]
    [:div
-    [:h1 {:class (c :text-lg)} "Researcher's Console"]]
+    [:h1 {:class (c :text-lg)} "Researcher's Console"]
+    [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
    [:div
     [config-view]
-
-    [:div {:class (c [:p 2])}
-     [:input {:type "button" :value "Add step" :on-click #(rf/dispatch [create-step :request :last])}]]
 
     (let [left-css (c :font-light [:p 1] [:text :gray-600] [:text-right])
           right-css (c [:pl 8] [:border-l :gray-600])]
@@ -380,7 +398,8 @@
             [:div {:class right-css} "comment"]
             [:div {:class left-css}
              [:div (step-type step)]
-             [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "remove"]]]
+             (when (< 1 (count (:steps stresty-case)))
+               [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "remove"]])]
             [:div {:class [right-css (c [:p 0])]}
              [render-step step]]
             (when (:result step)
