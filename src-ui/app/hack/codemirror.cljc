@@ -18,7 +18,7 @@
 (def default-cm-options
   {:lineNumbers true
    :height "auto"
-   :mode "application/json"
+   :mode "yaml"
    :lint true
    :matchBrackets true
    :viewportMargin #?(:cljs js/Infinity :clj Integer/MAX_VALUE)})

@@ -255,7 +255,8 @@
     (throw (ex-info "no such step type" {}))))
 
 (zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data response :response}]]
-  (let [step (-> (get-in db [::db :steps step-id])
+  (println "Type: " (type 12) (type "ss") (type true) (type {}) (type []))
+  (let [        step (-> (get-in db [::db :steps step-id])
                  (assoc-in [:status-code] (.-status response))
                  (assoc-in [:status] status)
                  (assoc-in [:result] data))]
@@ -277,10 +278,18 @@
 
 (defn render-step [step]
   ^{:key (:id step)}
-  [app.hack.codemirror/input
-   [::db :steps (:id step) (keyword (:type step))]
-   {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}}])
-
+  
+  (let [step-type (step-type step)
+        mode (cond (= "sql" step-type)
+                   "sql"
+                   (= "http" step-type)
+                   "yaml"
+                   :else
+                   "javascript")]
+    [app.hack.codemirror/input
+     [::db :steps (:id step) (keyword (:type step))]
+     {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
+      :mode mode}]))
 
 (defn render-sql-result-table [url step]
   (when (vector? (:result step))
@@ -341,7 +350,7 @@
                          )
                        ])
                     ])]           
-           [:div {:class (if is-ok (c [:border-l :green-500]) (c [:border-l :red-500]))}
+           [:div {:class [(c [:space-y 2] [:pl 2]) (if is-ok (c [:border-l :green-500]) (c [:border-l :red-500]))]}
             [:span {:class (if is-ok (c [:text :green-500]) (c [:text :red-500]))}
              (str "Status: " (:status-code step))]
             (if (empty? result)
@@ -396,7 +405,7 @@
 
 (zrf/defview view [stresty-case steps aidbox-url aidbox-auth-header]
   [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:p 2] {:grid-template-columns "1fr 7fr"})}
-   ;; [:style ".CodeMirror {background-color: #f7fafc;}"]
+   [:style ".CodeMirror {height: auto;}"]
    [:div
     [:h1 {:class (c :text-lg)} "Researcher's Console"]
     [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
@@ -405,19 +414,27 @@
     [config-view]
 
     (let [left-css (c :font-light [:p 1] [:text :gray-600] [:text-right])
-          right-css (c [:pl 8] [:border-l :gray-600])]
+          right-css (c [:pl 2] [:border-l :gray-600])]
       (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
         (if-let [step (get steps step-id)]
           ^{:key step-id}
           [:div
            [:div {:class (c :grid [:py 1] {:grid-template-columns "70px 1fr"})}
-            [:div {:class left-css}]
-            [:div {:class right-css} "comment"]
             [:div {:class left-css}
              [:div (step-type step)]
              (when (< 1 (count (:steps stresty-case)))
                [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} "remove"]])]
-            [:div {:class [right-css (c [:p 0])]}
+
+            [:div.comment {:class right-css}
+             [app.hack.codemirror/input
+              [::db :steps (:id step) :comment]
+              {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
+               :lineNumbers false
+               :placeholder "Add comment here..."
+               :mode "markdown"
+               :theme "comment"}]]
+            [:div {:class left-css}]
+            [:div {:class [right-css]}
              [render-step step]]
             (when (:result step)
               [render-result aidbox-url step])]
