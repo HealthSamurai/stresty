@@ -332,8 +332,10 @@
                                    (and (= type "sql")
                                         (sequential? result))
                                    (cons :table))]
+        (when (and (= :table @render-type) (map? (:result step)))
+          (reset! render-type :yaml))
         (when result
-          [:<>           
+          [:<>
            [:div {:class [(c [:space-y 2] [:pl 2])]}
             [:div {:class (c :flex :justify-between :items-center)}
              [:span {:class (if (= "ok" (:status step)) (c [:text :green-500]) (c [:text :red-500]))}
