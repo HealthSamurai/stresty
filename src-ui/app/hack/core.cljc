@@ -291,13 +291,12 @@
                    :else
                    "javascript")]
     [:div.step
-     [:style ".step .CodeMirror {min-height: 150px; height: auto;}"]
-
+     [:style ".step .CodeMirror {height: auto;} .step .CodeMirror-scroll {min-height: 150px;}"]
      [app.hack.codemirror/input
       [::db :steps (:id step) (keyword (:type step))]
       {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
        :lineNumbers false
-       :placeholder "wow"
+       :placeholder "Put your request here..."
        :mode mode}]]))
 
 (defn render-sql-result-table [url step]

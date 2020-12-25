@@ -61,4 +61,4 @@
 
                    (doseq [[k v] @st]
                      (if (not= k "extraKeys")
-                       (.setOption ^js/CodeMirror *cm k v)))))}))))
+                       (.setOption ^js/CodeMirror *cm (name k) v)))))}))))
