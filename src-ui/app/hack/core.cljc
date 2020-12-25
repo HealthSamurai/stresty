@@ -146,6 +146,7 @@
   {:dispatch [aidbox-fetch {:uri (str "/StrestyCase/" (get-in db [::db :id]))
                             :method "put"
                             :success {:event get-steps}
+                            :error {:event 'init-failed}
                             :body {:type "tutorial" :steps []}
                             :path [::db :case]}]})
 
@@ -157,6 +158,8 @@
                             :path [::db :case]}]})
 
 (zrf/defs page-sub [db] (get db ::db))
+
+(zrf/defs connection-status [db] (get-in db [::db :status]))
 
 (zrf/defs steps [db]
   (get-in db [::db :steps]))
@@ -180,22 +183,25 @@
 ;; get-or-create-case
 
 (zrf/defx init-failed [{db :db} _]
-  (println "ERROR: failed init process"))
+  {:db (assoc-in db [::db :status] :offline)}
+  )
 
 (zrf/defx ctx
-  [{db :db} [_ phase params]]
-  (cond
-    (= :init phase)
-    {:db (-> db
-             (assoc-in [::db :id] (:id params)))
-     :dispatch [aidbox-fetch {:uri "/"
-                              :method "post"
-                              :body setup-data
-                              :path [::db :config-resp]
-                              :error {:event init-failed}
-                              :success {:event get-or-create-case}}]}
-    (= :deinit phase)
-    {:db (dissoc db ::db)}))
+  [{db :db} [_ phase]]
+  (let [case-id (get-in db [:fragment-params :id])]
+    (cond
+      (= :init phase)
+      {:db (-> db
+               (assoc-in [::db :id] case-id)
+               (assoc-in [::db :status] :online))
+       :dispatch [aidbox-fetch {:uri "/"
+                                :method "post"
+                                :body setup-data
+                                :path [::db :config-resp]
+                                :error {:event init-failed}
+                                :success {:event get-or-create-case}}]}
+      (= :deinit phase)
+      {:db (dissoc db ::db)})))
 
 (defn get-http-fetch-for-step [step]
   (cond
@@ -423,8 +429,8 @@
   )
 
 (zrf/defview config-view [aidbox-url aidbox-auth-header]
-  (let [input-cls (c [:border] [:w 60] [:ml 1] [:py 0.5] [:px 2])]
-    [:span {:class (c [:p 2])}
+  (let [input-cls (c [:border] [:w 60] [:ml 1] [:py 0.5])]
+    [:span
      [:input {:class (c [:px 2] [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]
      [:input {:placeholder "Aidbox URL" :class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]
      [:input {:placeholder "Auth Header":class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]))
@@ -436,11 +442,16 @@
   (when-let [step-id (or (get-in db [::db :active-step]) (:id (first (get-in db [::db :case :data :steps]))))]
     (get-in db [::db :steps step-id])))
 
-(zrf/defview view [stresty-case steps aidbox-url aidbox-auth-header active-step]
+(zrf/defview view [stresty-case steps aidbox-url aidbox-auth-header active-step connection-status]
   [:div {:class (c [:grid] [:bg :gray-100] [:m-auto])}
-   [:div {:class (c [:py 1] [:bg :gray-300] :flex :justify-between :items-center)}
-    [:span
-     [:h1 {:class (c  [:px 4] :text-lg :inline-block) } "Researcher's Console"]
+   [:div {:class (c [:py 3] [:px 4] [:bg :gray-300] :flex :justify-between :items-center)}
+    [:div
+     [:span {:class [(c :inline-block [:w "10px"] [:h "10px"] [:rounded :full] [:mr 1])
+                     (if (= connection-status :online)
+                       (c [:bg :green-500])
+                       (c [:bg :red-500])
+                       )]}]
+     [:h1 {:class (c  [:pr 4] :text-lg :inline-block) } "Researcher's Console"]
      [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
     [config-view]]
 
