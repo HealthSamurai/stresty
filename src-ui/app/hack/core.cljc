@@ -324,63 +324,39 @@
                 ]) result)]])))
 
 (defn render-result [url step]
-  (let [show? (zrf/ratom true)
-        render-type (zrf/ratom nil)]
+  (let [render-type (zrf/ratom :yaml)]
     (fn [url step]
-      (let [is-ok (= (:status step) "ok")
-            type (step-type step)
+      (let [type (step-type step)
             result (:result step)
             allowed-render-types (cond->> [:yaml :json :edn]
                                    (and (= type "sql")
                                         (sequential? result))
                                    (cons :table))]
-        (if (not @render-type)
-          (reset! render-type (first allowed-render-types))
-          (if (-> allowed-render-types
-                  set
-                  (contains? @render-type)
-                  not)
-            (reset! render-type (first allowed-render-types))))
         (when result
           [:<>           
-           [:div (when (seq result)
-                   [:div {:class (c :flex :flex-col [:space-y 4] :text-right [:pr 1] [:text :gray-600] :font-light)}
-                    [:a {:on-click (fn [] (swap! show? not))} (if @show? "hide" "show")]
-                    (when @show?
-                      [:div {:class (c :flex :flex-col)}
-                       (for [r allowed-render-types]
-                         ^{:key (str (:id step) "-" (name r))}
-                         [:a {:class [(c :cursor-pointer)
-                                      (when (= @render-type r)
-                                        (c :underline)
-                                        )]
-                              :on-click (fn [] (reset! render-type r))} (name r)]
-                         )
-                       ])
-                    ])]           
-           [:div {:class [(c [:space-y 2] [:pl 2]) (if is-ok (c [:border-l :green-500]) (c [:border-l :red-500]))]}
-            [:span {:class (if is-ok (c [:text :green-500]) (c [:text :red-500]))}
-             (str "Status: " (:status-code step))]
+           [:div {:class [(c [:space-y 2] [:pl 2])]}
+            [:div {:class (c :flex :justify-between :items-center)}
+             [:span {:class (if (= "ok" (:status step)) (c [:text :green-500]) (c [:text :red-500]))}
+              (str "Status: " (:status-code step))]
+             [:span {:class (c [:mr 2])}
+              (for [r allowed-render-types]
+                ^{:key (str (:id step) "-" (name r))}
+                [:a {:class [(c :cursor-pointer [:mr 2])
+                             (when (= @render-type r)
+                               (c :underline))]
+                     :on-click (fn [] (reset! render-type r))} (name r)])]]
             (if (empty? result)
               [:span "Empty result"]
               (let [result (enrich-with-link url result)]
-                (if @show?
-                      ;; [:div {:dangerouslySetInnerHTML {:__html "<a>wow</a>"}}]
-
-                  (case @render-type
-                    :table
-                    [render-sql-result-table url step]
-                    :yaml
-                    [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
-                    :json
-                    [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result)}}]
-                    :edn
-                    [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result)}}]
-                    )
-                  [:pre "..."])))
-
-
-            ]])))))
+                (case @render-type
+                  :table
+                  [render-sql-result-table url step]
+                  :yaml
+                  [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
+                  :json
+                  [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result)}}]
+                  :edn
+                  [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result)}}])))]])))))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
@@ -396,17 +372,141 @@
                   :path [::db :case]}}))
 
 (zrf/defview config-view [aidbox-url aidbox-auth-header]
-  [:div
-   (let [input-cls (c [:border] [:w 50] [:ml 1] [:py 0.5] [:px 2])]
-      [:div {:class (c [:p 2])}
-       [:span
-        [:span "Aidbox URL:"]
-        [:input {:class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]]
-       [:span
-        [:span {:class (c [:ml 2])} "Auth Header:"]
-        [:input {:class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]
-       [:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]
-       [:input {:class (c [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]])])
+  (let [input-cls (c [:border] [:w 50] [:ml 1] [:py 0.5] [:px 2])]
+    [:span {:class (c [:p 2])}
+     [:span
+      [:span "Aidbox URL:"]
+      [:input {:class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]]
+     [:span
+      [:span {:class (c [:ml 2])} "Auth Header:"]
+      [:input {:class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]
+     #_[:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]
+     [:input {:class (c [:px 2] [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]]))
+
+(zrf/defx set-active-step [{db :db} [_ step-id]]
+  {:db (assoc-in db [::db :active-step] step-id)})
+
+(zrf/defs active-step [db]
+  (when-let [step-id (or (get-in db [::db :active-step]) (:id (first (get-in db [::db :case :data :steps]))))]
+    (get-in db [::db :steps step-id])))
+
+(zrf/defview postman-view [stresty-case steps aidbox-url aidbox-auth-header active-step]
+  [:div {:class (c [:grid] [:bg :gray-100] [:m-auto])}
+   [:div {:class (c [:py 1] [:bg :gray-300] :flex :justify-between :items-center)}
+    [:span
+     [:h1 {:class (c  [:px 4] :text-lg :inline-block) } "Researcher's Console"]
+     [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
+    [config-view]]
+
+   [:div {:class (c :grid [:py 1] {:grid-template-columns "2fr 3fr"})}
+    [:div {:class (c)}
+     (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
+        (if-let [step (get steps step-id)]
+          ^{:key step-id}
+          [:div
+           {:on-click #(rf/dispatch [set-active-step step-id])
+            :class [(c [:mb 4] [:border-b :gray-400] [:border-r :gray-400]
+                       [:hover [:border-b :gray-600] [:border-r :gray-600]])
+                    (when (= (:id active-step) (:id step))
+                      (c [:border-b :gray-600] [:border-r :gray-600]))]}
+           [:div {:class (c :flex :justify-between :items-center)}
+            [:div.comment
+             [:style ".comment .CodeMirror {height: auto;}"]
+             [app.hack.codemirror/input
+              [::db :steps (:id step) :comment]
+              {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
+               :lineNumbers false
+               :placeholder "Add comment here..."
+               :mode "markdown"
+               :theme "comment"}]
+             ]
+            [:div
+             (when (< 1 (count (:steps stresty-case)))
+               [:a {:on-click #(rf/dispatch [remove-step idx])}
+                [:i.fas.fa-trash {:class (c
+                                          [:mx 1]
+                                          [:text :red-300]
+                                          [:hover [:text :red-400]])}]])
+
+             [:a {:on-click #(rf/dispatch [exec-step (:id step)])}
+              [:i.fas.fa-play {:class (c
+                                       [:mx 1]
+                                       [:text :green-300]
+                                         [:hover [:text :green-400]])}]]
+
+
+             [:a {:on-click #(prn "plus")}
+                [:i.fas.fa-plus {:class (c
+                                          [:mx 1]
+                                          [:text :green-300]
+                                          [:hover [:text :green-400]])}]]]]
+
+           [render-step step]]
+          [:div "loading..."]))]
+    [:div
+     (when (:result active-step)
+       [render-result aidbox-url active-step])
+     ]]
+
+   [:div
+    (let [left-css (c :font-light [:p 1] [:text :gray-600] [:text-right])
+          right-css (c [:pl 2] [:border-l :gray-600])]
+      (for [[idx step-id] (map-indexed (fn [idx step] [idx (:id step)]) (:steps stresty-case))]
+        (if-let [step (get steps step-id)]
+          ^{:key step-id}
+          [:div
+           [:div {:class (c :grid [:py 1] {:grid-template-columns "70px 1fr"})}
+            [:div {:class left-css}
+             [:div (step-type step)]
+             (when (< 1 (count (:steps stresty-case)))
+               [:div [:a {:class (c [:hover [:text :red-500]]) :on-click #(rf/dispatch [remove-step idx])} [:i.fas.fa-trash {:class (c [:text :red-300])}]]])]
+
+            [:div.comment {:class right-css}
+             [:style ".comment .CodeMirror {height: auto;}"]
+             [app.hack.codemirror/input
+              [::db :steps (:id step) :comment]
+              {"extraKeys" {"Ctrl-Enter" #(rf/dispatch [exec-step (:id step)])}
+               :lineNumbers false
+               :placeholder "Add comment here..."
+               :mode "markdown"
+               :theme "comment"}]]
+            [:div {:class left-css}]
+            [:div {:class [right-css]}
+             [render-step step]]
+            (when (:result step)
+              [render-result aidbox-url step])]
+           [:div {:class (c [:ml "62.5px"] [:mb 1])}
+            [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
+                   :on-click #(rf/dispatch [create-step :request idx])
+                   :class (c
+                           :inline-block
+                           :cursor-pointer
+                           [:hover
+                            [:text :green-500]]
+                           [:active
+                            [:text :blue-500]]
+                           {:stroke-width 1 :stroke-linecap "round"})}
+             [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
+             [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]]
+
+          [:div "loading..."])))]
+
+   ])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -464,4 +564,5 @@
 
    ])
 
-(pages/reg-page ctx view)
+
+(pages/reg-page ctx postman-view)
