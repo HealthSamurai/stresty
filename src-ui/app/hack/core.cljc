@@ -248,6 +248,7 @@
 
 (zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data}]]
   (let [step (-> (get-in db [::db :steps step-id])
+                 (assoc-in [:status-code] (.-status response))
                  (assoc-in [:status] status)
                  (assoc-in [:result] data))]
     {:db (assoc-in db [::db :steps step-id] step)
@@ -333,7 +334,9 @@
                          )
                        ])
                     ])]           
-           [:div {:class (if is-ok (c [:border-l :green-400]) (c [:border-l :red-400]))}
+           [:div {:class (if is-ok (c [:border-l :green-500]) (c [:border-l :red-500]))}
+            [:span {:class (if is-ok (c [:text :green-500]) (c [:text :red-500]))}
+             (str "Status: " (:status-code step))]
             (if (empty? result)
               [:span "Empty result"]
               (if @show?
