@@ -320,41 +320,40 @@
                 ]) result)]])))
 
 (defn render-result [url step]
-  (let [render-type (zrf/ratom :yaml)]
-    (fn [url step]
-      (let [type (step-type step)
-            result (:result step)
-            allowed-render-types (cond->> [:yaml :json :edn]
-                                   (and (= type "sql")
-                                        (sequential? result))
-                                   (cons :table))]
-        (when (and (= :table @render-type) (map? (:result step)))
-          (reset! render-type :yaml))
-        (when result
-          [:<>
-           [:div {:class [(c [:space-y 2] [:pl 4] [:pr 2])]}
-            [:div {:class (c :flex :justify-between :items-center)}
-             [:span {:class (if (= "ok" (:status step)) (c [:text :green-500]) (c [:text :red-500]))}
-              (str "Status: " (:status-code step))]
-             [:span {:class (c [:mr 2])}
-              (for [r allowed-render-types]
-                ^{:key (str (:id step) "-" (name r))}
-                [:a {:class [(c :cursor-pointer [:mr 2])
-                             (when (= @render-type r)
-                               (c :underline))]
-                     :on-click (fn [] (reset! render-type r))} (name r)])]]
-            (if (empty? result)
-              [:span "Empty result"]
-              (let [result (enrich-with-link url result)]
-                (case @render-type
-                  :table
-                  [render-sql-result-table url step]
-                  :yaml
-                  [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
-                  :json
-                  [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result)}}]
-                  :edn
-                  [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result)}}])))]])))))
+  (let [render-type (or (:render-type step) "yaml")
+        type (step-type step)
+        result (:result step)
+        allowed-render-types (cond->> ["yaml" "json" "edn"]
+                               (and (sequential? result))
+                               (cons "table"))
+        render-type (or (:render-type step) (if (and (not (map? result)) (coll? result)) "table" "yaml"))]
+    (when result
+      [:<>
+       [:div {:class [(c [:space-y 2] [:pl 4] [:pr 2])]}
+        [:div {:class (c :flex :justify-between :items-center)}
+         [:span {:class (if (= "ok" (:status step)) (c [:text :green-500]) (c [:text :red-500]))}
+          (str "Status: " (:status-code step))]
+         [:span {:class (c [:mr 2])}
+          (for [r allowed-render-types]
+            ^{:key (str (:id step) "-" r)}
+            [:a {:class [(c :cursor-pointer [:mr 2])
+                         (when (= render-type r)
+                           (c :underline))]
+                 :on-click (fn []
+                             (rf/dispatch [update-step-value (:id step) :render-type r])
+                             (reset! render-type r))} r])]]
+        (if (empty? result)
+          [:span "Empty result"]
+          (let [result (enrich-with-link url result)]
+            (case render-type
+              "table"
+              [render-sql-result-table url step]
+              "yaml"
+              [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
+              "json"
+              [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result)}}]
+              "edn"
+              [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result)}}])))]])))
 
 
 (zrf/defx remove-step [{db :db} [_ idx]]
