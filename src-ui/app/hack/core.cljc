@@ -401,16 +401,11 @@
   )
 
 (zrf/defview config-view [aidbox-url aidbox-auth-header]
-  (let [input-cls (c [:border] [:w 50] [:ml 1] [:py 0.5] [:px 2])]
+  (let [input-cls (c [:border] [:w 60] [:ml 1] [:py 0.5] [:px 2])]
     [:span {:class (c [:p 2])}
-     [:span
-      [:span "Aidbox URL:"]
-      [:input {:class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]]
-     [:span
-      [:span {:class (c [:ml 2])} "Auth Header:"]
-      [:input {:class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]
-     #_[:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]
-     [:input {:class (c [:px 2] [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]]))
+     [:input {:class (c [:px 2] [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]
+     [:input {:placeholder "Aidbox URL" :class [input-cls] :value aidbox-url :on-change #(rf/dispatch [:zframes.routing/merge-params {:url (.-value (.-target %))}])}]
+     [:input {:placeholder "Auth Header":class [input-cls] :value aidbox-auth-header :on-change #(rf/dispatch [:zframes.routing/merge-params {:auth_header (.-value (.-target %))}])}]]))
 
 (zrf/defx set-active-step [{db :db} [_ step-id]]
   {:db (assoc-in db [::db :active-step] step-id)})
