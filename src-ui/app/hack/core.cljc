@@ -246,7 +246,7 @@
     :else
     (throw (ex-info "no such step type" {}))))
 
-(zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data}]]
+(zrf/defx on-exec-step [{db :db} [_ {status ::status step-id :step-id data :data response :response}]]
   (let [step (-> (get-in db [::db :steps step-id])
                  (assoc-in [:status-code] (.-status response))
                  (assoc-in [:status] status)
