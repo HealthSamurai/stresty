@@ -270,7 +270,7 @@
 
 (zrf/defx exec-step [{db :db} [_ step-id]]
   (let [step (get-in db [::db :steps step-id])
-        http-fetch (get-http-fetch-for-step {:url (aidbox-url-sub db)} step)
+        http-fetch (get-http-fetch-for-step (aidbox-url-sub db) step)
         on-complete {:event on-exec-step
                      :step-id step-id}]
     {:http/fetch (merge http-fetch
