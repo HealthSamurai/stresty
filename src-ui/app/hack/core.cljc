@@ -431,7 +431,7 @@
                      (when (= (:id active-step) (:id step))
                        (c [:border-b :gray-600] [:border-r :gray-600]))]}
             [:div {:class (c :flex :justify-between :items-start)}
-             [:div.comment {:class (c :w-full)}
+             [:div.comment {:class (c [:w "93%"])}
               [:style ".comment .CodeMirror {height: auto;}"]
               [app.hack.codemirror/input
                [::db :steps (:id step) :comment]
@@ -439,8 +439,7 @@
                 :lineNumbers false
                 :placeholder "Add comment here..."
                 :mode "markdown"
-                :theme "comment"}]
-              ]
+                :theme "comment"}]]
              [:div {:class (c :flex :flex-row :self-start)}
               (when (< 1 (count (:steps stresty-case)))
                 [:a {:on-click #(rf/dispatch [remove-step idx])}
