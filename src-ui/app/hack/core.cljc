@@ -9,6 +9,14 @@
             [app.hack.codemirror]
             [clojure.string :as str]))
 
+(defn enrich-with-link [url o]
+  (clojure.walk/postwalk
+   (fn [x]
+     (if (and (:id x) (:resourceType x))
+       (assoc x :id (str "<a target=\"blank\" href=\"" url "/static/console.html#/rest?req=GET%20/" (:resourceType x) "/" (:id x) "" \"">" (:id x)  "</a>"))
+       x))
+   o))
+
 (defn rand-str [len]
   (apply str (take len (repeatedly #(char (+ (rand 26) 65))))))
 
@@ -278,7 +286,7 @@
   (when (vector? (:result step))
     (let [{:keys [step-id result]} step
           ths (keys (first result))
-          style (c [:border :black] [:p 2])]
+          style (c [:border :gray-400] [:p 2])]
       [:table {:class [(c :w-full :border-collapse) style] }
        [:thead
         [:tr 
@@ -299,10 +307,10 @@
                               ]) (vals e))
                 ]) result)]])))
 
-(defn render-result [step]
+(defn render-result [url step]
   (let [show? (zrf/ratom true)
         render-type (zrf/ratom nil)]
-    (fn [step]
+    (fn [url step]
       (let [is-ok (= (:status step) "ok")
             type (step-type step)
             result (:result step)
@@ -339,18 +347,21 @@
              (str "Status: " (:status-code step))]
             (if (empty? result)
               [:span "Empty result"]
-              (if @show?
-                (case @render-type
-                  :table
-                  [render-sql-result-table step]
-                  :yaml
-                  [:pre (interop/to-yaml result)]
-                  :json
-                  [:pre (interop/to-json result)]
-                  :edn
-                  [:pre (interop/to-pretty-edn result)]
-                  )
-                [:pre "..."]))
+              (let [result (enrich-with-link url result)]
+                (if @show?
+                      ;; [:div {:dangerouslySetInnerHTML {:__html "<a>wow</a>"}}]
+
+                  (case @render-type
+                    :table
+                    [render-sql-result-table step]
+                    :yaml
+                    [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
+                    :json
+                    [:pre (interop/to-json result)]
+                    :edn
+                    [:pre (interop/to-pretty-edn result)]
+                    )
+                  [:pre "..."])))
 
 
             ]])))))
@@ -381,6 +392,9 @@
        [:input {:type "button" :value "Submit" :on-click #(rf/dispatch [setup-aidbox])}]
        [:input {:class (c [:ml 2]) :type "button" :value "Init" :on-click #(rf/dispatch [ctx :init])}]])])
 
+
+
+
 (zrf/defview view [stresty-case steps aidbox-url aidbox-auth-header]
   [:div {:class (c [:grid] [:bg :gray-100] [:m-auto] [:p 2] {:grid-template-columns "1fr 7fr"})}
    ;; [:style ".CodeMirror {background-color: #f7fafc;}"]
@@ -388,6 +402,9 @@
     [:h1 {:class (c :text-lg)} "Researcher's Console"]
     [:a {:href (href "hack" (rand-str 10) {:url aidbox-url :auth_header aidbox-auth-header})} "New Console"]]
    [:div
+
+    [:div {:dangerouslySetInnerHTML {:__html "<a>wow</a>"}}]
+
     [config-view]
 
     (let [left-css (c :font-light [:p 1] [:text :gray-600] [:text-right])
@@ -406,7 +423,7 @@
             [:div {:class [right-css (c [:p 0])]}
              [render-step step]]
             (when (:result step)
-              [render-result step])]
+              [render-result aidbox-url step])]
            [:div {:class (c [:ml "62.5px"] [:mb 1])}
             [:svg {:viewBox "0 0 15 15" :x 0 :y 0 :width 15 :height 15 :stroke "currentColor"
                    :on-click #(rf/dispatch [create-step :request idx])
@@ -421,6 +438,8 @@
              [:line {:x1 7.5 :x2 7.5 :y1 2.5 :y2 12.5}]
              [:line {:y1 7.5 :y2 7.5 :x1 2.5 :x2 12.5}]]]]
 
-          [:div "loading..."])))]])
+          [:div "loading..."])))]
+
+   ])
 
 (pages/reg-page ctx view)
