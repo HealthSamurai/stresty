@@ -334,11 +334,12 @@
                [:tr 
                 (map-indexed (fn [idx-td e]
                        ^{:key (str "tr-" idx "-td-" idx-td)}
-                       [:td {:class style}
-                              (if (or (seq? e) (coll? e))
-                                [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
-                                [:div {:dangerouslySetInnerHTML {:__html e}}])
-                              ]) (vals e))
+                               [:td {:class style
+                                     :valign "top"}
+                        (if (or (seq? e) (coll? e))
+                          [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
+                          [:div {:dangerouslySetInnerHTML {:__html e}}])
+                        ]) (vals e))
                 ]) result)]])
     [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
     ))
@@ -346,16 +347,16 @@
 (defn render-result-row [result url render-type]
   (if (empty? result)
     [:span "Empty result"]
-    (let [result (enrich-with-link url result)]
+    (let [result* (enrich-with-link url result)]
       (case render-type
         "table"
         [render-sql-result-table url result]
         "yaml"
-        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
+        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result*)}}]
         "json"
-        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result)}}]
+        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result*)}}]
         "edn"
-        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result)}}])))
+        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result*)}}])))
   )
 
 (defn render-result [url step]
@@ -483,7 +484,7 @@
                :placeholder "Add comment here..."
                :mode "markdown"
                :theme "comment"}]]
-            [:div {:class (c :flex :flex-row :self-start)}
+            [:div {:class (c :flex :flex-row :self-center)}
              (when (< 1 (count (:steps stresty-case)))
                [:a {:on-click #(rf/dispatch [remove-step idx])}
                 [:i.fas.fa-trash {:class (c
