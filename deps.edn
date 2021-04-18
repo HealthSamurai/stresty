@@ -5,7 +5,7 @@
             clj-http                        {:mvn/version "3.11.0"}
             cheshire                        {:mvn/version "5.6.3"}
             zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
-                                             :sha     "e041504bb4c4e560052cfe4390b1ed32b4328f94"}
+                                             :sha     "616178baf9992ea0b4ca64687355da2c7854eb80"}
             org.clojure/tools.cli           {:git/url "https://github.com/clojure/tools.cli"
                                              :sha     "c84e20639257d05b46583db73e203cc0cc275d64"}
             clj-commons/clj-yaml            {:mvn/version "0.7.0"}

@@ -10,11 +10,34 @@
 
              {:type        stresty.aidbox/desc-step
               :description "Clean all resources to avoid conflicts."}
+
              {:type     stresty.aidbox/truncate-step
               :truncate [:Patient :Encounter :Observation :Practitioner ]}
 
              {:type        stresty.aidbox/desc-step
               :description "Load resources that you will need to work with policies."}
+
+             {:type  stresty.aidbox/sql
+              :sql "truncate patient"}
+
+             {:type  stresty.aidbox/load
+              :url "bucket/data.ndjson.gz"}
+
+             {:type stresty/http
+              :GET "/Patient"
+              :match {:status 200
+                      :body {:entity empty?}}}
+
+             {:type stresty/http
+              :POST "/Patient"
+              :body {:id "pt-1"}
+              :match {:status 201}}
+
+             {:type stresty/http
+              :GET "/Patient"
+              :match {:status 200
+                      :body {:entity [{:resource {:id "pt-1"}}]}}}
+
              {:type  stresty/http-step
               :POST  "/$import"
               :body  {:id              "patient_import"
