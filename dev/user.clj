@@ -4,8 +4,7 @@
     [clojure.tools.namespace.repl :as repl]
     [shadow.cljs.devtools.api :as shadow]
     [shadow.cljs.devtools.config :as shadow.config]
-    [shadow.cljs.devtools.server :as shadow.server]
-    [stresty.web.core]))
+    [shadow.cljs.devtools.server :as shadow.server]))
 
 (defn delete-recursively [f]
   (when (.isDirectory f)
@@ -14,7 +13,8 @@
   (io/delete-file f))
 
 (defn restart [ctx]
-  (stresty.web.core/restart ctx))
+  ;; (stresty.web.core/restart ctx)
+  )
 
 (defn restart-shadow-clean []
   (shadow.server/stop!)

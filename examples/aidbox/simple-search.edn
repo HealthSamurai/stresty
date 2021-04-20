@@ -1,0 +1,32 @@
+{ns aidbox.simple-search
+ import #{sty}
+
+ case
+ {:zen/tags #{sty/case}
+  :title "Test case"
+  :steps
+  {:clean
+   {:desc "Clear all patients"
+    :method :post
+    :uri "/$sql"
+    :body "TRUNCATE patient"
+    :response {:status 200}}
+
+   :pts
+   {:desc  "Create number of patients"
+    :method :put
+    :uri "/"
+    :body [{:resourceType "Patient" :id "pt-1"}]
+    :response {:status 200
+               :body [{:id "pt-1"}]}}
+
+   :find
+   {:method :get
+    :uri "/Patient/pt-1"
+    :response {:status 200 :body {:id sty/string?}}}
+
+
+
+
+
+   }}}

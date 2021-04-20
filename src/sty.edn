@@ -1,0 +1,33 @@
+{ns sty
+
+ suite
+ {:zen/tags #{zen/schema zen/tag}
+  :type zen/map
+  :keys {:base-url {:type zen/string}
+         :basic-auth {:type zen/map
+                      :keys {:user {:type zen/string}
+                             :password {:type zen/string}}}}}
+
+ case
+ {:zen/tags #{zen/schema zen/tag}
+  :type zen/map
+  :keys {:title {:type zen/string}
+         :steps {:type zen/map
+                 :values {:type zen/map
+                          :require #{:method :uri}
+                          :keys {:desc   {:type zen/string}
+                                 :method {:type zen/keyword :enum [{:value :post} {:value :put} {:value :get} {:value :delete} {:value :patch}]}
+                                 :uri {:type zen/string}
+                                 :body {:type zen/any}
+                                 :response {:type zen/map
+                                            :values {:type zen/any}}}
+                          }}}}
+
+ string?
+ {}
+
+ get-in
+ {}
+
+
+ }
