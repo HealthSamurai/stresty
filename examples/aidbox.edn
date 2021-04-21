@@ -1,0 +1,10 @@
+{ns aidbox
+ import #{sty aidbox.simple-search}
+
+ aidbox
+ {:zen/tags #{sty/suite}
+  :base-url "https://edgeniquola.edge.aidbox.app"
+  :basic-auth {:user "basic" :password "secret"}}
+
+
+ }

@@ -1,4 +1,4 @@
-.PHONY: clean repl npm resource/VERSION build-native build docker oub jar deploy all
+.PHONY: clean test
 .EXPORT_ALL_VARIABLES:
 
 VERSION=$(shell cat VERSION)
@@ -11,7 +11,11 @@ clean:
 	rm pom.xml && rm -rf .cpcache
 
 repl:
-	mkdir -p target/shadow/dev && mkdir -p target/stylo/dev && clj -M:nrepl:ui:build -m nrepl.cmdline --middleware "[cider.nrepl/cider-middleware refactor-nrepl.middleware/wrap-refactor]"
+	mkdir -p target/stylo/dev/ target/shadow/dev/
+	clj -M:ui:test:nrepl -m nrepl.cmdline
+
+test:
+	clj -M:ui:test:nrepl:kaocha
 
 npm:
 	npm install

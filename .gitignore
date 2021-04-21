@@ -11,3 +11,4 @@ resources/public/assets/js/monaco
 .shadow-cljs
 *~
 /config.edn
+sty
