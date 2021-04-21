@@ -3,26 +3,25 @@
  :deps     {org.clojure/clojure             {:mvn/version "1.11.0-alpha1"}
             http-kit/http-kit               {:mvn/version "2.5.3"}
             org.martinklepsch/clj-http-lite {:mvn/version "0.4.3"}
-            cheshire                        {:mvn/version "5.6.3"}
+            cheshire/cheshire               {:mvn/version "5.6.3"}
             hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
             zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
                                              :sha "3a0ccdbc4c6acf62af583d0831c5bac3a6533232"}
             route-map/route-map             {:mvn/version "0.0.7"}
-            ;; ring/ring                    {:mvn/version "1.7.1"}
+            org.clojure/tools.cli           {:mvn/version "1.0.206"}
+            ring/ring                       {:mvn/version "1.7.1"}
             }
 
  :aliases {:nrepl
            {:extra-paths ["dev" "target/shadow/dev" "target/stylo/dev"  "examples"]
-            :extra-deps  {org.clojure/clojure           {:mvn/version "1.10.0"}
-                          cider/cider-nrepl             {:mvn/version "0.25.2"}
-                          refactor-nrepl/refactor-nrepl {:mvn/version "2.4.0"}
-                          re-frisk                      {:mvn/version "1.1.0"}
-                          binaryage/devtools            {:mvn/version "1.0.0"}
-                          com.cognitect/test-runner     {:git/url "https://github.com/cognitect-labs/test-runner"
-                                                         :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}}
+            :extra-deps  {org.clojure/clojure           {:mvn/version "1.11.0-alpha1"}
+                          nrepl/nrepl                   {:mvn/version "0.8.2"}
+                          cider/cider-nrepl             {:mvn/version "0.25.6"}
+                          refactor-nrepl/refactor-nrepl {:mvn/version "2.5.0"}
+                          re-frisk/re-frisk             {:mvn/version "1.3.2"}
+                          binaryage/devtools            {:mvn/version "1.0.2"}}}
 
-           :stresty
-           {:main-opts ["-m" "core"]}
+           :stresty {:main-opts ["-m" "stresty.core"]}
 
            :ui {:extra-paths ["src-ui" "src-c"]
                 :extra-deps  {org.clojure/clojurescript {:mvn/version "1.10.764"}
@@ -57,22 +56,17 @@
 
             :dependencies [[borkdude/clj-reflector-graal-java11-fix "0.0.1-graalvm-20.3.0"]]
 
-            :extra-deps
-            {clj.native-image/clj.native-image
-             {:git/url "https://github.com/taylorwood/clj.native-image.git"
-              :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}
+            :extra-deps {clj.native-image/clj.native-image
+                         {:git/url "https://github.com/taylorwood/clj.native-image.git"
+                          :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}
 
-           :build
-           {:extra-paths ["build"]
-            :jvm-opts    ^:replace ["-XX:-OmitStackTraceInFastThrow"]
-            :extra-deps  {cambada {:git/url "https://github.com/HealthSamurai/cambada"
-                                   :sha     "a8ccf922e516e3249e96ae63dadd91d5f01e83f5"}}
-            #_:main-opts #_ ["-m" "cambada.uberjar"
-                            "--main" "core"
-                            "--app-group-id" "hs" 
-                            "--app-artifact-id" "stresty"
-                            #_"--app-version" #_"1.0.0"]}
-           :run-test {:extra-paths ["test"]
-                      :extra-deps  {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner"
-                                                               :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}
-                      :main-opts   ["-m" "cognitect.test-runner"]}}}
+
+           :test    {:extra-paths ["test" "test-ui" "test-c" "dev"]}
+           :kaocha  {:extra-deps {lambdaisland/kaocha {:mvn/version "1.0-612"}}
+                     :jvm-opts   ^:replace ["-XX:-OmitStackTraceInFastThrow"]
+                     :main-opts  ["-m" "kaocha.runner" "--config-file" "test.edn"]}
+
+           :runner  {:main-opts  ["-m" "test-runner"]
+                     :extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner"
+                                                             :sha     "3cb0a9daf1cb746259dc8309b218f9211ad3b33b"}}}
+           }}

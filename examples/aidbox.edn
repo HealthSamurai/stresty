@@ -1,14 +1,10 @@
 {ns aidbox
  import #{sty aidbox.simple-search}
 
- suite
+ aidbox
  {:zen/tags #{sty/suite}
   :base-url "https://edgeniquola.edge.aidbox.app"
   :basic-auth {:user "basic" :password "secret"}}
 
- suite-2
- {:zen/tags #{sty/suite}
-  :base-url "http://localhost:8088"
-  :basic-auth {:user "basic" :password "secret"}}
 
  }
