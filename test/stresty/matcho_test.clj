@@ -1,45 +1,42 @@
 (ns stresty.matcho-test
   (:require [stresty.matcho :as sut]
-            [clojure.test :as t]))
+            [matcho.core :as matcho]
+            [clojure.test :as t :refer [deftest]]
+            [zen.core :as zen]))
 
 
-;; (defmacro match
-;;   "Match against each pattern and assert with is"
-;;   [x & pattern]
-;;   `(let [x# ~x
-;;          patterns# [~@pattern]
-;;          errors# (apply sut/match x# patterns#)]
-;;      (if-not (empty? errors#)
-;;        (t/is false (pr-str errors# x# patterns#))
-;;        (t/is true))))
+(def ztx (zen/new-context))
 
-(t/deftest test-matcho
+(zen/read-ns ztx 'sty)
+(defmacro match
+  "Match against each pattern and assert with is"
+  [x pat err]
+  `(let [errors# (sut/match ztx {} ~x ~pat)]
+     (matcho/match errors# ~err)
+     errors#))
+
+(deftest test-matcher
   (t/is (empty? (sut/match {} {:a 1} {:a 1})))
 
-  (t/is (=
-       (sut/match {} {:a 1} {:a 2})
-       [{:expected 2 :but 1 :path [:a]}]))
+  (match {:a 1} {:a 2} [{:expected 2, :but 1, :path [:a]}])
 
-  (t/is (empty? (sut/match {} {:a 1} {:a 'sty/number?})))
+  (match {:a 1} {:a 'sty/number?} empty?)
+  (match {:a 1} {:a 'sty/integer?} empty?)
 
-  (t/is (empty? (sut/match {} {:a 1} {:a "number?"})))
+  ;; (match {:a "str"} {:a '(sty/regex "str")} empty?)
 
-  (t/is (empty? (sut/match {} {:a "str"} {:a "#str"})))
+  (match {:a 200} {:a 'sty/ok?} empty?)
 
-  (t/is (empty? (sut/match {} {:a 200} {:a "2xx?"})))
+  (match {:a 204} {:a 'sty/ok?} empty?)
 
-  (t/is (empty? (sut/match {} {:a 204} {:a "2xx?"})))
+  ;; (match {:a "string"} {:a "#str\\w+"} empty?)
 
-  (t/is (empty? (sut/match {} {:a "string"} {:a "#str\\w+"})))
+  ;; (match  {:a 404} {:a 'sty/2xx?} [{:expected 'sty/2xx? :but 404 :path [:a]}])
 
-  (t/is (= (sut/match {} {:a 404} {:a "2xx?"}) [{:expected "2xx?" :but 404 :path [:a]}]))
+  ;; (match {:a {:b 1}} {:a {:c 'sty/nil?}} empty?)
 
-  (t/is (empty? (sut/match {} {:a {:b 1}} {:a {:c "nil?"}})))
+  (match [{:n "a"} {:n "b"} {:n "c"}] [{:n "a"} 'sty/any? {:n "c"}] empty?)
 
-  (t/is (empty? (sut/match {} [{:n "a"} {:n "b"} {:n "c"}] [{:n "a"} "any?" {:n "c"}])))
-
-  (t/is (empty? (sut/match {:user {:data {:patient_id "new-patient"}}}
-                         {:body {:id "new-patient"}}
-                         {:body {:id "{user.data.patient_id}"}})))
+  ;; (match {:body {:id "new-patient"}} {:body {:id "{user.data.patient_id}"}})
 
   )

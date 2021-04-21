@@ -1,5 +1,6 @@
 (ns stresty.matcho
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s]
+            [zen.core :as zen]))
 
 (defn template [conf template]
   (s/replace
@@ -21,55 +22,65 @@
   (if-let [func (ns-resolve 'clojure.core (symbol fn-name))]
     #(func %)))
 
-(defn- str->fn [fn-name]
-  (if-let [fn (get fns fn-name)]
-    fn
-    (built-in-fn fn-name)))
+(defmulti predicate (fn [model _] (:zen/name model)))
 
-(defmulti symbol-fn (fn [tp _] tp))
-
-(defmethod symbol-fn 'stresty/string?
+(defmethod predicate 'sty/string?
   [_ x]
-  (if-not (string? x)
+  (when-not (string? x)
     {:expected "string" :but x}))
 
-(defmethod symbol-fn 'stresty/distinct?
+(defmethod predicate 'sty/distinct?
   [_ x]
-  (if-not (distinct? x)
+  (when-not (distinct? x)
     {:expected "distinct" :but x}))
 
-(defmethod symbol-fn 'stresty/double?
+(defmethod predicate 'sty/number?
   [_ x]
-  (if-not (double? x)
+  (when-not (number? x)
+    {:expected "number" :but x}))
+
+(defmethod predicate 'sty/integer?
+  [_ x]
+  (when-not (integer? x)
+    {:expected "integer" :but x}))
+
+(defmethod predicate 'sty/ok?
+  [_ x]
+  (if-not (integer? x)
+    {:expected "integer" :but x}
+    (when-not (and (>= x 200) (< x 300))
+      {:expected "expected >= 200 and <= 300" :but x})))
+
+(defmethod predicate 'sty/any?
+  [_ _])
+
+;; {"2xx?" #
+;;  "4xx?" #(and (>= % 400) (< % 500))
+;;  "5xx?" #(and (>= % 500) (< % 600))}
+
+(defmethod predicate 'sty/double?
+  [_ x]
+  (when-not (double? x)
     {:expected "double" :but x}))
 
-(defmethod symbol-fn 'stresty/empty?
+(defmethod predicate 'sty/empty?
   [_ x]
-  (if-not (empty? x)
+  (when-not (empty? x)
     {:expected "empty" :but x}))
 
-(defmethod symbol-fn 'stresty/even?
+(defmethod predicate 'sty/even?
   [_ x]
-  (if-not (even? x)
+  (when-not (even? x)
     {:expected "even" :but x}))
 
 (defn- smart-explain-data
-  ([ctx p x]
-   (smart-explain-data ctx p x {}))
+  ([ztx ctx p x]
+   (smart-explain-data ztx ctx p x {}))
 
-  ([ctx p x m]
+  ([ztx ctx p x m]
    (cond
-     (and (string? p) (s/ends-with? p "?"))
-     (if-let [f (str->fn p)]
-       (smart-explain-data ctx f x {:fn-name p})
-       {:expected (str p " is not a function") :but x})
-
      (and  (string? p) (s/starts-with? p "#"))
-     (smart-explain-data ctx (java.util.regex.Pattern/compile (subs p 1)) x)
-
-     (and (string? x) (instance? java.util.regex.Pattern p))
-     (when-not (re-find p x)
-       {:expected (str "match regexp: " p) :but x})
+     (smart-explain-data ztx ctx (java.util.regex.Pattern/compile (subs p 1)) x)
 
      (string? p)
      (let [p* (template ctx p)]
@@ -77,50 +88,48 @@
          {:expected p* :but x}))
 
      (symbol? p)
-     (when-let [error (symbol-fn p x)]
-       error)
-
-     (fn? p)
-     (when-not (p x)
-       {:expected (or (:fn-name m) (pr-str p)) :but x})
+     (if-let [model (zen/get-symbol ztx p)]
+       (when-let [error (predicate model x)]
+         error)
+       {:syntax (str "Unrecognized symbol " p)})
 
      :else
      (when-not (= p x)
        {:expected p :but x}))))
 
-(defn- match-recur [ctx errors path x pattern]
+(defn- match-recur [ztx ctx errors path x pattern]
   (cond
     (and (map? x)
          (map? pattern))
-    (do
-      (reduce (fn [errors [k v]]
-                (let [path (conj path k)
-                      ev   (get x k)]
-                  (match-recur ctx errors path ev v)))
-              errors pattern))
+
+    (reduce (fn [errors [k v]]
+              (let [path (conj path k)
+                    ev   (get x k)]
+                (match-recur ztx ctx errors path ev v)))
+            errors pattern)
 
     (and (sequential? pattern)
          (sequential? x))
     (reduce (fn [errors [k v]]
               (let [path (conj path k)
                     ev   (nth (vec x) k nil)]
-                (match-recur ctx errors path ev v)))
+                (match-recur ztx ctx errors path ev v)))
             errors
             (map (fn [x i] [i x]) pattern (range)))
 
-    :else (let [err (smart-explain-data ctx pattern x)]
+    :else (let [err (smart-explain-data ztx ctx pattern x)]
             (if err
               (conj errors (assoc err :path path))
               errors))))
 
 (defn match
   "Match against each pattern"
-  [ctx x & patterns]
-  (reduce (fn [acc pattern] (match-recur ctx acc [] x pattern)) [] patterns))
+  [ztx ctx x & patterns]
+  (reduce (fn [acc pattern] (match-recur ztx ctx acc [] x pattern)) [] patterns))
 
 (comment
   (def ctx* {:user {:data {:patient_id "pt-1"}}})
-  
+
   (match {:user {:data {:patient_id "new-patient"}}}
          {:status 200,
           :body
@@ -133,6 +142,5 @@
          {:status 200
           :body   {:id 'stresty/string?}}
          )
-  
   )
 

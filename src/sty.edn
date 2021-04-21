@@ -23,11 +23,18 @@
                                             :values {:type zen/any}}}
                           }}}}
 
+ predicate {:zen/tags #{zen/tag}}
+
  string?
- {}
+ {:zen/tags #{predicate}
+  :zen/desc "Test string"}
 
- get-in
- {}
+ number? {:zen/tags #{predicate}}
 
+ integer? {:zen/tags #{predicate}}
+
+ ok? {:zen/tags #{predicate}}
+
+ any? {:zen/tags #{predicate}}
 
  }

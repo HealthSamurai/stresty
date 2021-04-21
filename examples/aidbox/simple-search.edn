@@ -26,6 +26,12 @@
     :response {:status 200 :body {:id sty/string?}}}
 
 
+   :search
+   {:method :get
+    :uri "/Patient?name=ups"
+    :response {:status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
+
+
 
 
 

@@ -9,30 +9,34 @@
                                              :sha "3a0ccdbc4c6acf62af583d0831c5bac3a6533232"}
             route-map/route-map             {:mvn/version "0.0.7"}
             org.clojure/tools.cli           {:mvn/version "1.0.206"}
-            ring/ring                       {:mvn/version "1.7.1"}
-            }
+            ring/ring                       {:mvn/version "1.7.1"}}
 
- :aliases {:nrepl
-           {:extra-paths ["dev" "target/shadow/dev" "target/stylo/dev"  "examples"]
-            :extra-deps  {org.clojure/clojure           {:mvn/version "1.11.0-alpha1"}
-                          nrepl/nrepl                   {:mvn/version "0.8.2"}
-                          cider/cider-nrepl             {:mvn/version "0.25.6"}
-                          refactor-nrepl/refactor-nrepl {:mvn/version "2.5.0"}
-                          re-frisk/re-frisk             {:mvn/version "1.3.2"}
-                          binaryage/devtools            {:mvn/version "1.0.2"}}}
+ :aliases {:nrepl   {:extra-paths ["dev" "target/shadow/dev" "target/stylo/dev"]
+                     :extra-deps  {refactor-nrepl/refactor-nrepl {:mvn/version "2.5.0"}
+                                   cider/piggieback              {:mvn/version "0.5.0"}
+                                   cider/cider-nrepl             {:mvn/version "0.25.6"}
+                                   re-frisk/re-frisk             {:mvn/version "1.3.2"}
+                                   binaryage/devtools            {:mvn/version "1.0.2"}}
+                     :jvm-opts  ^:replace ["-XX:-OmitStackTraceInFastThrow"]}
 
            :stresty {:main-opts ["-m" "stresty.core"]}
 
            :ui {:extra-paths ["src-ui" "src-c"]
-                :extra-deps  {org.clojure/clojurescript {:mvn/version "1.10.764"}
-                              re-frame/re-frame                  {:mvn/version "0.12.0"}
-                              reagent/reagent                   {:mvn/version "0.10.0"}
-                              reagent-utils/reagent-utils             {:mvn/version "0.3.3"}
-                              route-map/route-map                 {:mvn/version "0.0.7"}
-                              thheller/shadow-cljs      {:mvn/version "2.11.4"}
-                              medley/medley                    {:mvn/version "1.3.0"}
-                              garden/garden                    {:mvn/version "1.3.10"}
-                              markdown-to-hiccup/markdown-to-hiccup        {:mvn/version "0.6.2"}}}
+                :extra-deps {org.clojure/clojurescript   {:mvn/version "1.10.764"}
+                             reagent/reagent                     {:mvn/version "0.10.0"}
+                             re-frame/re-frame                    {:mvn/version "0.12.0"}
+                             day8.re-frame/async-flow-fx {:mvn/version "0.1.0"}
+                             re-frame-utils/re-frame-utils              {:mvn/version "0.1.0"}
+                             reagent-utils/reagent-utils               {:mvn/version "0.3.3"}
+                             clj-commons/cljss           {:mvn/version "1.6.4"}
+                             binaryage/oops              {:mvn/version "0.7.0"}
+                             medley/medley                      {:mvn/version "1.3.0"}
+                             cljs-http/cljs-http                   {:mvn/version "0.1.46"}
+                             hiccup/hiccup                      {:mvn/version "1.0.5"}
+                             garden/garden                      {:mvn/version "1.3.10"}
+                             route-map/route-map                   {:mvn/version "0.0.7"}
+                             cljs-bean/cljs-bean                   {:mvn/version "1.5.0"}
+                             thheller/shadow-cljs        {:mvn/version "2.11.8"}}}
 
            :native-image
            {:main-opts ["-m clj.native-image stresty.core"
@@ -61,7 +65,8 @@
                           :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}
 
 
-           :test    {:extra-paths ["test" "test-ui" "test-c" "dev"]}
+           :test    {:extra-paths ["test" "test-ui" "test-c" "dev"]
+                     :extra-deps {healthsamurai/matcho {:mvn/version "0.3.7"}}}
            :kaocha  {:extra-deps {lambdaisland/kaocha {:mvn/version "1.0-612"}}
                      :jvm-opts   ^:replace ["-XX:-OmitStackTraceInFastThrow"]
                      :main-opts  ["-m" "kaocha.runner" "--config-file" "test.edn"]}

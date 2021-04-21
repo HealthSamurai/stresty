@@ -12,7 +12,8 @@ clean:
 
 repl:
 	mkdir -p target/stylo/dev/ target/shadow/dev/
-	clj -M:ui:test:nrepl -m nrepl.cmdline
+	clj -M:ui:test:nrepl -m nrepl.cmdline --middleware [cider.nrepl/cider-middleware]
+
 
 test:
 	clj -M:ui:test:nrepl:kaocha
