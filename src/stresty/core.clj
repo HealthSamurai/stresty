@@ -2,6 +2,7 @@
   (:require
    [zen.core :as zen]
    [stresty.matcho]
+   [stresty.format.core :as fmt]
    [cheshire.core]
    [clj-http.lite.client :as http]
    [clojure.tools.cli :refer [parse-opts]]
@@ -14,50 +15,58 @@
   (System/getProperty "user.dir"))
 
 (defn run-step [ztx suite case step-key step]
-  (try
-    (let [req {:method (:method step)
-               :url (str (:base-url suite) (:uri step))
-               :headers {"content-type" "application/json"}
-               :body (when-let [b (:body step)]
-                       (cheshire.core/generate-string b))}
-          resp (http/request req)
-          state (get-in @ztx [:state (:zen/name suite) (:zen/name case)])
-          resp' (update resp :body (fn [x] (when x (cheshire.core/parse-string x keyword))))]
-      (swap! ztx assoc-in [:state (:zen/name suite) (:zen/name case) step-key] resp')
-      (println "   " (str (str/upper-case (name (:method req))) " " (:url req)))
-      (if-let [err (:error resp)]
-        (println "    >> ERROR:" (.getMessage ^Exception err))
-        (if-let [matcho (:response step)]
-          (let [errors (stresty.matcho/match ztx state resp' matcho)]
-            (if-not (empty? errors)
-              (do (println "       FAIL:" (str/join "     \n" errors))
-                  (println "       RESPONSE:" (pr-str resp')))
-              (if (get-in @ztx [:opts :verbose])
-                (println "     ✔" (pr-str resp'))
-                (println "       ✔"))))
-
-          (println "    >>" :status (:status resp) :body (:body resp)))))
-    (catch Exception e
-      (println :error (.getMessage e)))))
+  (let [req {:method (:method step)
+             :url (str (:base-url suite) (:uri step))
+             :headers {"content-type" "application/json"}
+             :body (when-let [b (:body step)]
+                     (cheshire.core/generate-string b))}
+        ev-base {:type 'sty/on-step-start :suite suite :case case
+                 :step (assoc step :id step-key)
+                 :verbose (get-in @ztx [:opts :verbose])
+                 :request req}]
+    (fmt/emit ztx ev-base)
+    (try
+      (let [resp (-> (http/request req)
+                     (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))
+            state (get-in @ztx [:state (:zen/name suite) (:zen/name case)])]
+        (swap! ztx assoc-in [:state (:zen/name suite) (:zen/name case) step-key] resp)
+        (if-let [err (:error resp)]
+          (fmt/emit ztx (assoc ev-base :type 'sty/on-step-exception :exception err))
+          (if-let [matcho (:response step)]
+            (let [errors (stresty.matcho/match ztx state resp matcho)]
+              (if-not (empty? errors)
+                (fmt/emit ztx (assoc ev-base :type 'sty/on-step-fail :errors errors :response resp))
+                (fmt/emit ztx (assoc ev-base :type 'sty/on-step-success :response resp))))
+            (fmt/emit ztx (assoc ev-base :type 'sty/on-step-response :response resp)))))
+      (catch Exception e
+        (fmt/emit ztx (assoc ev-base :type 'sty/on-step-exception :exception e))))))
 
 (defn run-case [ztx suite case]
+  (fmt/emit ztx {:type 'sty/on-case-start :suite suite :case case})
   (doseq [[k step] (->> (:steps case)
                         (sort-by (fn [[_ x]] (:row (meta x)))))]
-    (println "  " (str "#" (name k))  (:desc step))
-    (run-step ztx suite case k step)))
+    (run-step ztx suite case k step))
+  (fmt/emit ztx {:type 'sty/on-case-end :suite suite :case case}))
 
 (defn eval-suite [ztx suite]
-  (println "== Run suite " (:zen/name suite) (:base-url suite))
+  (fmt/emit ztx {:type 'sty/on-suite-start :suite suite})
   (doseq [case-ref (zen/get-tag ztx 'sty/case)]
     (let [case (zen/get-symbol ztx case-ref)]
-      (println "# case " (or (:title case) (:desc case) case-ref))
-      (run-case ztx suite case))))
+      (run-case ztx suite case)))
+  (fmt/emit ztx {:type 'sty/on-suite-end :suite suite}))
 
 (def cli-options
   ;; An option with a required argument
   [["-p" "--path PATH" "Project path"]
    ["-v" nil "Verbosity level" :id :verbose]
    ["-h" "--help"]])
+
+(defn calculate-paths [pth]
+  [(if pth
+     (if (str/starts-with? pth "/")
+       pth
+       (str (System/getProperty "user.dir") "/" pth))
+     (System/getProperty "user.dir"))])
 
 (defn -main [& args]
   (let [{opts :options args :arguments summary :summary errs :errors :as inp} (parse-opts args cli-options)]
@@ -68,30 +77,25 @@
                                         (println summary))
       :else (let [pth (:path opts)
                   suite-name (when-let [nm (first args)] (symbol nm))
-                  zen-opts {:paths [(if pth
-                                      (if (str/starts-with? pth "/")
-                                        pth
-                                        (str (System/getProperty "user.dir") "/" pth))
-                                      (System/getProperty "user.dir"))]}
+                  zen-opts {:paths (calculate-paths pth)}
                   ztx (zen/new-context zen-opts)]
-              (swap! ztx assoc :opts opts)
-              (println :read suite-name)
+              (swap! ztx assoc :opts opts :formatters {;;'sty/ndjson-fmt (atom {})
+                                                       'sty/stdout-fmt (atom {})})
+              (fmt/emit ztx {:type 'sty/on-tests-start :entry-point suite-name :opts zen-opts})
+              ;; TBD: fail on unexistiong suite
               (zen/read-ns ztx suite-name)
               (let [errs (:errors @ztx)]
                 (when-not (empty? errs)
-                  "Errors:"
-                  (println (str/join "\n" errs))))
+                  (fmt/emit ztx {:type 'sty/on-zen-errors :errors errs})))
               (doseq [suite-ref (zen/get-tag ztx 'sty/suite)]
                 (let [suite (zen/get-symbol ztx suite-ref)]
                   (eval-suite ztx suite)))
-              )))
-  )
+              (fmt/emit ztx {:type 'sty/on-tests-end :entry-point suite-name})))))
 
 
 (comment
   (-main "-p" "examples" "aidbox")
 
+  (-main "-p" "examples"  "aidbox")
   )
 
-;; (-main "-p" "examples"  "aidbox")
-;; (parse-opts ["--path" "examples"  "aidbox"] cli-options)
