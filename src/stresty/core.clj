@@ -4,6 +4,7 @@
    [stresty.matcho]
    [stresty.format.core :as fmt]
    [stresty.sci]
+   [stresty.server]
    [cheshire.core]
    [clj-http.lite.client :as http]
    [clojure.tools.cli :refer [parse-opts]]
@@ -77,7 +78,9 @@
      (System/getProperty "user.dir"))])
 
 (defn -main [& args]
-  (let [{opts :options args :arguments summary :summary errs :errors :as inp} (parse-opts args cli-options)]
+  (let [ztx (zen/new-context {})]
+    (stresty.server/start-server ztx {}))
+  #_(let [{opts :options args :arguments summary :summary errs :errors :as inp} (parse-opts args cli-options)]
     (cond
       (or (:help opts) (empty? args)) (do
                                         (println "sty <opts>" "SUTE_NS" "[CASE_NS]" "[STEP_NAME]")

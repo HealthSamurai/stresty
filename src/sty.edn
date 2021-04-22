@@ -98,5 +98,18 @@
   :keys {:result {:type zen/any}
          :errors {:type zen/any}}}
 
+ op  {:zen/tags #{zen/tag}}
+ echo {:zen/tags #{op} :zen/desc "echo operation to test rpc api"}
+
+ rest-op  {:zen/tags #{zen/tag}}
+ index-op {:zen/tags #{rest-op}}
+ rpc-op   {:zen/tags #{rpc-op}
+           :zen/desc "rpc endpoint, accept json and transit formats trho content-type header"}
+
+ api
+ {:zen/desc "Server routes"
+  :static-dir "static"
+  :routes {:get index-op
+           "rpc" {:post rpc-op}}}
 
  }

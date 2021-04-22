@@ -10,7 +10,8 @@
             borkdude/sci                    {:mvn/version "0.2.4"}
             route-map/route-map             {:mvn/version "0.0.7"}
             org.clojure/tools.cli           {:mvn/version "1.0.206"}
-            ring/ring                       {:mvn/version "1.7.1"}}
+            ring/ring                       {:mvn/version "1.7.1"}
+            com.cognitect/transit-clj       {:mvn/version "1.0.324"}}
 
  :aliases {:nrepl   {:extra-paths ["dev" "target/shadow/dev" "target/stylo/dev"]
                      :extra-deps  {refactor-nrepl/refactor-nrepl {:mvn/version "2.5.0"}
