@@ -1,8 +1,6 @@
-# REST Cases Runner
+# Stresty
 
-CLI Tool for REST Tests. [![Build Status](https://travis-ci.org/Aidbox/stresty.svg?branch=master)](https://travis-ci.org/Aidbox/stresty)
-
-Stresty (sty) is zen data DSL to test REST API in a declarative way!
+Stresty (sty) is zen data DSL to test your API in a declarative way!
 
 ![hog](hog.jpeg)
 
@@ -64,6 +62,16 @@ mytest.edn
 
 ## Development
 
+### Requirenments 
+
+- GraalVM
+- native-image util
+
+
+### Setup
+
+Setup via **jenv** (https://www.jenv.be/)
+
 macos env
 
 ```
@@ -75,4 +83,14 @@ macos env
 jenv add /Library/Java/JavaVirtualMachines/graalvm-ce-java11-21.0.0.2/Contents/Home
 jenv versions
 jenv local graalvm64-11.0.10
+```
+
+Setup via **SDKMAN** (https://sdkman.io/)
+
+
+```
+sdk ls java | grep grl            # find latest graalVM release
+sdk install java 21.1.0.r16-grl   # install found release
+sdk use java 21.1.0.r16-grl       # set it as default in current shell session
+gu install native-image           # install native-image util
 ```
