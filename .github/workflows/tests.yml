@@ -76,3 +76,6 @@ jobs:
 
       - name: build native
         run: make build-native
+
+      - name: errors
+        run: cat /tmp/clojure-*.edn
