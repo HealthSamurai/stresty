@@ -46,6 +46,15 @@ jobs:
       - name: install rlwrap
         run: sudo apt-get install -y rlwrap
 
+      - name: cache mvn
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('deps.edn')}}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: run tests
         run: make test
+
 

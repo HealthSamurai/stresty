@@ -8,5 +8,9 @@
   :base-url "https://edgeniquola.edge.aidbox.app"
   :basic-auth {:user "basic" :password "secret"}}
 
+ ;; devbox
+ ;; {:zen/tags #{sty/suite}
+ ;;  :base-url "https://locahost:8080"
+ ;;  :basic-auth {:user "basic" :password "secret"}}
 
  }

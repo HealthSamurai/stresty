@@ -13,7 +13,11 @@
   :type zen/map
   :require #{:method :uri}
   :keys {:desc   {:type zen/string}
-         :method {:type zen/keyword :enum [{:value :post} {:value :put} {:value :get} {:value :delete} {:value :patch}]}
+         :method {:type zen/keyword :enum [{:value :post}
+                                           {:value :put}
+                                           {:value :get}
+                                           {:value :delete}
+                                           {:value :patch}]}
          :uri {:type zen/string}
          :body {:type zen/any}
          :response {:type zen/map
@@ -27,9 +31,7 @@
 
  predicate {:zen/tags #{zen/tag}}
 
- string?
- {:zen/tags #{predicate}
-  :zen/desc "Test string"}
+ string? {:zen/tags #{predicate}}
 
  number? {:zen/tags #{predicate}}
 
@@ -48,7 +50,6 @@
                 :tags #{is-event}
                 :zen/desc "Event type, i.e. sty/on-tests-start"}
          :ts {:type zen/integer :zen/desc "Number of milliseconds from start"}}}
- 
 
  on-tests-start
  {:zen/tags #{is-event zen/schema}

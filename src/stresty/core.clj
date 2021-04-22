@@ -35,7 +35,7 @@
                (fn [old]
                  (update-in old [:state (:zen/name suite) (:zen/name case)]
                             (fn [state] (assoc state step-key resp)))))
-        
+
         (if-let [err (:error resp)]
           (fmt/emit ztx (assoc ev-base :type 'sty/on-step-exception :exception err))
           (if-let [matcho (:response step)]
@@ -87,7 +87,9 @@
                   zen-opts {:paths (calculate-paths pth)}
                   ztx (zen/new-context zen-opts)]
               (swap! ztx assoc :opts opts :formatters
-                     (let [fmt (get {"ndjson" 'sty/ndjson-fmt "stdout" 'sty/stdout-fmt "debug"  'sty/debug-fmt}
+                     (let [fmt (get {"ndjson" 'sty/ndjson-fmt
+                                     "stdout" 'sty/stdout-fmt
+                                     "debug"  'sty/debug-fmt}
                                        (:format opts)
                                        'sty/stdout-fmt)]
                              {fmt (atom {})}))
@@ -106,6 +108,7 @@
 (comment
   (-main "-p" "examples" "-f" "ndjson" "aidbox")
 
-  (-main "-f" "debug" "-p" "../fhir-stresty"   "aidbox")
+  (-main "-f" "stdout" "-p" "../fhir-stresty"   "aidbox")
+
   )
 
