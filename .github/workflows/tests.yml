@@ -69,7 +69,7 @@ jobs:
           arch: 'amd64'
 
       - name: Install native-image component
-        run: gu.cmd install native-image
+        run: gu install native-image
 
       - name: build native
         run: make build-native
