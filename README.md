@@ -64,6 +64,16 @@ mytest.edn
 
 ## Development
 
+### Requirenments 
+
+- GraalVM
+- native-image util
+
+
+### Setup
+
+Setup via **jenv** (https://www.jenv.be/)
+
 macos env
 
 ```
@@ -77,7 +87,8 @@ jenv versions
 jenv local graalvm64-11.0.10
 ```
 
-If you have SDKMAN (https://sdkman.io/) - You can setup GraalVM with it.
+Setup via **SDKMAN** (https://sdkman.io/)
+
 
 ```
 sdk ls java | grep grl            # find latest graalVM release
