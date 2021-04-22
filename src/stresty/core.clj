@@ -3,6 +3,7 @@
    [zen.core :as zen]
    [stresty.matcho]
    [stresty.format.core :as fmt]
+   [stresty.sci]
    [cheshire.core]
    [clj-http.lite.client :as http]
    [clojure.tools.cli :refer [parse-opts]]
@@ -15,7 +16,9 @@
   (System/getProperty "user.dir"))
 
 (defn run-step [ztx suite case step-key step]
-  (let [req {:method (:method step)
+  (let [state (or (get-in @ztx [:state (:zen/name suite) (:zen/name case)]) {})
+        step (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state}}} step)
+        req {:method (:method step)
              :url (str (:base-url suite) (:uri step))
              :headers {"content-type" "application/json"}
              :body (when-let [b (:body step)]
@@ -27,9 +30,12 @@
     (fmt/emit ztx ev-base)
     (try
       (let [resp (-> (http/request req)
-                     (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))
-            state (get-in @ztx [:state (:zen/name suite) (:zen/name case)])]
-        (swap! ztx assoc-in [:state (:zen/name suite) (:zen/name case) step-key] resp)
+                     (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))]
+        (swap! ztx
+               (fn [old]
+                 (update-in old [:state (:zen/name suite) (:zen/name case)]
+                            (fn [state] (assoc state step-key resp)))))
+        
         (if-let [err (:error resp)]
           (fmt/emit ztx (assoc ev-base :type 'sty/on-step-exception :exception err))
           (if-let [matcho (:response step)]
@@ -58,6 +64,7 @@
 (def cli-options
   ;; An option with a required argument
   [["-p" "--path PATH" "Project path"]
+   ["-f" "--format FORMAT" "Report format can be ndjson, debug, html"]
    ["-v" nil "Verbosity level" :id :verbose]
    ["-h" "--help"]])
 
@@ -79,8 +86,11 @@
                   suite-name (when-let [nm (first args)] (symbol nm))
                   zen-opts {:paths (calculate-paths pth)}
                   ztx (zen/new-context zen-opts)]
-              (swap! ztx assoc :opts opts :formatters {;;'sty/ndjson-fmt (atom {})
-                                                       'sty/stdout-fmt (atom {})})
+              (swap! ztx assoc :opts opts :formatters
+                     (let [fmt (get {"ndjson" 'sty/ndjson-fmt "stdout" 'sty/stdout-fmt "debug"  'sty/debug-fmt}
+                                       (:format opts)
+                                       'sty/stdout-fmt)]
+                             {fmt (atom {})}))
               (fmt/emit ztx {:type 'sty/on-tests-start :entry-point suite-name :opts zen-opts})
               ;; TBD: fail on unexistiong suite
               (zen/read-ns ztx suite-name)
@@ -94,8 +104,8 @@
 
 
 (comment
-  (-main "-p" "examples" "aidbox")
+  (-main "-p" "examples" "-f" "ndjson" "aidbox")
 
-  (-main "-p" "examples"  "aidbox")
+  (-main "-f" "debug" "-p" "../fhir-stresty"   "aidbox")
   )
 

@@ -6,7 +6,8 @@
             cheshire/cheshire               {:mvn/version "5.6.3"}
             hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
             zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
-                                             :sha "3a0ccdbc4c6acf62af583d0831c5bac3a6533232"}
+                                             :sha "cec57be7e197b5f8d746368d1166c44a6e2b28ad"}
+            borkdude/sci                    {:mvn/version "0.2.4"}
             route-map/route-map             {:mvn/version "0.0.7"}
             org.clojure/tools.cli           {:mvn/version "1.0.206"}
             ring/ring                       {:mvn/version "1.7.1"}}
@@ -45,6 +46,7 @@
                         "--initialize-at-build-time"
                         ;; "--initialize-at-run-time=org.httpkit.client.ClientSslEngineFactory\\$SSLHolder"
                         ;; "--initialize-at-build-time=org.httpkit.client.ClientSslEngineFactory\\$SSLHolder"
+                        "--initialize-at-run-time=java.lang.Math\\$RandomNumberGeneratorHolder"
                         "-H:ReflectionConfigurationFiles=reflection.json"
                         "-H:EnableURLProtocols=http,https,resource,file"
                         "-H:IncludeResources=.*edn"
@@ -62,7 +64,8 @@
 
             :extra-deps {clj.native-image/clj.native-image
                          {:git/url "https://github.com/taylorwood/clj.native-image.git"
-                          :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}
+                          :sha "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}
+                         borkdude/sci.impl.reflector {:mvn/version "0.0.1-java11"}}}
 
 
            :test    {:extra-paths ["test" "test-ui" "test-c" "dev"]

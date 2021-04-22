@@ -17,7 +17,7 @@
   (println (cheshire.core/generate-string event)))
 
 (defmethod do-format
-  'sty/stdout-fmt
+  'sty/debug-fmt
   [ztx _ state {tp :type ts :ts :as event}]
   #_(let [start (:start @state)
           epoch (- ts start)]
@@ -55,7 +55,54 @@
       (println "   " (str/join "\n    " (:errors event))))
 
     (= tp 'sty/on-step-exception)
-    (println " exception")
+    (println " exception " (pr-str (:exception event)))
+
+
+    )
+  )
+
+(defmethod do-format
+  'sty/stdout-fmt
+  [ztx _ state {tp :type ts :ts :as event}]
+  #_(let [start (:start @state)
+          epoch (- ts start)]
+      (println epoch (:type event)))
+  (cond
+    (= tp 'sty/on-tests-start)
+    (swap! state assoc :start ts)
+    (= tp 'sty/on-zen-errors)
+    (do
+      (println "Syntax errors:")
+      (println (str/join "\n"
+                         (->>
+                          (:errors event)
+                          (mapv (fn [{msg :message res :resource pth :path}]
+                                  (str ">> " msg " in " res " at " pth)))))))
+
+    (= tp 'sty/on-suite-start)
+    (print (get-in event [:suite :zen/name]) "{")
+
+    (= tp 'sty/on-case-start)
+    (print "(")
+
+    (= tp 'sty/on-step-start)
+    :nop
+
+    (= tp 'sty/on-step-success)
+    (print ".")
+
+    (= tp 'sty/on-step-fail)
+    (print "x")
+    
+
+    (= tp 'sty/on-step-exception)
+    (print "!")
+
+    (= tp 'sty/on-case-end)
+    (print ")")
+
+    (= tp 'sty/on-suite-end)
+    (print "}\n")
 
 
     )

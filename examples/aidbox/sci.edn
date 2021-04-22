@@ -1,0 +1,15 @@
+{ns aidbox.sci
+
+ import #{sty}
+
+ case
+ {:zen/tags #{sty/case}
+  :title "Test case"
+  :data {:my-id "pt-1"}
+  :steps
+  {:sci
+   {:method :get
+    :uri (str "/Patient/" (get-in sty/case [:data :my-id]))
+    :response {:body {:id (get-in sty/case [:data :my-id])}}}}}
+
+ }
