@@ -76,3 +76,12 @@ jenv add /Library/Java/JavaVirtualMachines/graalvm-ce-java11-21.0.0.2/Contents/H
 jenv versions
 jenv local graalvm64-11.0.10
 ```
+
+If you have SDKMAN (https://sdkman.io/) - You can setup GraalVM with it.
+
+```
+sdk ls java | grep grl            # find latest graalVM release
+sdk install java 21.1.0.r16-grl   # install found release
+sdk use java 21.1.0.r16-grl       # set it as default in current shell session
+gu install native-image           # install native-image util
+```
