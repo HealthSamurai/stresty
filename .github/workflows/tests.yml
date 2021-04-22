@@ -68,10 +68,11 @@ jobs:
           # Architecture flag, optional, defaults to 'amd64'. Available options are 'amd64' and 'aarch64'. Later is available only for linux runners.
           arch: 'amd64'
 
+      - name: Check java binary
+        run: java -version
+
       - name: Install native-image component
         run: gu install native-image
 
       - name: build native
         run: make build-native
-
-
