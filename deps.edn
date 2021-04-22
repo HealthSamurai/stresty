@@ -40,7 +40,8 @@
                              thheller/shadow-cljs        {:mvn/version "2.11.8"}}}
 
            :native-image
-           {:main-opts ["-m clj.native-image stresty.core"
+           {:main-opts ["-m" "clj.native-image"
+                        "stresty.core"
                         "--no-fallback"
                         "--report-unsupported-elements-at-runtime"
                         "--initialize-at-build-time"
