@@ -75,7 +75,4 @@ jobs:
         run: gu install native-image
 
       - name: build native
-        run: make build-native
-
-      - name: errors
-        run: cat /tmp/clojure-*.edn
+        run: make build-native || cat /tmp/clojure-*.edn
