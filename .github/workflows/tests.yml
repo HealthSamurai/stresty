@@ -95,6 +95,6 @@ jobs:
         if: matrix.os != 'windows-latest' 
 
       - name: build native on Windows
-        run: cp VERSION resources/VERSION  && clojure -M:native-image
+        run: cp VERSION resources/VERSION; clojure -M:native-image
         if: matrix.os == 'windows-latest' 
         shell: powershell
