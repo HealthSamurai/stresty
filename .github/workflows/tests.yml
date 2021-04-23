@@ -54,6 +54,7 @@ jobs:
 
       - name: install rlwrap
         run: sudo apt-get install -y rlwrap
+        if: matrix.os == 'ubuntu-latest' 
 
       - name: cache mvn
         uses: actions/cache@v2
