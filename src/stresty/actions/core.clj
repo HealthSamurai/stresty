@@ -10,10 +10,12 @@
 
 (defmethod run-action 'sty/http
   [ztx {env :env case :case state :state} args]
-  (let [resp (-> (http/request {:method (:method args)
-                                :url (str (:base-url env) (:url args))
+  (let [url  (str (:base-url env) (:url args))
+        resp (-> (http/request {:method (:method args)
+                                :url url
                                 :headers {"content-type" "application/json"}
                                 :body (when-let [b (:body args)]
                                         (cheshire.core/generate-string b))})
                  (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))]
+    (println "\n" ::http (:method args) url)
     resp))
