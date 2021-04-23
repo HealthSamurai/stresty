@@ -41,7 +41,7 @@ jobs:
     needs: create_release
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -105,7 +105,7 @@ jobs:
           # you like, remember that they need to be different for each platform.
           # You can choose any build matrix parameters. For Rust I use the
           # target triple.
-          asset_name: program-name-${{ matrix.config.os }}
+          asset_name: sty-${{ matrix.config.os }}
           # The path to the file you want to upload.
           asset_path: ./sty
           # probably you will need to change it, but most likely you are
