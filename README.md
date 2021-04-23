@@ -14,7 +14,7 @@ mytest.edn
 {ns mytest
  import #{sty}
 
- suite
+ env
  {:zen/tags #{sty/env}
   :base-url "https://edgeniquola.edge.aidbox.app"
   :basic-auth {:user "???" :password "???"}}
@@ -27,7 +27,7 @@ mytest.edn
    :create
    {:desc  "create"
     :method :post
-    :uri "/Patient"
+    :url "/Patient"
     :body {:resourceType "Patient"}
     :response {:status 201
                :body {:meta {:lastUpdated sty/string?
@@ -35,7 +35,7 @@ mytest.edn
    :read
    {:desc  "read"
     :method :get
-    :uri (str "/Patient/" (get-in sty/state [:create :body :id]))
+    :url (str "/Patient/" (get-in sty/state [:create :body :id]))
     :response {:status sty/ok?
                :body {:id (get-in sty/state [:create :body :id])
                       :meta {:lastUpdated sty/string?
@@ -43,7 +43,7 @@ mytest.edn
    :read-2
    {:desc  "wrong read"
     :method :get
-    :uri (str "/Patient/" (get-in sty/state [:create :body :id]))
+    :url (str "/Patient/" (get-in sty/state [:create :body :id]))
     :response {:status sty/ok?
                :body {:id (str "UPS-" (get-in sty/state [:create :body :id]))}}}
    }

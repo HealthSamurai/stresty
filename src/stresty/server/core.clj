@@ -22,7 +22,7 @@
 (defmethod command "tests"
   [ztx cmd]
   (stresty.operations.core/op ztx {:method 'sty/run-tests
-                                   :params (:params cmd)}))
+                                   :params (or (:params cmd) {})}))
 
 (defmethod command :default
   [ztx cmd]
@@ -68,15 +68,20 @@ sty => help
 (defn start-server [{opts :params}]
   (let [ztx (zen/new-context {:opts opts :paths (calculate-paths (:path opts))})]
     (zen/read-ns ztx 'sty)
+    (when-let [ns (:ns opts)]
+      (println ::ns ns)
+      (zen/read-ns ztx (symbol ns)))
     (configure-format ztx opts)
-    (report-zen-errors ztx)))
+    (report-zen-errors ztx)
+    ztx))
 
 (defn stop-server [ztx]
   (stresty.server.http/stop-server ztx))
 
 (defn exec [{cmd :command :as args}]
   (let [ztx (start-server args)]
-    (command ztx cmd)))
+    (command ztx cmd)
+    ztx))
 
 (comment
   (def ztx (start-server {}))

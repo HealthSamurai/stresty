@@ -1,6 +1,10 @@
 (ns stresty.operations.core
   (:require [zen.core :as zen]
-            [stresty.format.core :as fmt]))
+            [stresty.actions.core :as acts]
+            [stresty.matchers.core :as match]
+            [stresty.sci]
+            [stresty.format.core :as fmt]
+            [clojure.string :as str]))
 ;; [clj-http.lite.client :as http]
 
 (defmulti call-op (fn [ztx op args] (:zen/name op)))
@@ -13,135 +17,65 @@
   [ztx op {params :params}]
   {:result params})
 
-(defmethod call-op 'sty/run-tests
-  [ztx op {params :params}]
-  {:result params})
-
-
-
 (defn op [ztx args]
+  (println ::op args)
   (if-let [op (when-let [m (:method args)]
                 (zen/get-symbol ztx (symbol m)))]
-
     (call-op ztx op args)
     {:error {:message (str "Operation " (:method args) " is not defined.")}}))
 
 
-;; (defn run-step [ztx suite case step-key step]
-;;   (let [state (or (get-in @ztx [:state (:zen/name suite) (:zen/name case)]) {})
-;;         step (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state}}} step)
-;;         req {:method (:method step)
-;;              :url (str (:base-url suite) (:uri step))
-;;              :headers {"content-type" "application/json"}
-;;              :body (when-let [b (:body step)]
-;;                      (cheshire.core/generate-string b))}
-;;         ev-base {:type 'sty/on-step-start :suite suite :case case
-;;                  :step (assoc step :id step-key)
-;;                  :verbose (get-in @ztx [:opts :verbose])
-;;                  :request req}]
-;;     (fmt/emit ztx ev-base)
-;;     (try
-;;       (let [resp (-> (http/request req)
-;;                      (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))]
-;;         (swap! ztx
-;;                (fn [old]
-;;                  (update-in old [:state (:zen/name suite) (:zen/name case)]
-;;                             (fn [state] (assoc state step-key resp)))))
+(defn- get-case-state [ztx enm cnm]
+  (or (get-in @ztx [:state enm cnm]) {}))
 
-;;         (if-let [err (:error resp)]
-;;           (fmt/emit ztx (assoc ev-base :type 'sty/on-step-exception :exception err))
-;;           (if-let [matcho (:response step)]
-;;             (let [errors (stresty.matcho/match ztx state resp matcho)]
-;;               (if-not (empty? errors)
-;;                 (fmt/emit ztx (assoc ev-base :type 'sty/on-step-fail :errors errors :response resp))
-;;                 (fmt/emit ztx (assoc ev-base :type 'sty/on-step-success :response resp))))
-;;             (fmt/emit ztx (assoc ev-base :type 'sty/on-step-response :response resp)))))
-;;       (catch Exception e
-;;         (fmt/emit ztx (assoc ev-base :type 'sty/on-step-exception :exception e))))))
+(defn- save-case-state [ztx enm cnm key state]
+  (swap! ztx (fn [old] (update-in old [:state enm cnm] (fn [old] (assoc old key state))))))
 
-;; (defn run-case [ztx suite case]
-;;   (fmt/emit ztx {:type 'sty/on-case-start :suite suite :case case})
-;;   (doseq [[k step] (->> (:steps case)
-;;                         (sort-by (fn [[_ x]] (:row (meta x)))))]
-;;     (run-step ztx suite case k step))
-;;   (fmt/emit ztx {:type 'sty/on-case-end :suite suite :case case}))
+(defn sty-url [& args]
+  (str "/" (str/join  "/" args)))
 
-;; (defn eval-suite [ztx suite]
-;;   (fmt/emit ztx {:type 'sty/on-suite-start :suite suite})
-;;   (doseq [case-ref (zen/get-tag ztx 'sty/case)]
-;;     (let [case (zen/get-symbol ztx case-ref)]
-;;       (run-case ztx suite case)))
-;;   (fmt/emit ztx {:type 'sty/on-suite-end :suite suite}))
+(defn run-step [ztx {enm :zen/name :as env} {cnm :zen/name :as case} step-key {action :action :as step}]
+  (let [state (get-case-state ztx enm cnm)
+        action (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state 'url sty-url}}} action)
+        ev-base {:type 'sty/on-step-start :env env :case case
+                 :step (assoc step :id step-key)
+                 :verbose (get-in @ztx [:opts :verbose])
+                 :action action}]
+    (fmt/emit ztx ev-base)
+    (try
+      (let [result (stresty.actions.core/run-action ztx state action)]
+        (save-case-state ztx enm cnm step-key result)
+        (if-let [err (:error result)]
+          (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error err))
+          (if-let [matcher (:matches step)]
+            (let [errors (stresty.matchers.core/match
+                          ztx
+                          (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state}}} matcher)
+                          result)]
+              (if-not (empty? errors)
+                (fmt/emit ztx (assoc ev-base :type 'sty/on-step-fail :errors errors :result result :matcher matcher))
+                (fmt/emit ztx (assoc ev-base :type 'sty/on-step-fail :errors errors :result result :matcher matcher))))
+            (fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result)))))
+      (catch Exception e
+        (fmt/emit ztx (assoc ev-base :type 'sty/on-step-exception :exception e))))))
 
-;; (def cli-options
-;;   ;; An option with a required argument
-;;   [["-p" "--path PATH" "Project path"]
-;;    ["-f" "--format FORMAT" "Report format can be ndjson, debug, html"]
-;;    ["-v" nil "Verbosity level" :id :verbose]
-;;    ["-h" "--help"]])
+(defn run-case [ztx env case]
+  (fmt/emit ztx {:type 'sty/on-case-start :env env :case case})
+  (doseq [[k step] (->> (:steps case)
+                        (sort-by (fn [[_ x]] (:row (meta x)))))]
+    (run-step ztx env case k step))
+  (fmt/emit ztx {:type 'sty/on-case-end :env env :case case}))
 
-;; (defn calculate-paths [pth]
-;;   [(if pth
-;;      (if (str/starts-with? pth "/")
-;;        pth
-;;        (str (System/getProperty "user.dir") "/" pth))
-;;      (System/getProperty "user.dir"))])
+(defn run-env [ztx env]
+  (fmt/emit ztx {:type 'sty/on-env-start :env env})
+  (doseq [case-ref (zen/get-tag ztx 'sty/case)]
+    (let [case (zen/get-symbol ztx case-ref)]
+      (run-case ztx env case)))
+  (fmt/emit ztx {:type 'sty/on-env-end :env env}))
 
-;; (defn -main [& args]
-;;   (let [ztx (zen/new-context {})]
-;;     (zen/read-ns ztx 'sty)
-;;     (stresty.server.core/start-server ztx {}))
-;;   #_(let [{opts :options args :arguments summary :summary errs :errors :as inp} (parse-opts args cli-options)]
-;;     (cond
-;;       (or (:help opts) (empty? args)) (do
-;;                                         (println "sty <opts>" "SUTE_NS" "[CASE_NS]" "[STEP_NAME]")
-;;                                         (println "opts:")
-;;                                         (println summary))
-;;       :else (let [pth (:path opts)
-;;                   suite-name (when-let [nm (first args)] (symbol nm))
-;;                   zen-opts {:paths (calculate-paths pth)}
-;;                   ztx (zen/new-context zen-opts)]
-;;               (swap! ztx assoc :opts opts :formatters
-;;                      (let [fmt (get {"ndjson" 'sty/ndjson-fmt
-;;                                      "stdout" 'sty/stdout-fmt
-;;                                      "debug"  'sty/debug-fmt}
-;;                                        (:format opts)
-;;                                        'sty/stdout-fmt)]
-;;                              {fmt (atom {})}))
-;;               (fmt/emit ztx {:type 'sty/on-tests-start :entry-point suite-name :opts zen-opts})
-;;               ;; TBD: fail on unexistiong suite
-;;               (zen/read-ns ztx suite-name)
-;;               (let [errs (:errors @ztx)]
-;;                 (when-not (empty? errs)
-;;                   (fmt/emit ztx {:type 'sty/on-zen-errors :errors errs})))
-;;               (doseq [suite-ref (zen/get-tag ztx 'sty/env)]
-;;                 (let [suite (zen/get-symbol ztx suite-ref)]
-;;                   (eval-suite ztx suite)))
-;;               (fmt/emit ztx {:type 'sty/on-tests-end :entry-point suite-name})))))
-#_(let [{opts :options args :arguments summary :summary errs :errors :as inp} (parse-opts args cli-options)]
-    (cond
-      (or (:help opts) (empty? args)) (do
-                                        (println "sty <opts>" "SUTE_NS" "[CASE_NS]" "[STEP_NAME]")
-                                        (println "opts:")
-                                        (println summary))
-      :else (let [pth (:path opts)
-                  suite-name (when-let [nm (first args)] (symbol nm))
-                  zen-opts {:paths (calculate-paths pth)}
-                  ztx (zen/new-context zen-opts)]
-              (swap! ztx assoc :opts opts :formatters
-                     (let [fmt (get {"ndjson" 'sty/ndjson-fmt
-                                     "stdout" 'sty/stdout-fmt
-                                     "debug"  'sty/debug-fmt}
-                                       (:format opts)
-                                       'sty/stdout-fmt)]
-                             {fmt (atom {})}))
-              (fmt/emit ztx {:type 'sty/on-tests-start :entry-point suite-name :opts zen-opts})
-              ;; TBD: fail on unexistiong suite
-              (zen/read-ns ztx suite-name)
-              (let [errs (:errors @ztx)]
-                (when-not (empty? errs)
-                  (fmt/emit ztx {:type 'sty/on-zen-errors :errors errs})))
-              (doseq [suite-ref (zen/get-tag ztx 'sty/env)]
-                (let [suite (zen/get-symbol ztx suite-ref)]
-                  (eval-suite ztx suite)))
-              (fmt/emit ztx {:type 'sty/on-tests-end :entry-point suite-name}))))
+(defmethod call-op 'sty/run-tests
+  [ztx op {params :params}]
+  (doseq [env-ref (zen/get-tag ztx 'sty/env)]
+    (let [env (zen/get-symbol ztx env-ref)]
+      (run-env ztx env)))
+  {:result params})

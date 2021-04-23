@@ -1,5 +1,5 @@
 {ns aidbox.simple-search
- import #{sty fhir aidbox}
+ import #{sty sty.fhir sty.aidbox}
 
  case
  {:zen/tags #{sty/case}
@@ -7,27 +7,28 @@
   :steps
   {:clean
    {:desc "Clear all patients"
-    :action {:type aidbox/sql :sql "TRUNCATE patient"}}
+    :action {:type sty.aidbox/sql :sql "TRUNCATE patient"}}
 
    :pts
    {:desc  "Create number of patients"
-    :action {:type aidbox/load
+    :action {:type sty.aidbox/load
              :resources [{:resourceType "Patient" :id "pt-1"}]}}
 
    :find
-   {:action  {:method :get :uri "/Patient/pt-1"}
-    :matches {:status 200 :body {:id sty/string?}}}
+   {:action  {:type sty/http :method :get :url "/Patient/pt-1"}
+    :matches {:type sty/matcho :status 200 :body {:id sty/string?}}}
 
 
    :search
-   {:action  {:method :get :uri "/Patient?name=ups"}
-    :matches {:status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
+   {:action  {:type sty/http :method :get :url "/Patient?name=ups"}
+    :matches {:type sty/matcho :status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
 
    :search-with-params
-   {:action {:method :get
-             :uri "/Patient?name=ups"
+   {:action {:type sty/http 
+             :method :get
+             :url "/Patient?name=ups"
              :params {:name "ups"}}
-    :matches {:status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
+    :matches {:type sty/matcho :status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
 
 
    :search-with-fhir

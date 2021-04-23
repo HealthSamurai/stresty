@@ -9,7 +9,9 @@
 
   :steps
   {:sci
-   {:action {:method :get :uri (sty/url "Patient" (get-in sty/case [:data :my-id]))}
-    :matches {:body {:id (get-in sty/case [:data :my-id])}}}}}
+   {:action {:type sty/http
+             :method :get :url (sty/url "Patient" (get-in sty/case [:data :my-id]))}
+    :matches {:type sty/matcho
+              :body {:id (get-in sty/case [:data :my-id])}}}}}
 
  }

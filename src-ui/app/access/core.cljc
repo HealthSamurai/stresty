@@ -26,7 +26,7 @@
  (fn [{db :db} [_ phase _params]]
    (cond
      (= :init phase)
-     {:http/fetch [{:uri      "/User"
+     {:http/fetch [{:url      "/User"
                     :unbundle true
                     :params   {:_count 1000}
                     :path     [::db :users-list]}]}

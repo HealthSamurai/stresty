@@ -8,7 +8,7 @@
 
 (zrf/defx ctx
   [_ [_ phase params]]
-  (cond (= :init phase) {:http/fetch {:uri  "/Patient"
+  (cond (= :init phase) {:http/fetch {:url  "/Patient"
                                   :unbundle true
                                   :params   {:_count 100}
                                   :path     [::patients]}}))

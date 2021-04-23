@@ -1,20 +1,20 @@
 (ns stresty.actions.core)
 
-(defmulti run-action (fn [ztx action args] (:zen/name action)))
+(defmulti run-action (fn [ztx state args] (or (:type args) 'sty/http)))
 
 (defmethod run-action :default
-  [ztx action args]
-  {:error {:message (str "Action " (:zen/name action) " is not implemented!")}})
+  [ztx state args]
+  {:error {:message (str "Action " (:type args) " is not implemented!")}})
 
-;; (defn run-step [ztx suite case step-key step]
-;;   (let [state (or (get-in @ztx [:state (:zen/name suite) (:zen/name case)]) {})
+;; (defn run-step [ztx env case step-key step]
+;;   (let [state (or (get-in @ztx [:state (:zen/name env) (:zen/name case)]) {})
 ;;         step (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state}}} step)
 ;;         req {:method (:method step)
-;;              :url (str (:base-url suite) (:uri step))
+;;              :url (str (:base-url env) (:uri step))
 ;;              :headers {"content-type" "application/json"}
 ;;              :body (when-let [b (:body step)]
 ;;                      (cheshire.core/generate-string b))}
-;;         ev-base {:type 'sty/on-step-start :suite suite :case case
+;;         ev-base {:type 'sty/on-step-start :env env :case case
 ;;                  :step (assoc step :id step-key)
 ;;                  :verbose (get-in @ztx [:opts :verbose])
 ;;                  :request req}]
@@ -24,7 +24,7 @@
 ;;                      (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))]
 ;;         (swap! ztx
 ;;                (fn [old]
-;;                  (update-in old [:state (:zen/name suite) (:zen/name case)]
+;;                  (update-in old [:state (:zen/name env) (:zen/name case)]
 ;;                             (fn [state] (assoc state step-key resp)))))
 
 ;;         (if-let [err (:error resp)]

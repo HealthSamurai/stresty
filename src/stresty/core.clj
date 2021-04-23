@@ -30,9 +30,13 @@
   (-main "-f" "stdout" "-p" "../fhir-stresty"   "aidbox")
 
   (-main)
-  (-main "tests")
 
   (def ctx (-main "server" "--port=8888"))
+  (type ctx)
+
+  (stresty.server.core/stop-server ctx)
+
+  (def res (-main "--path=examples" "--ns=aidbox" "--format=debug" "tests"))
 
   )
 

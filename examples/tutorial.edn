@@ -79,7 +79,7 @@ regex if the request parameter named resource/id matches data.patient value of t
               :POST  "/AccessPolicy"
               :body  {:id     "patient-access"
                       :engine "matcho"
-                      :matcho {:uri            "#/Patient/.*"
+                      :matcho {:url            "#/Patient/.*"
                                :params         {:resource/id ".user.data.patient_id"}
                                :request-method "get"}}
               :match {:status 201}}
@@ -111,7 +111,7 @@ Let's make sure that we really don't have access to the Encounter resource:"}
               :POST  "/AccessPolicy"
               :body  {:id     "search-patient-encounter"
                       :engine "matcho"
-                      :matcho {:uri            "/Encounter"
+                      :matcho {:url            "/Encounter"
                                :params         {:patient ".user.data.patient_id"}
                                :request-method "get"}}
               :match {:status 201}}

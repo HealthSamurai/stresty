@@ -1,7 +1,8 @@
 {ns sty
 
- suite
+ env
  {:zen/tags #{zen/schema zen/tag}
+  :zen/desc "Represents subject (server) under the testing"
   :type zen/map
   :keys {:base-url {:type zen/string}
          :tags {:type zen/set :every {:type zen/string}}
@@ -15,14 +16,14 @@
  http
  {:zen/tags #{step-engine zen/schema}
   :type zen/map
-  :require #{:method :uri}
+  :require #{:method :url}
   :keys {:method {:type zen/keyword :enum [{:value :post}
                                            {:value :put}
                                            {:value :get}
                                            {:value :delete}
                                            {:value :option}
                                            {:value :patch}]}
-         :uri    {:type zen/string}
+         :url    {:type zen/string}
          :params {:type zen/map :values {:type zen/string}}
          :headers {:type zen/map :values {:type zen/string}}
          :body {:type zen/any}}}
@@ -30,23 +31,44 @@
  print
  {:zen/tags #{zen/tag zen/schema}
   :type zen/map
-  :keys {:expression {:type zen/list}}}
+  :keys {:expression {:type zen/list}
+         :path {:type zen/vector}}}
+
+ action
+ {:zen/tags #{zen/schema}
+  :schema-key {:key :type}
+  :require #{:type}
+  :type zen/map
+  :keys {:type {:type zen/symbol}}}
+
+ matcher
+ {:zen/tags #{zen/schema}
+  :schema-key {:key :type}
+  :type zen/map
+  :require #{:type}
+  :values {:type zen/any}
+  :keys {:type {:type zen/symbol}}}
+
+ matcho
+ {:zen/tags #{zen/schema}
+  :zen/desc "Matcho engine"
+  :type zen/map
+  :values {:type zen/any}}
 
  step
  {:zen/tags #{zen/schema}
   :schema-key {:key :type :tags #{step-engine}}
   :type zen/map
-  :require #{:method :uri}
-  :keys {:type   {:type zen/symbol :tags #{step-engine}}
-         :desc   {:type zen/string}
-         :tags   {:type zen/set :every {:type zen/string}}
-         :response {:type zen/map :values {:type zen/any}}}}
+  :keys {:desc    {:type zen/string}
+         :tags    {:type zen/set :every {:type zen/string}}
+         :action  {:confirms #{action}}
+         :matches {:confirms #{matcher}}}}
 
  case
  {:zen/tags #{zen/schema zen/tag}
   :type zen/map
   :keys {:title {:type zen/string}
-         :tags {:type zen/set :every {:type zen/string}}
+         :tags  {:type zen/set :every {:type zen/string}}
          :steps {:type zen/map
                  :values {:confirms #{step}}}}}
 
@@ -91,7 +113,7 @@
   :zen/desc "Event emited on tests finish"
   :confirms #{event}
   :type zen/map
-  :keys {:suite {:confirms #{suite}}
+  :keys {:env {:confirms #{env}}
          :case {:confirms #{case}}}}
 
  on-case-end
@@ -107,7 +129,7 @@
   :zen/desc "Event emited on tests finish"
   :confirms #{event}
   :type zen/map
-  :keys {:suite {:confirms #{suite}}
+  :keys {:env {:confirms #{env}}
          :case {:confirms #{case}}
          :step {:confirms #{step}}}}
 
@@ -121,7 +143,9 @@
 
  op  {:zen/tags #{zen/tag zen/schema}
       :type zen/map
-      :keys {:params {:type zen/map}}}
+      :keys {:params {:confirms #{zen/schema}}
+             :result {:confirms #{zen/schema}}}}
+
  echo {:zen/tags #{op} :zen/desc "echo operation to test rpc api"}
 
  run-tests
@@ -129,21 +153,21 @@
   :zen/desc "Run selected tests"
   :params {:type zen/map
            :keys {:tags    {:type zen/set    :every {:type zen/string}}
-                  :pattern {:type zen/string :every {:type zen/string}}}}}
+                  :pattern {:type zen/string}}}}
 
  run-cases
  {:zen/tags #{op}
   :zen/desc "Run specific cases"
   :params {:type zen/map
            :keys {:cases  {:type zen/vector :every {:type zen/symbol :tags #{case}}}
-                  :suites {:type zen/vector :every {:type zen/symbol :tags #{suite}}}
+                  :envs {:type zen/vector :every {:type zen/symbol :tags #{env}}}
                   :tags {:type zen/set :every {:type zen/string}}}}}
 
  run-steps
  {:zen/tags #{op}
   :zen/desc "Run specific cases"
   :params {:type zen/map
-           :keys {:suites {:type zen/vector :every {:type zen/symbol :tags #{suite}}}
+           :keys {:envs {:type zen/vector :every {:type zen/symbol :tags #{env}}}
                   :case   {:type zen/symbol :tags #{case}}
                   :tags   {:type zen/set :every {:type zen/string}}
                   :steps  {:type zen/vector :every {:type zen/keyword}}}}}

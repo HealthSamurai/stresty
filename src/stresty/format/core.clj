@@ -34,17 +34,16 @@
                           (mapv (fn [{msg :message res :resource pth :path}]
                                   (str msg " in " res " at " pth)))))))
 
-    (= tp 'sty/on-suite-start)
-    (println "==" (get-in event [:suite :zen/name])
-             (get-in event [:suite :base-url]))
+    (= tp 'sty/on-env-start)
+    (println "==" (get-in event [:env :zen/name])
+             (get-in event [:env :base-url]))
 
     (= tp 'sty/on-case-start)
     (println " #" (get-in event [:case :zen/name]))
 
     (= tp 'sty/on-step-start)
     (print "  *" (name (get-in event [:step :id])) "=>"
-           (let [req (:step event)]
-             (str (str/upper-case (name (:method req))) " " (:uri req))))
+           (str "TBD: render action"))
 
     (= tp 'sty/on-step-success)
     (println " success")
@@ -56,6 +55,9 @@
 
     (= tp 'sty/on-step-exception)
     (println " exception " (pr-str (:exception event)))
+
+    :else
+    (println " ??" tp event)
 
 
     )
@@ -79,8 +81,8 @@
                           (mapv (fn [{msg :message res :resource pth :path}]
                                   (str ">> " msg " in " res " at " pth)))))))
 
-    (= tp 'sty/on-suite-start)
-    (print (get-in event [:suite :zen/name]) "{")
+    (= tp 'sty/on-env-start)
+    (print (get-in event [:env :zen/name]) "{")
 
     (= tp 'sty/on-case-start)
     (print "(")
@@ -100,7 +102,7 @@
     (= tp 'sty/on-case-end)
     (print ")")
 
-    (= tp 'sty/on-suite-end)
+    (= tp 'sty/on-env-end)
     (print "}\n")
 
 
