@@ -43,7 +43,7 @@
                  :action action}]
     (fmt/emit ztx ev-base)
     (try
-      (let [result (stresty.actions.core/run-action ztx state action)]
+      (let [result (stresty.actions.core/run-action ztx {:state state :case case :env env} action)]
         (save-case-state ztx enm cnm step-key result)
         (if-let [err (:error result)]
           (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error err))

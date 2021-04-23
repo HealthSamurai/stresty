@@ -49,12 +49,21 @@
     (println " success")
 
     (= tp 'sty/on-step-fail)
-    (do 
+    (do
       (println " fail")
       (println "   " (str/join "\n    " (:errors event))))
 
+    (= tp 'sty/on-step-error)
+    (println " error " (pr-str (:error event)))
+
     (= tp 'sty/on-step-exception)
     (println " exception " (pr-str (:exception event)))
+
+    (= tp 'sty/on-case-end)
+    :nop
+
+    (= tp 'sty/on-env-end)
+    :nop
 
     :else
     (println " ??" tp event)

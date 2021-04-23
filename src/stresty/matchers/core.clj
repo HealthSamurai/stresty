@@ -7,3 +7,7 @@
   [ztx matcher sample]
  {:errors [{:message (str (:type matcher) " is not implmented.")}]})
 
+(defmethod match 'sty/matcho
+  [ztx matcher sample]
+  (stresty.matchers.matcho/match ztx {} sample (dissoc matcher :type)))
+
