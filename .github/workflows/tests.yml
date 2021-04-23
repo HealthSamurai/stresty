@@ -25,6 +25,14 @@ jobs:
       matrix:
         os: [windows-latest]
         # os: [ubuntu-latest, macOS-latest, windows-latest]
+        gu-binary: [gu, gu.cmd]
+        exclude:
+          - os: ubuntu-latest
+            gu-binary: gu.cmd
+          - os: macos-latest
+            gu-binary: gu.cmd
+          - os: windows-latest
+            gu-binary: gu
 
     runs-on: ${{ matrix.os }}
     # runs-on: ubuntu-latest
@@ -73,7 +81,9 @@ jobs:
         run: java -version
 
       - name: Install native-image component
-        run: gu install native-image
+        run: ${{ matrix.gu-binary }} install native-image
+         
 
       - name: build native
-        run: make build-native || cat /tmp/clojure-*.edn
+        run: cp VERSION resources/VERSION  && clojure -M:native-image
+        # run: make build-native || cat /tmp/clojure-*.edn
