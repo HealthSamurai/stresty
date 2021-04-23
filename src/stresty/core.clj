@@ -4,7 +4,7 @@
    [stresty.matcho]
    [stresty.format.core :as fmt]
    [stresty.sci]
-   [stresty.server]
+   [stresty.server.core]
    [cheshire.core]
    [clj-http.lite.client :as http]
    [clojure.tools.cli :refer [parse-opts]]
@@ -79,7 +79,8 @@
 
 (defn -main [& args]
   (let [ztx (zen/new-context {})]
-    (stresty.server/start-server ztx {}))
+    (zen/read-ns ztx 'sty)
+    (stresty.server.core/start-server ztx {}))
   #_(let [{opts :options args :arguments summary :summary errs :errors :as inp} (parse-opts args cli-options)]
     (cond
       (or (:help opts) (empty? args)) (do

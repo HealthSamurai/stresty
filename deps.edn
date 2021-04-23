@@ -1,17 +1,21 @@
 {:paths    ["src" "resources"]
  :jvm-opts []
  :deps     {org.clojure/clojure             {:mvn/version "1.11.0-alpha1"}
-            http-kit/http-kit               {:mvn/version "2.5.3"}
-            org.martinklepsch/clj-http-lite {:mvn/version "0.4.3"}
-            cheshire/cheshire               {:mvn/version "5.6.3"}
-            hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
             zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
                                              :sha "cec57be7e197b5f8d746368d1166c44a6e2b28ad"}
             borkdude/sci                    {:mvn/version "0.2.4"}
             route-map/route-map             {:mvn/version "0.0.7"}
             org.clojure/tools.cli           {:mvn/version "1.0.206"}
+
+            http-kit/http-kit               {:mvn/version "2.5.3"}
             ring/ring                       {:mvn/version "1.7.1"}
-            com.cognitect/transit-clj       {:mvn/version "1.0.324"}}
+            org.martinklepsch/clj-http-lite {:mvn/version "0.4.3"}
+
+            hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
+
+            com.cognitect/transit-clj       {:mvn/version "1.0.324"}
+            cheshire/cheshire               {:mvn/version "5.6.3"}
+            clj-commons/clj-yaml            {:mvn/version "0.7.106"}}
 
  :aliases {:nrepl   {:extra-paths ["dev" "target/shadow/dev" "target/stylo/dev"]
                      :extra-deps  {refactor-nrepl/refactor-nrepl {:mvn/version "2.5.0"}
@@ -47,10 +51,10 @@
                         "--report-unsupported-elements-at-runtime"
                         "--initialize-at-build-time"
                         ;; "--initialize-at-run-time=org.httpkit.client.ClientSslEngineFactory\\$SSLHolder"
-                        ;; "--initialize-at-build-time=org.httpkit.client.ClientSslEngineFactory\\$SSLHolder"
+                        "--initialize-at-build-time=org.httpkit.client.ClientSslEngineFactory\\$SSLHolder"
                         "--initialize-at-run-time=java.lang.Math\\$RandomNumberGeneratorHolder"
                         "-H:ReflectionConfigurationFiles=reflection.json"
-                        "-H:EnableURLProtocols=http,https,resource,file"
+                        "-H:EnableURLProtocols=http,https"
                         "-H:IncludeResources=.*edn"
                         "--enable-all-security-services"
                         ;; "--native-image-info"
