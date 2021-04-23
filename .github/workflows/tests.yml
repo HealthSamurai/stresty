@@ -21,12 +21,21 @@ on: [push]
 
 jobs:
   clojure:
-    # strategy:
-    #   matrix:
-    #     os: [ubuntu-latest, macOS-latest, windows-latest]
+    strategy:
+      matrix:
+        os: [windows-latest]
+        # os: [ubuntu-latest, macOS-latest, windows-latest]
+        gu-binary: [gu, gu.cmd]
+        exclude:
+          - os: ubuntu-latest
+            gu-binary: gu.cmd
+          - os: macos-latest
+            gu-binary: gu.cmd
+          - os: windows-latest
+            gu-binary: gu
 
-    # runs-on: ${{ matrix.os }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    # runs-on: ubuntu-latest
 
     steps:
       - name: checkout
@@ -45,6 +54,7 @@ jobs:
 
       - name: install rlwrap
         run: sudo apt-get install -y rlwrap
+        if: matrix.os == 'ubuntu-latest' 
 
       - name: cache mvn
         uses: actions/cache@v2
@@ -54,8 +64,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: run tests
+      - name: run tests on Unix based OS
         run: make test
+        if: matrix.os != 'windows-latest' 
+
+      # - name: run tests on Windows
+      #   run: clojure -M:ui:test:nrepl:kaocha
+      #   shell: powershell
+      #   if: matrix.os == 'windows-latest' 
 
       - name: Setup Graalvm
         id: setup-graalvm
@@ -72,7 +88,36 @@ jobs:
         run: java -version
 
       - name: Install native-image component
-        run: gu install native-image
-
-      - name: build native
+        run: ${{ matrix.gu-binary }} install native-image
+         
+      - name: build native on Unix like OS
         run: make build-native || cat /tmp/clojure-*.edn
+        if: matrix.os != 'windows-latest' 
+
+      # - name: build native on Windows
+      #   run: cp VERSION resources/VERSION; clojure -M:native-image;
+      #   if: matrix.os == 'windows-latest' 
+      #   shell: powershell
+
+      - name: build native on Windows
+        run: clojure -M:ui:build -m build; cp target/uberjar/stresty-*-standalone.jar target/stresty.jar
+        if: matrix.os == 'windows-latest' 
+        shell: powershell
+
+      - name: build native on Windows
+        if: matrix.os == 'windows-latest' 
+        shell: powershell
+        run: |
+          cp VERSION resources/VERSION;
+          native-image.cmd -jar target\stresty.jar`
+              --no-fallback `
+              --report-unsupported-elements-at-runtime `
+              --initialize-at-build-time `
+              --initialize-at-build-time=org.httpkit.client.ClientSslEngineFactory\\$SSLHolder `
+              --initialize-at-run-time=java.lang.Math\\$RandomNumberGeneratorHolder `
+              -H:ReflectionConfigurationFiles=reflection.json `
+              -H:EnableURLProtocols=http,https `
+              -H:IncludeResources=.*edn `
+              --enable-all-security-services `
+              -H:Name=sty `
+              -H:+ReportExceptionStackTraces 

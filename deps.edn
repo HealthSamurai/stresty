@@ -27,6 +27,11 @@
 
            :stresty {:main-opts ["-m" "stresty.core"]}
 
+           :build {:extra-paths ["build"]
+                   :jvm-opts ^:replace ["-XX:-OmitStackTraceInFastThrow"]
+                   :extra-deps {cambada/cambada {:git/url "https://github.com/HealthSamurai/cambada"
+                                         :sha     "a8ccf922e516e3249e96ae63dadd91d5f01e83f5"}}}
+
            :ui {:extra-paths ["src-ui" "src-c"]
                 :extra-deps {org.clojure/clojurescript   {:mvn/version "1.10.764"}
                              reagent/reagent                     {:mvn/version "0.10.0"}
