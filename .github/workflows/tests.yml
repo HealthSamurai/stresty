@@ -65,7 +65,8 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: run tests
-        run: make test
+        run: cljojure -M:ui:test:nrepl:kaocha
+        # run: make test
 
       - name: Setup Graalvm
         id: setup-graalvm
