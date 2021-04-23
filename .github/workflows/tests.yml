@@ -20,11 +20,27 @@ name: stresty ci
 on: [push]
 
 jobs:
+  create_release:
+    name: Create release
+    runs-on: ubuntu-latest
+    # Note this. We are going to use that in further jobs.
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: 'snapshot' # ${{ github.ref }}
+          release_name: Release 0.0.1 #${{ github.ref }}
+          draft: false
+          prerelease: false
   clojure:
     strategy:
       matrix:
-        os: [windows-latest]
-        # os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
         gu-binary: [gu, gu.cmd]
         exclude:
           - os: ubuntu-latest
@@ -44,8 +60,8 @@ jobs:
       - name: install java
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt' # See 'Supported distributions' for available options
-          java-version: '11'
+          distribution: "adopt" # See 'Supported distributions' for available options
+          java-version: "11"
 
       - name: install clj
         uses: DeLaGuardo/setup-clojure@3.2
@@ -53,9 +69,14 @@ jobs:
           cli: 1.10.3.822
 
       - name: install rlwrap
-        run: sudo apt-get install -y rlwrap
         if: matrix.os == 'ubuntu-latest' 
+        run: sudo apt-get install -y rlwrap
 
+      - name: install rlwrap
+        if: matrix.os == 'macos-latest' 
+        run: brew install rlwrap
+
+        #run: sudo apt-get install -y rlwrap
       - name: cache mvn
         uses: actions/cache@v2
         with:
@@ -78,11 +99,10 @@ jobs:
         uses: DeLaGuardo/setup-graalvm@master
         with:
           # GraalVM version, no pattern syntax available atm
-          graalvm: '21.0.0.2'
-          # Java version, optional, defaults to 'java8'. Available options are 'java8' and 'java11'.
-          java: 'java11'
+          graalvm: "21.0.0.2"
+          java: "java11"
           # Architecture flag, optional, defaults to 'amd64'. Available options are 'amd64' and 'aarch64'. Later is available only for linux runners.
-          arch: 'amd64'
+          arch: "amd64"
 
       - name: Check java binary
         run: java -version
@@ -94,30 +114,20 @@ jobs:
         run: make build-native || cat /tmp/clojure-*.edn
         if: matrix.os != 'windows-latest' 
 
-      # - name: build native on Windows
-      #   run: cp VERSION resources/VERSION; clojure -M:native-image;
-      #   if: matrix.os == 'windows-latest' 
-      #   shell: powershell
-
       - name: build native on Windows
-        run: clojure -M:ui:build -m build; cp target/uberjar/stresty-*-standalone.jar target/stresty.jar
+        run: cp VERSION resources/VERSION; clojure -M:native-image;
         if: matrix.os == 'windows-latest' 
         shell: powershell
 
-      - name: build native on Windows
-        if: matrix.os == 'windows-latest' 
-        shell: powershell
-        run: |
-          cp VERSION resources/VERSION;
-          native-image.cmd -jar target\stresty.jar`
-              --no-fallback `
-              --report-unsupported-elements-at-runtime `
-              --initialize-at-build-time `
-              --initialize-at-build-time=org.httpkit.client.ClientSslEngineFactory\\$SSLHolder `
-              --initialize-at-run-time=java.lang.Math\\$RandomNumberGeneratorHolder `
-              -H:ReflectionConfigurationFiles=reflection.json `
-              -H:EnableURLProtocols=http,https `
-              -H:IncludeResources=.*edn `
-              --enable-all-security-services `
-              -H:Name=sty `
-              -H:+ReportExceptionStackTraces 
+      - name: Build native
+        run: make build-native || cat /tmp/clojure-*.edn
+
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: sty-${{ matrix.config.os }}
+          asset_path: ./sty
+          asset_content_type: application/octet-stream
