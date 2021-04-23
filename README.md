@@ -59,6 +59,24 @@ mytest.edn
 
 ## Installation
 
+## Usage
+
+```
+
+sty --path=PATH <command> <subcommand>
+
+sty server -p PORT
+
+sty tests --envs=ENV1,ENV2 --cases=CS,CS  --steps=STEP,STEP --tags=TAG,TAG
+
+sty watch --paths=PATH1,PATH2
+
+sty (help) => help
+
+
+
+```
+
 
 ## Development
 
@@ -71,7 +89,6 @@ mytest.edn
 - GraalVM
 - native-image util
 
-
 ### Setup
 
 Setup via **jenv** (https://www.jenv.be/)
@@ -79,10 +96,10 @@ Setup via **jenv** (https://www.jenv.be/)
 macos env
 
 ```
- tar -xzf graalvm-ce-java11-darwin-amd64-21.0.0.2.tar.gz
- sudo mv graalvm-ce-java11-21.0.0.2 /Library/Java/JavaVirtualMachines
- /usr/libexec/java_home -V
- sudo xattr -r -d com.apple.quarantine /Library/Java/JavaVirtualMachines/graalvm-ce-java11-21.0.0.2/Contents/Home
+tar -xzf graalvm-ce-java11-darwin-amd64-21.0.0.2.tar.gz
+sudo mv graalvm-ce-java11-21.0.0.2 /Library/Java/JavaVirtualMachines
+/usr/libexec/java_home -V
+sudo xattr -r -d com.apple.quarantine /Library/Java/JavaVirtualMachines/graalvm-ce-java11-21.0.0.2/Contents/Home
  
 jenv add /Library/Java/JavaVirtualMachines/graalvm-ce-java11-21.0.0.2/Contents/Home
 jenv versions

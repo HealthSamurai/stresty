@@ -1,46 +1,36 @@
 (ns stresty.core
-  (:require
-   [zen.core :as zen]
-   [stresty.format.core]
-   [stresty.actions.core]
-   [stresty.matchers.core]
-   [stresty.server.core]
-   [stresty.sci]
-   [cheshire.core]
-   [clojure.tools.cli :refer [parse-opts]]
-   [clojure.string :as str])
+  (:require [stresty.server.core :as server]
+            [clojure.string :as str])
   (:gen-class))
-
 
 (set! *warn-on-reflection* true)
 
-(defn current-dir []
-  (System/getProperty "user.dir"))
+(defn parse-args [args]
+  (loop [[a & as] args
+         params {}]
+    (if (and (nil? a) (empty? as))
+      params
+      (if (str/starts-with? a "--")
+        (let [[k v] (str/split a #"=" 2)]
+          (recur as (assoc-in params [:params (keyword (str/replace k #"^--" ""))] (str/trim v))))
+        (assoc params :command (merge {:name (str/trim a)} (parse-args as)))))))
 
-(def cli-options
-  ;; An option with a required argument
-  [["-p" "--path PATH" "Project path"]
-   ["-f" "--format FORMAT" "Report format can be ndjson, debug, html"]
-   ["-v" nil "Verbosity level" :id :verbose]
-   ["-h" "--help"]])
-
-(defn calculate-paths [pth]
-  [(if pth
-     (if (str/starts-with? pth "/")
-       pth
-       (str (System/getProperty "user.dir") "/" pth))
-     (System/getProperty "user.dir"))])
 
 (defn -main [& args]
-  (let [ztx (zen/new-context {})]
-    (zen/read-ns ztx 'sty)
-    (stresty.server.core/start-server ztx {})))
+  (stresty.server.core/exec (parse-args args)))
 
 
 (comment
+  (parse-args ["--path=PATH" "tests" "--parama=1" "--paramb=2"])
+  (parse-args [])
+  (parse-args ["server" "--port=800"])
+
   (-main "-p" "examples" "-f" "ndjson" "aidbox")
 
   (-main "-f" "stdout" "-p" "../fhir-stresty"   "aidbox")
+
+  (-main)
+  (-main "server" "--port=800")
 
   )
 

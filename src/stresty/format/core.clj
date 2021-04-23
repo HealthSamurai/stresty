@@ -93,7 +93,6 @@
 
     (= tp 'sty/on-step-fail)
     (print "x")
-    
 
     (= tp 'sty/on-step-exception)
     (print "!")

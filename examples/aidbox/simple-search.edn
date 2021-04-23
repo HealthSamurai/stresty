@@ -20,7 +20,7 @@
 
 
    :search
-   {:action {:method :get :uri "/Patient?name=ups"}
+   {:action  {:method :get :uri "/Patient?name=ups"}
     :matches {:status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
 
    :search-with-params
