@@ -1,5 +1,5 @@
-(ns stresty.server.core-test
-  (:require [stresty.server.core :as sut]
+(ns stresty.server.http-test
+  (:require [stresty.server.http :as sut]
             [zen.core :as zen]
             [matcho.core :as matcho]
             [clojure.test :as t]))

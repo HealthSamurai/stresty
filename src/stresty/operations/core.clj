@@ -5,7 +5,6 @@
             [stresty.sci]
             [stresty.format.core :as fmt]
             [clojure.string :as str]))
-;; [clj-http.lite.client :as http]
 
 (defmulti call-op (fn [ztx op args] (:zen/name op)))
 
