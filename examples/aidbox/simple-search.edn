@@ -1,5 +1,5 @@
 {ns aidbox.simple-search
- import #{sty}
+ import #{sty fhir aidbox}
 
  case
  {:zen/tags #{sty/case}
@@ -7,32 +7,39 @@
   :steps
   {:clean
    {:desc "Clear all patients"
-    :method :post
-    :uri "/$sql"
-    :body "TRUNCATE patient"
-    :response {:status 200}}
+    :action {:type aidbox/sql :sql "TRUNCATE patient"}}
 
    :pts
    {:desc  "Create number of patients"
-    :method :put
-    :uri "/"
-    :body [{:resourceType "Patient" :id "pt-1"}]
-    :response {:status 200
-               :body [{:id "pt-1"}]}}
+    :action {:type aidbox/load
+             :resources [{:resourceType "Patient" :id "pt-1"}]}}
 
    :find
-   {:method :get
-    :uri "/Patient/pt-1"
-    :response {:status 200 :body {:id sty/string?}}}
+   {:action  {:method :get :uri "/Patient/pt-1"}
+    :matches {:status 200 :body {:id sty/string?}}}
 
 
    :search
-   {:method :get
-    :uri "/Patient?name=ups"
-    :response {:status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
+   {:action {:method :get :uri "/Patient?name=ups"}
+    :matches {:status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
+
+   :search-with-params
+   {:action {:method :get
+             :uri "/Patient?name=ups"
+             :params {:name "ups"}}
+    :matches {:status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
 
 
+   :search-with-fhir
+   {:action {:type fhir/search
+             :resourceType "Patient"
+             :params {:name "ups"}}}
 
+   :debug-expr
+   {:action {:type sty/print :expression (get-in sty/case [:search-with-fhir])}}
+
+   :debug-path
+   {:action {:type sty/print :path [:search-with-fhir]}}
 
 
    }}}

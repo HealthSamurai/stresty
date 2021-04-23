@@ -4,28 +4,49 @@
  {:zen/tags #{zen/schema zen/tag}
   :type zen/map
   :keys {:base-url {:type zen/string}
+         :tags {:type zen/set :every {:type zen/string}}
          :basic-auth {:type zen/map
                       :keys {:user {:type zen/string}
                              :password {:type zen/string}}}}}
 
- step
- {:zen/tags #{zen/schema}
+ step-engine
+ {:zen/tags #{zen/tag}}
+
+ http
+ {:zen/tags #{step-engine zen/schema}
   :type zen/map
   :require #{:method :uri}
-  :keys {:desc   {:type zen/string}
-         :method {:type zen/keyword :enum [{:value :post}
+  :keys {:method {:type zen/keyword :enum [{:value :post}
                                            {:value :put}
                                            {:value :get}
                                            {:value :delete}
+                                           {:value :option}
                                            {:value :patch}]}
-         :uri {:type zen/string}
-         :body {:type zen/any}
-         :response {:type zen/map
-                    :values {:type zen/any}}}}
+         :uri    {:type zen/string}
+         :params {:type zen/map :values {:type zen/string}}
+         :headers {:type zen/map :values {:type zen/string}}
+         :body {:type zen/any}}}
+
+ print
+ {:zen/tags #{zen/tag zen/schema}
+  :type zen/map
+  :keys {:expression {:type zen/list}}}
+
+ step
+ {:zen/tags #{zen/schema}
+  :schema-key {:key :type :tags #{step-engine}}
+  :type zen/map
+  :require #{:method :uri}
+  :keys {:type   {:type zen/symbol :tags #{step-engine}}
+         :desc   {:type zen/string}
+         :tags   {:type zen/set :every {:type zen/string}}
+         :response {:type zen/map :values {:type zen/any}}}}
+
  case
  {:zen/tags #{zen/schema zen/tag}
   :type zen/map
   :keys {:title {:type zen/string}
+         :tags {:type zen/set :every {:type zen/string}}
          :steps {:type zen/map
                  :values {:confirms #{step}}}}}
 
@@ -98,13 +119,41 @@
   :keys {:result {:type zen/any}
          :errors {:type zen/any}}}
 
- op  {:zen/tags #{zen/tag}}
+ op  {:zen/tags #{zen/tag zen/schema}
+      :type zen/map
+      :keys {:params {:type zen/map}}}
  echo {:zen/tags #{op} :zen/desc "echo operation to test rpc api"}
+
+ run-tests
+ {:zen/tags #{op}
+  :zen/desc "Run selected tests"
+  :params {:type zen/map
+           :keys {:tags    {:type zen/set    :every {:type zen/string}}
+                  :pattern {:type zen/string :every {:type zen/string}}}}}
+
+ run-cases
+ {:zen/tags #{op}
+  :zen/desc "Run specific cases"
+  :params {:type zen/map
+           :keys {:cases  {:type zen/vector :every {:type zen/symbol :tags #{case}}}
+                  :suites {:type zen/vector :every {:type zen/symbol :tags #{suite}}}
+                  :tags {:type zen/set :every {:type zen/string}}}}}
+
+ run-steps
+ {:zen/tags #{op}
+  :zen/desc "Run specific cases"
+  :params {:type zen/map
+           :keys {:suites {:type zen/vector :every {:type zen/symbol :tags #{suite}}}
+                  :case   {:type zen/symbol :tags #{case}}
+                  :tags   {:type zen/set :every {:type zen/string}}
+                  :steps  {:type zen/vector :every {:type zen/keyword}}}}}
 
  rest-op  {:zen/tags #{zen/tag}}
  index-op {:zen/tags #{rest-op}}
+
  rpc-op   {:zen/tags #{rpc-op}
            :zen/desc "rpc endpoint, accept json and transit formats trho content-type header"}
+
  get-rpc-op   {:zen/tags #{rpc-op}
                :zen/desc "rpc endpoint, accept json and transit formats trho content-type header"}
 
@@ -114,5 +163,7 @@
   :routes {:get index-op
            "rpc" {:post rpc-op
                   :get  get-rpc-op}}}
+ cli
+ {:zen/desc "CLI interface"}
 
  }

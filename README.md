@@ -62,6 +62,10 @@ mytest.edn
 
 ## Development
 
+### Overview
+
+![stresty-structure.png](stresty-structure.png)
+
 ### Requirenments 
 
 - GraalVM

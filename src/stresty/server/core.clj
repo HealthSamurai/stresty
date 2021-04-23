@@ -13,7 +13,7 @@
    [ring.util.request]
    [ring.util.response]
 
-   [stresty.operations :as ops]))
+   [stresty.operations.core :as ops]))
 
 (defn form-decode [s]
   #_(clojure.walk/keywordize-keys (ring.util.codec/form-decode s))

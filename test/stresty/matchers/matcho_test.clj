@@ -1,5 +1,5 @@
-(ns stresty.matcho-test
-  (:require [stresty.matcho :as sut]
+(ns stresty.matchers.matcho-test
+  (:require [stresty.matchers.matcho :as sut]
             [matcho.core :as matcho]
             [clojure.test :as t :refer [deftest]]
             [zen.core :as zen]))

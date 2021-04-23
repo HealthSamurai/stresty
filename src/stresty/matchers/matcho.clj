@@ -1,4 +1,4 @@
-(ns stresty.matcho
+(ns stresty.matchers.matcho
   (:require [clojure.string :as s]
             [zen.core :as zen]))
 
@@ -143,4 +143,3 @@
           :body   {:id 'stresty/string?}}
          )
   )
-
