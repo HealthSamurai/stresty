@@ -15,7 +15,7 @@ mytest.edn
  import #{sty}
 
  suite
- {:zen/tags #{sty/suite}
+ {:zen/tags #{sty/env}
   :base-url "https://edgeniquola.edge.aidbox.app"
   :basic-auth {:user "???" :password "???"}}
 

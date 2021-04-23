@@ -25,12 +25,14 @@
   (parse-args [])
   (parse-args ["server" "--port=800"])
 
-  (-main "-p" "examples" "-f" "ndjson" "aidbox")
+  
 
   (-main "-f" "stdout" "-p" "../fhir-stresty"   "aidbox")
 
   (-main)
-  (-main "server" "--port=800")
+  (-main "tests")
+
+  (def ctx (-main "server" "--port=8888"))
 
   )
 

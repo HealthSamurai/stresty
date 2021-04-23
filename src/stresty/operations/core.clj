@@ -1,4 +1,6 @@
-(ns stresty.operations.core)
+(ns stresty.operations.core
+  (:require [zen.core :as zen]
+            [stresty.format.core :as fmt]))
 ;; [clj-http.lite.client :as http]
 
 (defmulti call-op (fn [ztx op args] (:zen/name op)))
@@ -10,6 +12,20 @@
 (defmethod call-op 'sty/echo
   [ztx op {params :params}]
   {:result params})
+
+(defmethod call-op 'sty/run-tests
+  [ztx op {params :params}]
+  {:result params})
+
+
+
+(defn op [ztx args]
+  (if-let [op (when-let [m (:method args)]
+                (zen/get-symbol ztx (symbol m)))]
+
+    (call-op ztx op args)
+    {:error {:message (str "Operation " (:method args) " is not defined.")}}))
+
 
 ;; (defn run-step [ztx suite case step-key step]
 ;;   (let [state (or (get-in @ztx [:state (:zen/name suite) (:zen/name case)]) {})
@@ -98,7 +114,7 @@
 ;;               (let [errs (:errors @ztx)]
 ;;                 (when-not (empty? errs)
 ;;                   (fmt/emit ztx {:type 'sty/on-zen-errors :errors errs})))
-;;               (doseq [suite-ref (zen/get-tag ztx 'sty/suite)]
+;;               (doseq [suite-ref (zen/get-tag ztx 'sty/env)]
 ;;                 (let [suite (zen/get-symbol ztx suite-ref)]
 ;;                   (eval-suite ztx suite)))
 ;;               (fmt/emit ztx {:type 'sty/on-tests-end :entry-point suite-name})))))
@@ -125,7 +141,7 @@
               (let [errs (:errors @ztx)]
                 (when-not (empty? errs)
                   (fmt/emit ztx {:type 'sty/on-zen-errors :errors errs})))
-              (doseq [suite-ref (zen/get-tag ztx 'sty/suite)]
+              (doseq [suite-ref (zen/get-tag ztx 'sty/env)]
                 (let [suite (zen/get-symbol ztx suite-ref)]
                   (eval-suite ztx suite)))
               (fmt/emit ztx {:type 'sty/on-tests-end :entry-point suite-name}))))

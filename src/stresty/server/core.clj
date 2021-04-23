@@ -1,31 +1,28 @@
 (ns stresty.server.core
   (:require
    [zen.core :as zen]
-   [stresty.format.core]
    [stresty.actions.core]
    [stresty.matchers.core]
    [stresty.server.core]
    [stresty.server.http]
    [stresty.server.cli]
+   [stresty.operations.core]
+   [stresty.format.core :as fmt] 
    [stresty.sci]
    [clojure.string :as str]))
 
-(defn start-server [opts]
-  (let [ztx (zen/new-context {})]
-    (zen/read-ns ztx 'sty)))
-
-(defn stop-server [ztx])
 
 (defmulti command
   (fn [ztx cmd] (:name cmd)))
 
 (defmethod command "server"
   [ztx cmd]
-  (println cmd))
+  (stresty.server.http/start-server ztx (update (:params cmd) :port (fn [x] (when x (Integer/parseInt x))))))
 
 (defmethod command "tests"
   [ztx cmd]
-  (println cmd))
+  (stresty.operations.core/op ztx {:method 'sty/run-tests
+                                   :params (:params cmd)}))
 
 (defmethod command :default
   [ztx cmd]
@@ -54,17 +51,35 @@ sty => help
        (str (System/getProperty "user.dir") "/" pth))
      (System/getProperty "user.dir"))])
 
-(defn exec [{cmd :command opts :params}]
+(defn report-zen-errors [ztx]
+  (let [errs (:errors @ztx)]
+    (when-not (empty? errs)
+      (fmt/emit ztx {:type 'sty/on-zen-errors :errors errs}))))
+
+(defn configure-format [ztx opts]
+  (swap! ztx assoc :opts opts :formatters
+         (let [fmt (get {"ndjson" 'sty/ndjson-fmt
+                         "stdout" 'sty/stdout-fmt
+                         "debug"  'sty/debug-fmt}
+                        (:format opts)
+                        'sty/stdout-fmt)]
+           {fmt (atom {})})))
+
+(defn start-server [{opts :params}]
   (let [ztx (zen/new-context {:opts opts :paths (calculate-paths (:path opts))})]
     (zen/read-ns ztx 'sty)
+    (configure-format ztx opts)
+    (report-zen-errors ztx)))
+
+(defn stop-server [ztx]
+  (stresty.server.http/stop-server ztx))
+
+(defn exec [{cmd :command :as args}]
+  (let [ztx (start-server args)]
     (command ztx cmd)))
 
-
 (comment
-  (def ztx (zen/new-context {}))
-  (zen/read-ns ztx 'sty)
-
-  (start-server ztx {})
+  (def ztx (start-server {}))
   (stop-server ztx)
 
   )

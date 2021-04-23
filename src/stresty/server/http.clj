@@ -151,8 +151,8 @@
       {:status 404
        :body {:message (str "Route " (:request-method request) " " (:uri request) " is not found. Routes " (zen/get-symbol ztx 'sty/api))}})))
 
-(defn start-server [ztx opts]
-  (let [port (or (:port opts) 4174)
+(defn start-server [ztx {port :port}]
+  (let [port (or port 4174)
         handler (-> (mk-handler ztx dispatch)
                     (wrap-static))
         srv (server/run-server handler {:port port})]
