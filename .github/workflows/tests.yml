@@ -20,7 +20,25 @@ name: stresty ci
 on: [push]
 
 jobs:
+  create_release:
+    name: Create release
+    runs-on: ubuntu-latest
+    # Note this. We are going to use that in further jobs.
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
   clojure:
+    needs: create_release
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -34,8 +52,8 @@ jobs:
       - name: install java
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt' # See 'Supported distributions' for available options
-          java-version: '11'
+          distribution: "adopt" # See 'Supported distributions' for available options
+          java-version: "11"
 
       - name: install clj
         uses: DeLaGuardo/setup-clojure@3.2
@@ -43,10 +61,9 @@ jobs:
           cli: 1.10.3.822
 
       - name: install rlwrap
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: brew install rlwrap
-        run: sudo apt-get install -y rlwrap
 
+        #run: sudo apt-get install -y rlwrap
       - name: cache mvn
         uses: actions/cache@v2
         with:
@@ -63,11 +80,11 @@ jobs:
         uses: DeLaGuardo/setup-graalvm@master
         with:
           # GraalVM version, no pattern syntax available atm
-          graalvm: '21.0.0.2'
+          graalvm: "21.0.0.2"
           # Java version, optional, defaults to 'java8'. Available options are 'java8' and 'java11'.
-          java: 'java11'
+          java: "java11"
           # Architecture flag, optional, defaults to 'amd64'. Available options are 'amd64' and 'aarch64'. Later is available only for linux runners.
-          arch: 'amd64'
+          arch: "amd64"
 
       - name: Check java binary
         run: java -version
@@ -75,14 +92,22 @@ jobs:
       - name: Install native-image component
         run: gu install native-image
 
-      - name: build native
+      - name: Build native
         run: make build-native || cat /tmp/clojure-*.edn
 
-      - name: Publish release
-        uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
-          prerelease: true
-          title: "Development Build"
-          files: sty
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          # This is how it will be named on the release page. Put hatever name
+          # you like, remember that they need to be different for each platform.
+          # You can choose any build matrix parameters. For Rust I use the
+          # target triple.
+          asset_name: program-name-${{ matrix.config.os }}
+          # The path to the file you want to upload.
+          asset_path: ./sty
+          # probably you will need to change it, but most likely you are
+          # uploading a binary file
+          asset_content_type: application/octet-stream
