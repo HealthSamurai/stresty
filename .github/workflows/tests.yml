@@ -64,8 +64,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: run tests
+      - name: run tests on Unix based OS
+        run: make test
+        if: matrix.os != 'windows-latest' 
+
+      - name: run tests on Windows
         run: clojure -M:ui:test:nrepl:kaocha
+        shell: powershell
+        if: matrix.os == 'windows-latest' 
         # run: make test
 
       - name: Setup Graalvm
@@ -85,7 +91,11 @@ jobs:
       - name: Install native-image component
         run: ${{ matrix.gu-binary }} install native-image
          
+      - name: build native on Unix like OS
+        run: make build-native || cat /tmp/clojure-*.edn
+        if: matrix.os != 'windows-latest' 
 
-      - name: build native
+      - name: build native on Windows
         run: cp VERSION resources/VERSION  && clojure -M:native-image
-        # run: make build-native || cat /tmp/clojure-*.edn
+        if: matrix.os != 'windows-latest' 
+        shell: powershell
