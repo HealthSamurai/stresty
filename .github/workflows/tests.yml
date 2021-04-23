@@ -94,7 +94,30 @@ jobs:
         run: make build-native || cat /tmp/clojure-*.edn
         if: matrix.os != 'windows-latest' 
 
+      # - name: build native on Windows
+      #   run: cp VERSION resources/VERSION; clojure -M:native-image;
+      #   if: matrix.os == 'windows-latest' 
+      #   shell: powershell
+
       - name: build native on Windows
-        run: cp VERSION resources/VERSION; clojure -M:native-image;
+        run: clojure -M:ui:build -m build; cp target\uberjar\stresty-*-standalone.jar target\stresty.jar
         if: matrix.os == 'windows-latest' 
         shell: powershell
+
+      - name: build native on Windows
+        if: matrix.os == 'windows-latest' 
+        shell: powershell
+        run: |
+          cp VERSION resources/VERSION;
+          native-image.cmd -jar target\stresty.jar`
+              --no-fallback `
+              --report-unsupported-elements-at-runtime `
+              --initialize-at-build-time `
+              --initialize-at-build-time=org.httpkit.client.ClientSslEngineFactory\\$SSLHolder `
+              --initialize-at-run-time=java.lang.Math\\$RandomNumberGeneratorHolder `
+              -H:ReflectionConfigurationFiles=reflection.json `
+              -H:EnableURLProtocols=http,https `
+              -H:IncludeResources=.*edn `
+              --enable-all-security-services `
+              -H:Name=sty `
+              -H:+ReportExceptionStackTraces 
