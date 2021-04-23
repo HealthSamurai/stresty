@@ -21,12 +21,11 @@ on: [push]
 
 jobs:
   clojure:
-    # strategy:
-    #   matrix:
-    #     os: [ubuntu-latest, macOS-latest, windows-latest]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
 
-    # runs-on: ${{ matrix.os }}
-    runs-on: macos-latest 
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: checkout
@@ -44,7 +43,9 @@ jobs:
           cli: 1.10.3.822
 
       - name: install rlwrap
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: brew install rlwrap
+        run: sudo apt-get install -y rlwrap
 
       - name: cache mvn
         uses: actions/cache@v2
