@@ -4,7 +4,8 @@
     [clojure.tools.namespace.repl :as repl]
     [shadow.cljs.devtools.api :as shadow]
     [shadow.cljs.devtools.config :as shadow.config]
-    [shadow.cljs.devtools.server :as shadow.server]))
+    [shadow.cljs.devtools.server :as shadow.server]
+    [zen.core :as zen]))
 
 (defn delete-recursively [f]
   (when (.isDirectory f)
@@ -40,7 +41,7 @@
 
   (do
     (defonce *context (atom {}))
-    (def ztx (zen.core/new-context))
+    (def ztx (zen/new-context))
     (swap! *context assoc :ztx ztx)
 
     (zen.core/read-ns ztx 'user)

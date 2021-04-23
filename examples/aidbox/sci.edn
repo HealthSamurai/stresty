@@ -2,16 +2,47 @@
 
  import #{sty}
 
- case
+ sample
  {:zen/tags #{sty/case}
   :title "Test case"
-  :data {:my-id "pt-1"}
-
+  
   :steps
-  {:sci
+  {:create-patient
    {:action {:type sty/http
-             :method :get :url (sty/url "Patient" (get-in sty/case [:data :my-id]))}
-    :matches {:type sty/matcho
-              :body {:id (get-in sty/case [:data :my-id])}}}}}
+             :zen/desc "Try to create patient with some id"
+             :method :post
+             :url "/Patient"
+             :body {:id "pt-1"}}}
+
+   
+   :update-patient
+   {:action {:type sty/http
+             :zen/desc "Next try to update newly created patient"
+             :method :patch
+             :url "/Patient/pt-1"
+             :body {:birthDate "1970-01-01"}}}}
+  }
+
+ next-sample
+ {:zen/tags #{sty/case}
+  :title "Next sample"
+  :steps
+  {:fetch-patients
+   {:action {:type sty/http
+             :method :get
+             :url "/Patient"}}
+
+     :create-another-patient
+     {:action {:type sty/http
+               :method :post
+               :url "/Patient"
+               :body {:id "pt-2"
+                      :name [{:family "Patient" :given ["Test"]}]}}}
+   
+   
+     }
+  }
+
+ 
 
  }

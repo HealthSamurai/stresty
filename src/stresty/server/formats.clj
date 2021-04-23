@@ -90,8 +90,10 @@
 
 (defmethod parse-format :transit [_ _ {b :body}]
   (when b
-    (let [r (transit/reader b :json)]
-      {:resource (transit/read r)})))
+    (let [r (transit/reader b :json)
+          body (transit/read r)]
+      {:body body
+       :resource body})))
 
 (defmethod parse-format :default [ct _ {b :body}]
   (throw (RuntimeException. (str "Unknown Content-Type: " ct))))

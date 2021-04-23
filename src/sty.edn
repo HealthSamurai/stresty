@@ -148,6 +148,13 @@
 
  echo {:zen/tags #{op} :zen/desc "echo operation to test rpc api"}
 
+ get-namespaces {:zen/tags #{op} :zen/desc "get namespaces with cases to run on UI"}
+
+ get-case {:zen/tags #{op}
+           :zen/desc "get stresty case to run on UI"
+           :params {:type zen/map
+                    :keys {:case {:type zen/string}}}}
+ 
  run-tests
  {:zen/tags #{op}
   :zen/desc "Run selected tests"
@@ -188,6 +195,6 @@
            "rpc" {:post rpc-op
                   :get  get-rpc-op}}}
  cli
- {:zen/desc "CLI interface"}
+ {:zen/desc "CLI interface"}}
 
- }
+ 

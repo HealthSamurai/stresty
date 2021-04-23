@@ -11,7 +11,6 @@
             [reagent.core :as r]
             #?(:cljs [reagent.dom :as dom])
             #?(:cljs [app.scenario.editor :refer [zf-editor]])
-            [markdown-to-hiccup.core :as md]
             [cljs.pprint :as pp]
             [clojure.string :as str]))
 
@@ -27,7 +26,10 @@
   [{db :db} [_ phase params]]
   (cond
     (= :init phase)
-    (let [config (get db :config)
+    {:zen/rpc {:method "sty/get-case"
+               :params {:case (str (:ns params) "/" (:name params))}
+               :path [::db :case]}}
+    #_(let [config (get db :config)
           config* (assoc config :current-case (str (:ns params) "/" (:name params)))]
       {:http/fetch [{:uri (str "/zen/symbol/" (:ns params) "/" (:name params))
                      :path [::db :scenario]}
@@ -57,7 +59,7 @@
     {:db (-> db
              (assoc-in [::db :editors-state] editors-state))}))
 
-(zrf/defs scenario [db]
+#_(zrf/defs scenario [db]
   (get-in db [::db :scenario :data]))
 
 (zrf/defs case-ctx [db]
@@ -102,20 +104,9 @@
              (update-in (into path) dissoc method)
              (assoc-in (into path [new-method]) url))}))
 
-(zrf/defx change-url [{db :db} [_ index method value]]
-  {:db (-> db
-           (assoc-in (into [::db :scenario :data :steps index method]) value))})
 
-(defn insert-at-index [coll element index]
-  (let [[before after] (split-at (+ 1 index) coll)]
-    (concat before [element] after)))
 
-(defn delete-at [coll index]
-  (concat (subvec coll 0 index)
-          (subvec coll (+ 1 index)))
-  )
-
-(zrf/defx add-step
+#_(zrf/defx add-step
  [{db :db} [_ index]]
   (let [steps (get-in db [::db :scenario :data :steps])
         ed-state (get-in db [::db :editors-state])
@@ -134,7 +125,7 @@
   (let [current-state (get-in db [::db :editors-state index :editing])]
     {:db (assoc-in db [::db :editors-state index :editing] (not current-state))}))
 
-(zrf/defx export-case [{db :db} _]
+#_(zrf/defx export-case [{db :db} _]
   (let [case (get-in db [::db :scenario :data])
         blob (js/Blob. [(-> case
                             (pp/write :pretty true :right-margin 60)
@@ -151,7 +142,7 @@
     {:db db}
     ))
 
-(zrf/defx delete-step
+#_(zrf/defx delete-step
   [{db :db} [_ index]]
   (let [steps (get-in db [::db :scenario :data :steps])
         steps* (vec (delete-at steps index))
@@ -166,26 +157,12 @@
 
 (defn step-controls [step index editing]
   [:<>
-   [:div {:class (c :flex :flex-row :absolute [:left "100%"]:items-start)}
-    [zf-button {:on-click [::add-step index]
-                :type "text"} [:i.fas.fa-plus]]
-    [zf-button {:on-click [::edit-step index]
-                :type "text"}
-     (if editing
-       [:i.fas.fa-save]
-       [:i.fas.fa-pencil-alt])]
-    [zf-button {:on-click [::delete-step index]
-                :type "text"
-                :class (c [:text :red-300])} [:i.fas.fa-trash]]]
    [:div {:class (c :flex :flex-col :absolute [:right "100%"] :items-start)}
     (if (not (= (:type step) 'stresty.aidbox/desc-step))
       [zf-button {:on-click [::run-step step index]
                   :type "text"
                   :class (c [:text :green-300])} [:i.fas.fa-play]])]])
 
-(def bg-color :red-300)
-
-(identity bg-color)
 
 (defn default-step-style [result]
   (prn (:errors result))
@@ -199,13 +176,29 @@
                    )]
     [(c :flex :flex-col [:p 2]) bg-class]))
 
+(defn step-meta [step]
+  [:div {:class (c :flex :flex-row :justify-between :border-t [:px 1])}
+   [:div [:span {:class (c [:text :gray-500])} "failure"]]
+   [:div
+    [:span (:type step)]
+    [zf-button {:on-click [::run-step step index]
+                  :type "text"
+                  :class (c [:text :green-300])} [:i.fas.fa-play]]
+    ]
+   ]
+  )
+
 (defn render-step-root [step index result editor-state]
-  [:div {:class (c :relative [:my 2])}
-   [step-controls step index (:editing editor-state)]
+  [:div {:class (c :relative [:my 2] :border [:bg :gray-100])}
    (if (:editing editor-state)
      [:div {:class (default-step-style result)}
-      [zf-editor [::db :scenario :data :steps index]]]
-     [render-step step index result])])
+      #_[zf-editor [::db :scenario :data :steps index]]]
+     [:div {:class (c [:p 1])}
+      [render-step step index result]])
+   [step-meta step]
+   ]
+  
+  )
 
 (defn step-method [step index]
   (let [step-method (->> step
@@ -219,7 +212,7 @@
        ^{:key meth}
        [:option {:value meth} (name meth)])]))
 
-(defn response-view [index result]
+#_(defn response-view [index result]
   (if result
     [:div
      "Response"
@@ -228,7 +221,7 @@
       (:errors result)
       true]]))
 
-(defmethod render-step 'stresty/http-step [step index result]
+#_(defmethod render-step 'stresty/http-step [step index result]
   (let [method (first (filter meths (keys step)))]
     [:div {:class (default-step-style result)}
      [:div {:class (c :flex :flex-row :items-)}
@@ -247,9 +240,9 @@
   [:div {:class (default-step-style result)}
    [:div {:class (c :flex :flex-row :items-center)}
     "TRUNCATE " (str (:truncate step))]
-   [response-view index result]])
+   #_[response-view index result]])
 
-(defmethod render-step 'stresty.aidbox/sql-step [step index result]
+#_(defmethod render-step 'stresty.aidbox/sql-step [step index result]
   [:div {:class (default-step-style result)}
    
    [zf-editor [::db :scenario :data :steps index :sql]]
@@ -257,26 +250,33 @@
   )
 
 (defmethod render-step 'stresty.aidbox/desc-step [step]
-  [:div {:class (c [:my 2] :text-base)} (-> (:description step)
-               md/md->hiccup
-               md/component)])
+  [:div {:class (c [:my 2] :text-base)}
+   (-> (:description step))])
 
 (defmethod render-step :default [step]
-  [:pre (str step)])
+  [:code (str step)])
+
+(zrf/defs scenario [db]
+  (let [case (get-in db [::db :case :data])]
+    {:title (:title case)
+     :steps (:steps case)})
+  )
 
 (zrf/defview view [scenario case-ctx editors-state]
   [:div {:class (c :flex :flex-col :items-center)}
    
    [:div {:class (c [:p 6] :flex :flex-col :w-max-4xl :w-full)}
-    
-    #_[:div {:on-click #(rf/dispatch [create-ctx])} "Create CTX"]
-    #_[:pre (str case-ctx)]
-
-
+        
     [:h1 {:class (c :text-2xl [:mb 2])} (:title scenario)]
     [:div {:class (c [:mb 6])} (:desc scenario)]
 
-    (for [[idx step] (map-indexed #(vector %1 %2) (:steps scenario))
+    (for [key (keys (:steps scenario))
+          :let [step (get-in scenario [:steps key])]]
+      ^{:key step}
+       [render-step-root step 0 {} {}]
+      )
+    
+    #_(for [[idx step] (map-indexed #(vector %1 %2) (:steps scenario))
           :let [result (get-in case-ctx [:stresty/step-results idx])
                 editor-state (get editors-state idx)]]
       ^{:key idx}
