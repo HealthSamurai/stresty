@@ -1,8 +1,8 @@
-{:paths    ["src" "resources"]
+{:paths    ["src" "resources" "examples"]
  :jvm-opts []
  :deps     {org.clojure/clojure             {:mvn/version "1.11.0-alpha1"}
             zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
-                                             :sha "cec57be7e197b5f8d746368d1166c44a6e2b28ad"}
+                                             :sha "3a0ccdbc4c6acf62af583d0831c5bac3a6533232"}
             borkdude/sci                    {:mvn/version "0.2.4"}
             route-map/route-map             {:mvn/version "0.0.7"}
             org.clojure/tools.cli           {:mvn/version "1.0.206"}

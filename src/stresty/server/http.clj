@@ -60,6 +60,7 @@
     (if (= :options (:request-method req))
       (preflight req)
       (let [req (prepare-request req)
+            _ (println req)
             resp (dispatch ztx req)]
         (-> resp
             (formats/format-response req)
@@ -92,6 +93,8 @@
 
 (defmethod rest-op 'sty/rpc-op
   [ztx rest-op {{meth :method :as args} :body}]
+  (println "Method " meth)
+  (println "ARGS: " args)
   (if-let [rpc-op (and meth (let [meth (symbol meth)] (zen/get-symbol ztx meth)))]
     {:status 200
      :body (ops/call-op ztx rpc-op args)}
@@ -162,11 +165,26 @@
     (srv)
     (swap! ztx dissoc :server)))
 
+(defn restart-server [ztx opts]
+  (stop-server ztx)
+  (start-server ztx opts))
+  
+
 (comment
   (def ztx (zen/new-context {}))
   (zen/read-ns ztx 'sty)
 
-  (start-server ztx {})
+  (zen/read-ns ztx 'aidbox.sci)
+
   (stop-server ztx)
+  
+  (:errors @ztx)
+
+  (restart-server ztx {})
+
+  (def cases (zen/get-symbol ztx 'aidbox.sci/sample))
+  
+
+  
 
   )

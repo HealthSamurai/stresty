@@ -16,13 +16,18 @@
   [ztx op {params :params}]
   {:result params})
 
-(defn op [ztx args]
-  (println ::op args)
-  (if-let [op (when-let [m (:method args)]
-                (zen/get-symbol ztx (symbol m)))]
-    (call-op ztx op args)
-    {:error {:message (str "Operation " (:method args) " is not defined.")}}))
 
+(defmethod call-op 'sty/get-namespaces
+  [ztx op _]
+  (let [cases (zen/get-tag ztx 'sty/case)]
+    {:result {:namespaces (group-by (fn [e] (first (str/split (str e) #"\/"))) cases)}}))
+
+(defmethod call-op 'sty/get-case
+  [ztx op {params :params}]
+  (println "OP: " (:case params))
+  (if-let [case (zen/get-symbol ztx (symbol (:case params)))]
+    {:result case}
+    {:error {:message "Case not found"}}))
 
 (defn- get-case-state [ztx enm cnm]
   (or (get-in @ztx [:state enm cnm]) {}))

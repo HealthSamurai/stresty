@@ -7,6 +7,7 @@
             [zframes.window]
             [zframes.console]
             [zframes.storage]
+            [zframes.rpc]
 
             [app.pages :as pages]
 
@@ -54,7 +55,7 @@
 (defn mount-root []
   (rf/clear-subscription-cache!)
   #?(:cljs
-     (reagent.dom/render
+     (reagent.dom/render 
       [current-page]
       (.getElementById js/document "app"))))
 

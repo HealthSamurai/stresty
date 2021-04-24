@@ -235,10 +235,10 @@
               body (-> content
                        (str/split #"\n\n"))
               ]
-          (cond-> {:uri uri
+          #_(cond-> {:uri uri
                    :method method}
             (#{:post :put :patch} method)
-            (assoc :body (interop/from-yaml (last body)))
+            #_(assoc :body (interop/from-yaml (last body)))
             ))
 
         ))
@@ -266,13 +266,13 @@
           body (-> content
                    (str/split "\n\n"))
           ]
-      (cond-> {:uri (str aidbox-url uri)
+      #_(cond-> {:uri (str aidbox-url uri)
                :headers {"authorization" aidbox-auth-header}
 
                :method method
                :format "json"}
         (#{:post :put :patch} method)
-        (assoc :body (interop/from-yaml (last body)))
+        #_(assoc :body (interop/from-yaml (last body)))
         ))
     :else
     (throw (ex-info "no such step type" {}))))
@@ -337,11 +337,11 @@
                                [:td {:class style
                                      :valign "top"}
                         (if (or (seq? e) (coll? e))
-                          [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
+                          [:pre #_{:dangerouslySetInnerHTML {:__html (interop/to-yaml (enrich-with-link url e))}}]
                           [:div {:dangerouslySetInnerHTML {:__html e}}])
                         ]) (vals e))
                 ]) result)]])
-    [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
+    #_[:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result)}}]
     ))
 
 (defn render-result-row [result url render-type]
@@ -352,11 +352,11 @@
         "table"
         [render-sql-result-table url result]
         "yaml"
-        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result*)}}]
+        #_[:pre {:dangerouslySetInnerHTML {:__html (interop/to-yaml result*)}}]
         "json"
         [:pre {:dangerouslySetInnerHTML {:__html (interop/to-json result*)}}]
         "edn"
-        [:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result*)}}])))
+        #_[:pre {:dangerouslySetInnerHTML {:__html (interop/to-pretty-edn result*)}}])))
   )
 
 (defn render-result [url step]
