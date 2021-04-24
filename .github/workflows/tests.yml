@@ -33,25 +33,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: 'snapshot' # ${{ github.ref }}
-          release_name: Release 0.0.1 #${{ github.ref }}
+          tag_name: '0.2.0' # ${{ github.ref }}
+          release_name: Release 0.2.0 #${{ github.ref }}
           draft: false
           prerelease: false
   clojure:
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        # os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, macOS-latest]
         gu-binary: [gu, gu.cmd]
         exclude:
           - os: ubuntu-latest
             gu-binary: gu.cmd
           - os: macos-latest
             gu-binary: gu.cmd
-          - os: windows-latest
-            gu-binary: gu
+          # - os: windows-latest
+          #   gu-binary: gu
 
     runs-on: ${{ matrix.os }}
-    # runs-on: ubuntu-latest
 
     steps:
       - name: checkout
