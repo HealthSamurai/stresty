@@ -8,6 +8,13 @@
 
 (defmulti call-op (fn [ztx op args] (:zen/name op)))
 
+(defn op [ztx args]
+  (if-let [op (when-let [m (:method args)]
+                (zen/get-symbol ztx (symbol m)))]
+    (call-op ztx op args)
+    {:error {:message (str "Operation " (:method args) " is not defined.")}}))
+
+
 (defmethod call-op :default
   [ztx op args]
   {:error {:message (str "Op " (:zen/name op) " is not implemented!")}})

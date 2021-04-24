@@ -7,7 +7,7 @@
    [stresty.server.http]
    [stresty.server.cli]
    [stresty.operations.core]
-   [stresty.format.core :as fmt] 
+   [stresty.format.core :as fmt]
    [stresty.sci]
    [clojure.string :as str]))
 
