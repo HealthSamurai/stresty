@@ -6,6 +6,7 @@
    [clojure.walk]
 
    [stresty.server.formats :as formats]
+   [stresty.format.core :as fmt]
 
    [ring.middleware.content-type]
    [ring.middleware.head]
@@ -16,7 +17,6 @@
    [stresty.operations.core :as ops]))
 
 (defn form-decode [s]
-  #_(clojure.walk/keywordize-keys (ring.util.codec/form-decode s))
   (->> (str/split s #"&")
        (reduce (fn [acc pair]
                  (let [[k v] (str/split pair #"=" 2)]
@@ -29,7 +29,6 @@
         params (if (string? params) {(keyword params) nil} params)
         method-override (and (= :post meth) (get headers "x-http-method-override"))
         body (formats/parse-body req)]
-    (println ::params params)
     (cond-> req
       body (merge body)
       method-override (assoc :request-method (keyword (str/lower-case method-override)))
@@ -79,19 +78,19 @@
 (defn wrap-static [h]
   (fn [req] (handle-static h req)))
 
-(defmulti rest-operation (fn [ztx op request] (:zen/name op)))
+(defmulti rest-op (fn [ztx op request] (:zen/name op)))
 
-(defmethod rest-operation :default
+(defmethod rest-op :default
   [ztx op request]
   {:status 500
    :body {:message (str (:zen/name op) " is not implemented.")}})
 
-(defmethod rest-operation 'sty/index-op
+(defmethod rest-op 'sty/index-op
   [ztx op request]
   {:status 200
    :body {:message "Welcome to stesty!"}})
 
-(defmethod rest-operation 'sty/rpc-op
+(defmethod rest-op 'sty/rpc-op
   [ztx rest-op {{meth :method :as args} :body}]
   (if-let [rpc-op (and meth (let [meth (symbol meth)] (zen/get-symbol ztx meth)))]
     {:status 200
@@ -99,9 +98,8 @@
     {:status 404
      :body {:message (str "Operation " meth " is not registered")}}))
 
-(defmethod rest-operation 'sty/get-rpc-op
+(defmethod rest-op 'sty/get-rpc-op
   [ztx rest-op {{meth :method :as params} :params}]
-  (println ::params params)
   (if-let [rpc-op (and meth (let [meth (symbol meth)] (zen/get-symbol ztx meth)))]
     {:status 200
      :body (ops/call-op ztx rpc-op {:params (dissoc params :method)})}
@@ -138,29 +136,29 @@
     (->> result (sort-by :w) last)))
 
 (defn route [ztx {uri :uri meth :request-method}]
-  (let [{routes :routes} (zen/get-symbol ztx 'sty/api)]
-    (when-let [{op-name :match params :params} (match-route meth uri routes)]
-      {:op (zen/get-symbol ztx op-name)
-       :params params})))
+  (let [{routes :routes} (or (:routes @ztx) (zen/get-symbol ztx 'sty/api))]
+    (when-let [{op-name :match params :params :as route} (match-route meth uri routes)]
+      (if-let [op (zen/get-symbol ztx op-name)]
+        {:op op :params params}
+        {:error {:message (format "rest-op %s is not registered" op-name)}}))))
 
 (defn dispatch [ztx request]
-  (let [{op :op params :params} (route ztx request)]
-    (if op
-      (do (println ::op op)
-          (rest-operation ztx op (assoc request :route-params params)))
-      {:status 404
-       :body {:message (str "Route " (:request-method request) " " (:uri request) " is not found. Routes " (zen/get-symbol ztx 'sty/api))}})))
+  (let [{op :op params :params error :error} (route ztx request)]
+    (cond error {:status 500 :body error}
+          op (rest-op ztx op (assoc request :route-params params))
+          :else {:status 404 :body {:message (str "Route " (:request-method request) " " (:uri request) " is not found. Routes " (zen/get-symbol ztx 'sty/api))}})))
 
 (defn start-server [ztx {port :port}]
   (let [port (or port 4174)
         handler (-> (mk-handler ztx dispatch)
                     (wrap-static))
         srv (server/run-server handler {:port port})]
-    (println ::server-started port)
+    (fmt/emit ztx {:type 'http.server/start :port port})
     (swap! ztx assoc :server srv)))
 
 (defn stop-server [ztx]
   (when-let [srv (get @ztx :server)]
+    (fmt/emit ztx {:type 'http.server/stop})
     (srv)
     (swap! ztx dissoc :server)))
 

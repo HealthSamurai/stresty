@@ -187,7 +187,7 @@
   :routes {:get index-op
            "rpc" {:post rpc-op
                   :get  get-rpc-op}}}
- cli
- {:zen/desc "CLI interface"}
+
+ cli {:zen/desc "CLI interface"}
 
  }

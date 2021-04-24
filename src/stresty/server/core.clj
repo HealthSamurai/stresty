@@ -69,7 +69,6 @@ sty => help
   (let [ztx (zen/new-context {:opts opts :paths (calculate-paths (:path opts))})]
     (zen/read-ns ztx 'sty)
     (when-let [ns (:ns opts)]
-      (println ::ns ns)
       (zen/read-ns ztx (symbol ns)))
     (configure-format ztx opts)
     (report-zen-errors ztx)

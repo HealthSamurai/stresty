@@ -1,0 +1,24 @@
+{ns stresty.testcase
+ import #{sty}
+
+ env {:zen/tags #{sty/env}
+      :base-url "http://localhost:7777"}
+
+ case-1
+ {:zen/tags #{sty/case}
+  :steps
+  {
+   :echo
+   {:action {:type sty/http :method :get :url "/echo"}
+    :matches {:type sty/matcho :status 200 :body {:uri "/echo"}}}
+   
+   }}
+
+
+
+
+
+
+
+
+ }

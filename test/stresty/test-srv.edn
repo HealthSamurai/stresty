@@ -1,0 +1,6 @@
+{ns stresty.test-srv
+ import #{sty}
+
+ echo-op {:zen/tags #{sty/rest-op}}
+
+ }
