@@ -5,15 +5,15 @@
             [cheshire.core])
   (:import java.net.ConnectException))
 
-(defmulti run-action (fn [ztx ctx args] (or (:type args) 'sty/http)))
+(defmulti run-action (fn [ztx ctx args] (or (:act args) 'sty/http)))
 
 (defmethod run-action :default
   [ztx ctx args]
   {:error {:message (format "Action '%s is not implemented!" (:type args))}})
 
 (defn action [ztx ctx args]
-  (let [tp (or (:type args) 'sty/http)]
-    (if-let [schema (zen/get-symbol ztx tp)]
+  (let [tp (:act args)]
+    (if-let [schema (zen/get-symbol ztx (or (:act args) 'sty/http))]
       (let [{errors :errors :as res} (zen/validate ztx #{'sty/action tp} args)]
         (if (empty? errors)
           (run-action ztx (assoc ctx :schema schema) args)
@@ -36,6 +36,6 @@
                                             (cheshire.core/generate-string b))})
                      (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))]
         
-        {:result resp})
+        {:result (dissoc resp :headers)}) ;; TBD: support headers option;; too noisy
       (catch java.net.ConnectException _
         {:error {:message (format "Connection to %s is refused" url)}}))))

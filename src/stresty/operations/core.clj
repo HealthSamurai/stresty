@@ -45,30 +45,32 @@
 (defn sty-url [& args]
   (str "/" (str/join  "/" args)))
 
-(defn run-step [ztx {enm :zen/name :as env} {cnm :zen/name :as case} step-key {action :action :as step}]
+(defn run-step [ztx {enm :zen/name :as env} {cnm :zen/name :as case} step-key {action :do :as step}]
   (let [state (get-case-state ztx enm cnm)
         action (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state 'url sty-url}}} action)
         ev-base {:type 'sty/on-step-start :env env :case case
                  :step (assoc step :id step-key)
                  :verbose (get-in @ztx [:opts :verbose])
-                 :action action}]
+                 :do action}]
     (fmt/emit ztx ev-base)
     (try
-      (let [result (stresty.actions.core/run-action ztx {:state state :case case :env env} action)]
-        (save-case-state ztx enm cnm step-key result)
-        (if-let [err (:error result)]
-          (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error err))
-          (if-let [matcher (:matches step)]
-            (let [errors (stresty.matchers.core/match
-                          ztx
-                          (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state}}} matcher)
-                          result)]
-              (if-not (empty? errors)
-                (fmt/emit ztx (assoc ev-base :type 'sty/on-step-fail :errors errors :result result :matcher matcher))
-                (fmt/emit ztx (assoc ev-base :type 'sty/on-step-fail :errors errors :result result :matcher matcher))))
-            (fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result)))))
+      (let [{result :result error :error} (stresty.actions.core/run-action ztx {:state state :case case :env env} action)]
+        (fmt/emit ztx (assoc ev-base :type 'sty/on-action-result :result result :error error))
+        (if error
+          (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error error))
+          (do
+            (save-case-state ztx enm cnm step-key result)
+            (if-let [matcher (:match step)]
+              (let [{errors :errors} (stresty.matchers.core/match
+                                      ztx
+                                      (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state}}} matcher)
+                                      result)]
+                (if-not (empty? errors)
+                  (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher))
+                  (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok :result result :matcher matcher))))
+              (fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result))))))
       (catch Exception e
-        (fmt/emit ztx (assoc ev-base :type 'sty/on-step-exception :exception e))))))
+        (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error {:message (.getMessage e)}))))))
 
 (defn run-case [ztx env case]
   (fmt/emit ztx {:type 'sty/on-case-start :env env :case case})

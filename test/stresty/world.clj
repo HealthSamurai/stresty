@@ -8,7 +8,7 @@
 (defmethod stresty.server.http/rest-op
   'stresty.test-srv/echo-op
   [ztx op req]
-  {:status 200 :body req})
+  {:status 200 :body (select-keys req [:request-method :uri :query-string :body])})
 
 (defn stop-test-server []
   (when-let [tsrv @test-server]

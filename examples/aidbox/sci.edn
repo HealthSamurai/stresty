@@ -8,7 +8,7 @@
   
   :steps
   {:create-patient
-   {:action {:type sty/http
+   {:do {:type sty/http
              :zen/desc "Try to create patient with some id"
              :method :post
              :url "/Patient"
@@ -16,7 +16,7 @@
 
    
    :update-patient
-   {:action {:type sty/http
+   {:do {:type sty/http
              :zen/desc "Next try to update newly created patient"
              :method :patch
              :url "/Patient/pt-1"
@@ -28,12 +28,12 @@
   :title "Next sample"
   :steps
   {:fetch-patients
-   {:action {:type sty/http
+   {:do {:type sty/http
              :method :get
              :url "/Patient"}}
 
      :create-another-patient
-     {:action {:type sty/http
+     {:do {:type sty/http
                :method :post
                :url "/Patient"
                :body {:id "pt-2"

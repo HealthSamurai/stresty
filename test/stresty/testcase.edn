@@ -9,16 +9,22 @@
   :steps
   {
    :echo
-   {:action {:type sty/http :method :get :url "/echo"}
-    :matches {:type sty/matcho :status 200 :body {:uri "/echo"}}}
-   
+   {:do {:act sty/http :method :get :url "/echo"}
+    :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
+
+   :echo-2
+   {:do {:act sty/http
+         :method :get
+         :url "/echo"
+         :params {:param "value"}}
+    :match {:by sty/matcho
+            :status 200
+            :body {:uri "/echo"}}}
+
+   :debug
+   {:do {:act sty/print
+         :path [:echo :body]}}
+
    }}
-
-
-
-
-
-
-
 
  }

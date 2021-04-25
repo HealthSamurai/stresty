@@ -113,7 +113,7 @@
 ;; :has()
 ;; :host()
 ;; :host-context()
-;; :is() (:matches(), :any())
+;; :is() (:match(), :any())
 ;; :lang()
 ;; :not()
 ;; :nth-child()

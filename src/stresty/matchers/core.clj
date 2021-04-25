@@ -1,7 +1,7 @@
 (ns stresty.matchers.core
   (:require [stresty.matchers.matcho]))
 
-(defmulti match (fn [ztx matcher sample] (or (:type matcher) 'sty/matcho)))
+(defmulti match (fn [ztx matcher sample] (or (:by matcher) 'sty/matcho)))
 
 (defmethod match :default
   [ztx matcher sample]
@@ -9,5 +9,5 @@
 
 (defmethod match 'sty/matcho
   [ztx matcher sample]
-  (stresty.matchers.matcho/match ztx {} sample (dissoc matcher :type)))
+  (stresty.matchers.matcho/match ztx {} sample (dissoc matcher :by)))
 

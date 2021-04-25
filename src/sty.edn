@@ -10,13 +10,31 @@
                       :keys {:user {:type zen/string}
                              :password {:type zen/string}}}}}
 
- step-engine
+ is-action
  {:zen/tags #{zen/tag}}
 
- http
- {:zen/tags #{step-engine zen/schema}
+ action
+ {:zen/tags #{zen/schema}
+  :schema-key {:key :act}
+  :require #{:act}
   :type zen/map
-  :require #{:method :url}
+  :keys {:act {:type zen/symbol :tags #{is-action}}}}
+
+ is-matcher
+ {:zen/tags #{zen/tag}}
+
+ matcher
+ {:zen/tags #{zen/schema}
+  :schema-key {:key :by}
+  :type zen/map
+  :require #{:by}
+  :keys {:by {:type zen/symbol :tags #{is-matcher}}}
+  :values {:type zen/any}}
+
+ http
+ {:zen/tags #{is-action zen/schema}
+  :type zen/map
+  :require #{:method :url} ;;#{:get :put :post :patch :delete}
   :keys {:method {:type zen/keyword :enum [{:value :post}
                                            {:value :put}
                                            {:value :get}
@@ -26,43 +44,32 @@
          :url    {:type zen/string}
          :params {:type zen/map :values {:type zen/string}}
          :headers {:type zen/map :values {:type zen/string}}
-         :body {:type zen/any}}}
+         :body {:type zen/any}
+
+         ;; :get {:type zen/string}
+         ;; :post {:type zen/string}
+         ;; :put {:type zen/string}
+         }}
 
  print
- {:zen/tags #{zen/tag zen/schema}
+ {:zen/tags #{is-action zen/schema}
   :type zen/map
   :keys {:expression {:type zen/list}
          :path {:type zen/vector}}}
 
- action
- {:zen/tags #{zen/schema}
-  :schema-key {:key :type}
-  :require #{:type}
-  :type zen/map
-  :keys {:type {:type zen/symbol}}}
-
- matcher
- {:zen/tags #{zen/schema}
-  :schema-key {:key :type}
-  :type zen/map
-  :require #{:type}
-  :values {:type zen/any}
-  :keys {:type {:type zen/symbol}}}
-
  matcho
- {:zen/tags #{zen/schema}
+ {:zen/tags #{is-matcher zen/schema}
   :zen/desc "Matcho engine"
   :type zen/map
   :values {:type zen/any}}
 
  step
  {:zen/tags #{zen/schema}
-  :schema-key {:key :type :tags #{step-engine}}
   :type zen/map
   :keys {:desc    {:type zen/string}
          :tags    {:type zen/set :every {:type zen/string}}
-         :action  {:confirms #{action}}
-         :matches {:confirms #{matcher}}}}
+         :do      {:confirms #{action}}
+         :match   {:confirms #{matcher}}}}
 
  case
  {:zen/tags #{zen/schema zen/tag}

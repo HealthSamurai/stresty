@@ -22,54 +22,72 @@
   #_(let [start (:start @state)
           epoch (- ts start)]
       (println epoch (:type event)))
-  (cond
-    (= tp 'sty/on-tests-start)
-    (swap! state assoc :start ts)
-    (= tp 'sty/on-zen-errors)
-    (do
-      (println "Syntax errors")
-      (println (str/join "\n"
-                         (->>
-                          (:errors event)
-                          (mapv (fn [{msg :message res :resource pth :path}]
-                                  (str msg " in " res " at " pth)))))))
+  (let [ident (get @state :ident)]
+    (cond
+      (= tp 'sty/on-tests-start)
+      (swap! state assoc :start ts)
+      (= tp 'sty/on-zen-errors)
+      (do
+        (println "Syntax errors:")
+        (println (str/join "\n"
+                           (->>
+                            (:errors event)
+                            (mapv (fn [{msg :message res :resource pth :path}]
+                                    (str msg " in " res " at " pth)))))))
 
-    (= tp 'sty/on-env-start)
-    (println "==" (get-in event [:env :zen/name])
-             (get-in event [:env :base-url]))
+      (= tp 'sty/on-env-start)
+      (do 
+        (swap! state assoc :ident "  ")
+        (println "env" (get-in event [:env :zen/name]) (get-in event [:env :base-url])))
 
-    (= tp 'sty/on-case-start)
-    (println " #" (get-in event [:case :zen/name]))
+      (= tp 'sty/on-env-end)
+      (swap! state assoc :ident " ")
 
-    (= tp 'sty/on-step-start)
-    (print "  *" (name (get-in event [:step :id])) "=>"
-           (str "TBD: render action"))
+      (= tp 'sty/on-case-start)
+      (do
+        (swap! state assoc :ident "    ")
+        (println " case:" (get-in event [:case :zen/name])))
 
-    (= tp 'sty/on-step-success)
-    (println " success")
+      (= tp 'sty/on-case-end)
+      (swap! state assoc :ident "  ")
 
-    (= tp 'sty/on-step-fail)
-    (do
-      (println " fail")
-      (println "   " (str/join "\n    " (:errors event))))
+      (= tp 'sty/on-step-start)
+      (do
+        (swap! state assoc :ident "      ")
+        (println "     *" (name (get-in event [:step :id]))))
 
-    (= tp 'sty/on-step-error)
-    (println " error " (pr-str (:error event)))
+      (= tp 'sty/on-match-ok)
+      (println ident "success")
 
-    (= tp 'sty/on-step-exception)
-    (println " exception " (pr-str (:exception event)))
+      (= tp 'sty/on-match-fail)
+      (do
+        (println ident "ERRORS:")
+        (println (str ident "  ") (if (:errors event)
+                                    (str/join (str "\n   " ident) (:errors event))
+                                    event)))
 
-    (= tp 'sty/on-case-end)
-    :nop
+      (= tp 'sty/on-step-error)
+      (println ident tp (or (get-in event [:error :message]) (get-in event [:error]) (dissoc event :type :ts)))
 
-    (= tp 'sty/on-env-end)
-    :nop
+      (= tp 'sty/on-step-exception)
+      (println ident tp (or (get-in event [:error :message])
+                            (get-in event [:error])
+                            (dissoc event :type :ts)))
 
-    :else
-    (println " ??" tp event)
+      (= tp 'sty/on-step-result)
+      (println ident tp (:result event))
+
+      (= tp 'sty/on-action-result)
+      (println ident tp (:result event))
+
+      (= tp 'sty.http/request)
+      (println ident tp (:method event) (:url event) (dissoc event :method :url :type :ts))
+
+      :else
+      (println ident tp (dissoc event :type))
 
 
-    )
+      ))
   )
 
 (defmethod do-format

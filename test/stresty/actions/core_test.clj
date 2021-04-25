@@ -18,16 +18,16 @@
 
 
   (matcho/match
-   (sut/action ztx ctx {})
+   (sut/action ztx ctx {:act 'sty/http})
    {:error {:message #"Wrong action para"}})
 
   (matcho/match
-   (sut/action ztx ctx {:type 'ups})
+   (sut/action ztx ctx {:act 'ups})
    {:error {:message #"is not defined"}})
 
   (matcho/match
    (sut/action ztx ctx
-               {:type 'sty/http
+               {:act 'sty/http
                 :method :get
                 :url "/echo"})
    {:error {:message #"Connection to .* refused"}})
@@ -37,14 +37,14 @@
 
   (matcho/match
    (sut/action ztx ctx
-               {:type 'sty/http
+               {:act 'sty/http
                 :method :get
                 :url "/unknown"})
    {:result {:status 404}})
 
   (matcho/match
    (sut/action ztx ctx
-               {:type 'sty/http
+               {:act 'sty/http
                 :method :get
                 :url "/echo"})
    {:result {:status 200
