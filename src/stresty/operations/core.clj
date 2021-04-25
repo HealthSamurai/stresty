@@ -41,6 +41,9 @@
 (defn- save-case-state [ztx enm cnm key state]
   (swap! ztx (fn [old] (update-in old [:state enm cnm] (fn [old] (assoc old key state))))))
 
+(defn- save-step-result [ztx cnm {idx :_index :as step} result]
+  (swap! ztx update :result #(assoc-in % [cnm idx] result)))
+
 (defn sty-url [& args]
   (str "/" (str/join  "/" args)))
 
@@ -56,17 +59,26 @@
       (let [{result :result error :error} (stresty.actions.core/run-action ztx {:state state :case case :env env} action)]
         (fmt/emit ztx (assoc ev-base :type 'sty/on-action-result :result result :error error))
         (if error
-          (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error error))
+          (do
+            ;; TODO: what is FAIL step?
+            (save-step-result ztx cnm step {:status :fail :error error :result result})
+            (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error error)))
           (do
             (when id (save-case-state ztx enm cnm id result))
             (if-let [matcher (:match step)]
-              (let [{errors :errors} (stresty.matchers.core/match
+              (let [{errors :errors :as mr} (stresty.matchers.core/match
                                       ztx
                                       (stresty.sci/eval-data {:namespaces {'sty {'env env 'step step 'case case 'state state}}} matcher)
                                       result)]
-                (if-not (empty? errors)
-                  (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher))
-                  (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok :result result :matcher matcher))))
+                (if (empty? errors)
+                  (do
+                    (save-step-result ztx cnm step {:status :success})
+                    (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok   :result result :matcher matcher)))
+
+                  (do
+                   (save-step-result ztx cnm step {:status :error :error error :result result})
+                   (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher)))
+                  ))
               :skip #_(fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result))))))
       (catch Exception e
         (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error {:message (.getMessage e)}))))))
@@ -90,4 +102,5 @@
   (doseq [env-ref (zen/get-tag ztx 'sty/env)]
     (let [env (zen/get-symbol ztx env-ref)]
       (run-env ztx env)))
+  (fmt/emit ztx {:type 'sty/tests-summary})
   {:result params})

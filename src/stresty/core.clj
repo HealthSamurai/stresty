@@ -25,11 +25,18 @@
   (parse-args [])
   (parse-args ["server" "--port=800"])
 
-  
+
 
   (-main "-f" "stdout" "-p" "../fhir-stresty"   "aidbox")
 
-  (-main)
+
+  (def marata-test
+    (do
+      (prn "---------------------------------------------")
+      ;;(-main "--path=/Users/aitem/Work/HS/ssty/t" "--ns=rmis" "tests")
+      (prn "---------------------------------------------")
+      (-main "--path=/Users/aitem/Work/HS/ssty/t" "--format=stdout" "--ns=rmis" "tests")
+      ))
 
   (def ctx (-main "server" "--port=8888"))
   (type ctx)
@@ -39,4 +46,3 @@
   (def res (-main "--path=examples" "--ns=aidbox" "--format=debug" "tests"))
 
   )
-
