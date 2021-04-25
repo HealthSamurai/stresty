@@ -2,7 +2,8 @@
  import #{sty}
 
  env {:zen/tags #{sty/env}
-      :base-url "http://localhost:7777"}
+      :base-url "http://localhost:7777"
+      :basic-auth {:user "user" :password "pwd"}}
 
  case-1
  {:zen/tags #{sty/case}

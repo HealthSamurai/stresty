@@ -23,30 +23,37 @@ mytest.edn
  {:zen/tags #{sty/case}
   :title "Patient track"
   :steps
-  {
-   :create
-   {:desc  "create"
-    :method :post
-    :url "/Patient"
-    :body {:resourceType "Patient"}
-    :response {:status 201
-               :body {:meta {:lastUpdated sty/string?
-                             :versionId sty/string?}}}}
-   :read
-   {:desc  "read"
-    :method :get
-    :url (str "/Patient/" (get-in sty/state [:create :body :id]))
-    :response {:status sty/ok?
-               :body {:id (get-in sty/state [:create :body :id])
-                      :meta {:lastUpdated sty/string?
-                             :versionId sty/string?}}}}
-   :read-2
-   {:desc  "wrong read"
-    :method :get
-    :url (str "/Patient/" (get-in sty/state [:create :body :id]))
-    :response {:status sty/ok?
-               :body {:id (str "UPS-" (get-in sty/state [:create :body :id]))}}}
-   }
+  [{:id :create
+    :desc  "create"
+    :do {:act sty/http
+         :method :post
+         :url "/Patient"
+         :body {:resourceType "Patient"}}
+    :match {:by sty/matcho
+            :status 201
+            :body {:meta {:lastUpdated sty/string?
+                          :versionId sty/string?}}}}
+
+   {:id :read
+    :desc  "read"
+    :do {:act sty/http
+         :method :get
+         :url (str "/Patient/" (get-in sty/state [:create :body :id]))}
+    :match {:by sty/matcho
+            :status sty/ok?
+            :body {:id (get-in sty/state [:create :body :id])
+                   :meta {:lastUpdated sty/string?
+                          :versionId sty/string?}}}}
+   
+   {:id :read-2
+    :desc  "wrong read"
+    :do {:act sty/http
+         :method :get
+         :url (str "/Patient/" (get-in sty/state [:create :body :id]))}
+    :match {:by sty/matcho
+            :status sty/ok?
+            :body {:id (str "UPS-" (get-in sty/state [:create :body :id]))}}}
+   ]
   }
  }
 

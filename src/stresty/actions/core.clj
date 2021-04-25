@@ -27,17 +27,19 @@
 
 (defmethod run-action 'sty/http
   [ztx {env :env case :case state :state} args]
-  (let [url (str (:base-url env) (:url args))]
+  (let [url (str (:base-url env) (:url args))
+        {{user :user pass :password} :basic-auth} env]
     (try
-      (fmt/emit ztx {:type 'sty.http/request :method (:method args) :url url})
-      (let [resp (-> (http/request {:method (:method args)
-                                    :url url
-                                    :throw-exceptions false
-                                    :headers (merge
-                                              (:headers args)
-                                              {"content-type" "application/json"} )
-                                    :body (when-let [b (:body args)]
-                                            (cheshire.core/generate-string b))})
+      (let [req (cond->
+                    {:method (:method args)
+                     :url url
+                     :throw-exceptions false
+                     :headers (merge (:headers args) {"content-type" "application/json"} )}
+                  (:body args)
+                  (assoc :body (cheshire.core/generate-string (:body args)))
+                  (and user pass) (assoc :basic-auth [user pass]))
+            _ (fmt/emit ztx {:type 'sty.http/request :method (:method args) :url url :basic-auth (and user pass true)})
+            resp (-> (http/request req)
                      (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))]
         {:result (dissoc resp :headers)}) ;; TBD: support headers option;; too noisy
       (catch java.net.ConnectException _
