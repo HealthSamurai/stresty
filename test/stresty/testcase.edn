@@ -20,7 +20,18 @@
             :status 200
             :body {:uri sty/string?}}}
 
-   {:do {:act sty/print
-         :path [:echo :body]}}]}
+   {:id :print
+    :do {:act sty/print
+         :path [:echo :body]}}
+
+   {:id :print-2
+    :do {:act sty/print
+         :expression {
+                      ;; :case (get-in sty/case [])
+                      :state (get-in sty/state [])
+                      :env  (get-in sty/env [])
+                      :data (get-in sty/state [:echo :body])}}}
+
+   ]}
 
  }
