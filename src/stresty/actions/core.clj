@@ -21,6 +21,10 @@
       {:error {:message (format "Action '%s is not defined " tp)}})))
 
 
+(defmethod run-action 'sty/print
+  [ztx {env :env case :case state :state} args]
+  {:result {:tbd args}})
+
 (defmethod run-action 'sty/http
   [ztx {env :env case :case state :state} args]
   (let [url (str (:base-url env) (:url args))]
@@ -35,7 +39,6 @@
                                     :body (when-let [b (:body args)]
                                             (cheshire.core/generate-string b))})
                      (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))]
-        
         {:result (dissoc resp :headers)}) ;; TBD: support headers option;; too noisy
       (catch java.net.ConnectException _
         {:error {:message (format "Connection to %s is refused" url)}}))))

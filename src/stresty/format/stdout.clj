@@ -1,4 +1,4 @@
-(ns colors)
+(ns stresty.format.stdout)
 
 (defn- escape-code
   [i]

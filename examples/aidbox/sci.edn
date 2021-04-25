@@ -7,42 +7,38 @@
   :title "Test case"
   
   :steps
-  {:create-patient
-   {:do {:type sty/http
-             :zen/desc "Try to create patient with some id"
-             :method :post
-             :url "/Patient"
-             :body {:id "pt-1"}}}
+  [{:id :create-patient
+    :do {:type sty/http
+         :zen/desc "Try to create patient with some id"
+         :method :post
+         :url "/Patient"
+         :body {:id "pt-1"}}}
 
    
-   :update-patient
-   {:do {:type sty/http
-             :zen/desc "Next try to update newly created patient"
-             :method :patch
-             :url "/Patient/pt-1"
-             :body {:birthDate "1970-01-01"}}}}
+   
+   {:id :update-patient
+    :do {:type sty/http
+         :zen/desc "Next try to update newly created patient"
+         :method :patch
+         :url "/Patient/pt-1"
+         :body {:birthDate "1970-01-01"}}}]
   }
 
  next-sample
  {:zen/tags #{sty/case}
   :title "Next sample"
   :steps
-  {:fetch-patients
-   {:do {:type sty/http
-             :method :get
-             :url "/Patient"}}
+  [{:id :fetch-patients
+    :do {:type sty/http
+         :method :get
+         :url "/Patient"}}
 
-     :create-another-patient
-     {:do {:type sty/http
-               :method :post
-               :url "/Patient"
-               :body {:id "pt-2"
-                      :name [{:family "Patient" :given ["Test"]}]}}}
-   
-   
-     }
+   {:id :create-another-patient
+    :do {:type sty/http
+         :method :post
+         :url "/Patient"
+         :body {:id "pt-2"
+                :name [{:family "Patient" :given ["Test"]}]}}}]
   }
-
- 
 
  }

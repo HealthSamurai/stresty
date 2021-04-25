@@ -1,5 +1,6 @@
 (ns stresty.format.core
   (:require [cheshire.core]
+            [zprint.core :as zprint]
             [clojure.string :as str]))
 
 (set! *warn-on-reflection* true)
@@ -53,15 +54,15 @@
 
       (= tp 'sty/on-step-start)
       (do
-        (swap! state assoc :ident "      ")
-        (println "     *" (name (get-in event [:step :id]))))
+        (swap! state assoc :ident "  ")
+        (println " -" (get-in event [:step :id]) (get-in event [:step :desc] "")))
 
       (= tp 'sty/on-match-ok)
       (println ident "success")
 
       (= tp 'sty/on-match-fail)
       (do
-        (println ident "ERRORS:")
+        (println ident  "ERRORS:")
         (println (str ident "  ") (if (:errors event)
                                     (str/join (str "\n   " ident) (:errors event))
                                     event)))
@@ -75,10 +76,18 @@
                             (dissoc event :type :ts)))
 
       (= tp 'sty/on-step-result)
-      (println ident tp (:result event))
+      :skip #_(do
+        (println ident tp)
+        (println (zprint/czprint-str (:result event))))
 
       (= tp 'sty/on-action-result)
-      (println ident tp (:result event))
+      (do
+        (println ident tp)
+        (let [s (zprint/czprint-str (:result event))
+              lines (str/split s #"\n")]
+          (println (->> (mapv (fn [x] (str ident "  " x)) lines)
+                        (str/join "\n")))))
+      
 
       (= tp 'sty.http/request)
       (println ident tp (:method event) (:url event) (dissoc event :method :url :type :ts))
@@ -134,4 +143,12 @@
 
 
     )
+  )
+
+(comment
+
+  (zprint/czprint-str
+   {:body {:a 1}
+    :header {:xxxx 3}})
+
   )

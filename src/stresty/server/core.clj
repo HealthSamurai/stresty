@@ -62,7 +62,7 @@ sty => help
                          "stdout" 'sty/stdout-fmt
                          "debug"  'sty/debug-fmt}
                         (:format opts)
-                        'sty/stdout-fmt)]
+                        'sty/debug-fmt)]
            {fmt (atom {})})))
 
 (defn start-server [{opts :params}]

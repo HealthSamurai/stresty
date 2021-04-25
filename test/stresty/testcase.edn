@@ -7,24 +7,19 @@
  case-1
  {:zen/tags #{sty/case}
   :steps
-  {
-   :echo
-   {:do {:act sty/http :method :get :url "/echo"}
+  [{:id :echo
+    :do {:act sty/http :method :get :url "/echo"}
     :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
 
-   :echo-2
    {:do {:act sty/http
          :method :get
-         :url "/echo"
+         :url (get-in sty/state [:echo :body :uri])
          :params {:param "value"}}
     :match {:by sty/matcho
             :status 200
-            :body {:uri "/echo"}}}
+            :body {:uri sty/string?}}}
 
-   :debug
    {:do {:act sty/print
-         :path [:echo :body]}}
-
-   }}
+         :path [:echo :body]}}]}
 
  }

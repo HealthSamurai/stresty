@@ -5,42 +5,40 @@
  {:zen/tags #{sty/case}
   :title "Test case"
   :steps
-  {:clean
-   {:desc "Clear all patients"
+  [{:desc "Clear all patients"
     :do {:type sty.aidbox/sql :sql "TRUNCATE patient"}}
 
-   :pts
-   {:desc  "Create number of patients"
+   
+   {:id :pts
+    :desc  "Create number of patients"
     :do {:type sty.aidbox/load
-             :resources [{:resourceType "Patient" :id "pt-1"}]}}
+         :resources [{:resourceType "Patient" :id "pt-1"}]}}
 
-   :find
-   {:do  {:type sty/http :method :get :url "/Patient/pt-1"}
+   
+   {:id :find
+    :do  {:type sty/http :method :get :url "/Patient/pt-1"}
     :match {:type sty/matcho :status 200 :body {:id sty/string?}}}
 
 
-   :search
-   {:do  {:type sty/http :method :get :url "/Patient?name=ups"}
+   {:id :search
+    :do  {:type sty/http :method :get :url "/Patient?name=ups"}
     :match {:type sty/matcho :status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
 
-   :search-with-params
-   {:do {:type sty/http 
-             :method :get
-             :url "/Patient?name=ups"
-             :params {:name "ups"}}
+   {:id :search-with-params
+    :do {:type sty/http
+         :method :get
+         :url "/Patient?name=ups"
+         :params {:name "ups"}}
     :match {:type sty/matcho :status 200 :body {:entry [{:resource {:id "pt-1"}}]}}}
 
+   {:id :search-with-fhir
+    :do {:type fhir/search
+         :resourceType "Patient"
+         :params {:name "ups"}}}
 
-   :search-with-fhir
-   {:do {:type fhir/search
-             :resourceType "Patient"
-             :params {:name "ups"}}}
-
-   :debug-expr
    {:do {:type sty/print :expression (get-in sty/case [:search-with-fhir])}}
 
-   :debug-path
    {:do {:type sty/print :path [:search-with-fhir]}}
 
 
-   }}}
+   ]}}

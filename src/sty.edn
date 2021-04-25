@@ -31,6 +31,12 @@
   :keys {:by {:type zen/symbol :tags #{is-matcher}}}
   :values {:type zen/any}}
 
+ xstring
+ {:zen/tags #{zen/schema}
+  :type zen/case
+  :case [{:when {:type zen/string}}
+         {:when {:type zen/list}}]}
+
  http
  {:zen/tags #{is-action zen/schema}
   :type zen/map
@@ -41,9 +47,9 @@
                                            {:value :delete}
                                            {:value :option}
                                            {:value :patch}]}
-         :url    {:type zen/string}
-         :params {:type zen/map :values {:type zen/string}}
-         :headers {:type zen/map :values {:type zen/string}}
+         :url    {:confirms #{xstring}}
+         :params {:type zen/map :values {:confirms #{xstring}}}
+         :headers {:type zen/map :values {:confirms #{xstring}}}
          :body {:type zen/any}
 
          ;; :get {:type zen/string}
@@ -66,7 +72,8 @@
  step
  {:zen/tags #{zen/schema}
   :type zen/map
-  :keys {:desc    {:type zen/string}
+  :keys {:id      {:type zen/keyword}
+         :desc    {:type zen/string}
          :tags    {:type zen/set :every {:type zen/string}}
          :do      {:confirms #{action}}
          :match   {:confirms #{matcher}}}}
@@ -76,8 +83,8 @@
   :type zen/map
   :keys {:title {:type zen/string}
          :tags  {:type zen/set :every {:type zen/string}}
-         :steps {:type zen/map
-                 :values {:confirms #{step}}}}}
+         :steps {:type zen/vector
+                 :every {:confirms #{step}}}}}
 
  predicate {:zen/tags #{zen/tag}}
 

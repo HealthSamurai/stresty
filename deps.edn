@@ -1,8 +1,9 @@
 {:paths    ["src" "resources" "examples"]
  :jvm-opts []
  :deps     {org.clojure/clojure             {:mvn/version "1.11.0-alpha1"}
+            borkdude/edamame                {:mvn/version "0.0.11-alpha.29"}
             zen-lang/zen                    {:git/url "https://github.com/zen-lang/zen"
-                                             :sha "3a0ccdbc4c6acf62af583d0831c5bac3a6533232"}
+                                             :sha "cec57be7e197b5f8d746368d1166c44a6e2b28ad"}
             borkdude/sci                    {:mvn/version "0.2.4"}
             route-map/route-map             {:mvn/version "0.0.7"}
             org.clojure/tools.cli           {:mvn/version "1.0.206"}
@@ -12,6 +13,7 @@
             org.martinklepsch/clj-http-lite {:mvn/version "0.4.3"}
 
             hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
+            zprint/zprint                   {:mvn/version "1.1.1"}
 
             com.cognitect/transit-clj       {:mvn/version "1.0.324"}
             cheshire/cheshire               {:mvn/version "5.6.3"}

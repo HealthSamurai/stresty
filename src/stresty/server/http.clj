@@ -60,7 +60,6 @@
     (if (= :options (:request-method req))
       (preflight req)
       (let [req (prepare-request req)
-            _ (println req)
             resp (dispatch ztx req)]
         (-> resp
             (formats/format-response req)

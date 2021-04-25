@@ -31,7 +31,6 @@
 
 (defmethod call-op 'sty/get-case
   [ztx op {params :params}]
-  (println "OP: " (:case params))
   (if-let [case (zen/get-symbol ztx (symbol (:case params)))]
     {:result case}
     {:error {:message "Case not found"}}))
@@ -45,11 +44,11 @@
 (defn sty-url [& args]
   (str "/" (str/join  "/" args)))
 
-(defn run-step [ztx {enm :zen/name :as env} {cnm :zen/name :as case} step-key {action :do :as step}]
+(defn run-step [ztx {enm :zen/name :as env} {cnm :zen/name :as case} {id :id idx :_index action :do :as step}]
   (let [state (get-case-state ztx enm cnm)
         action (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state 'url sty-url}}} action)
         ev-base {:type 'sty/on-step-start :env env :case case
-                 :step (assoc step :id step-key)
+                 :step (assoc step :id (or id idx))
                  :verbose (get-in @ztx [:opts :verbose])
                  :do action}]
     (fmt/emit ztx ev-base)
@@ -59,7 +58,7 @@
         (if error
           (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error error))
           (do
-            (save-case-state ztx enm cnm step-key result)
+            (when id (save-case-state ztx enm cnm id result))
             (if-let [matcher (:match step)]
               (let [{errors :errors} (stresty.matchers.core/match
                                       ztx
@@ -68,15 +67,15 @@
                 (if-not (empty? errors)
                   (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher))
                   (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok :result result :matcher matcher))))
-              (fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result))))))
+              :skip #_(fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result))))))
       (catch Exception e
         (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error {:message (.getMessage e)}))))))
 
 (defn run-case [ztx env case]
   (fmt/emit ztx {:type 'sty/on-case-start :env env :case case})
-  (doseq [[k step] (->> (:steps case)
-                        (sort-by (fn [[_ x]] (:row (meta x)))))]
-    (run-step ztx env case k step))
+  (doseq [step (->> (:steps case)
+                   (map-indexed (fn [idx x] (assoc x :_index idx))))]
+    (run-step ztx env case step))
   (fmt/emit ztx {:type 'sty/on-case-end :env env :case case}))
 
 (defn run-env [ztx env]
