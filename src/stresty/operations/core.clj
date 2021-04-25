@@ -46,7 +46,7 @@
 
 (defn run-step [ztx {enm :zen/name :as env} {cnm :zen/name :as case} {id :id idx :_index action :do :as step}]
   (let [state (get-case-state ztx enm cnm)
-        action (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state 'url sty-url}}} action)
+        action (stresty.sci/eval-data {:namespaces {'sty {'env env 'step step 'case case 'state state 'url sty-url}}} action)
         ev-base {:type 'sty/on-step-start :env env :case case
                  :step (assoc step :id (or id idx))
                  :verbose (get-in @ztx [:opts :verbose])
@@ -62,7 +62,7 @@
             (if-let [matcher (:match step)]
               (let [{errors :errors} (stresty.matchers.core/match
                                       ztx
-                                      (stresty.sci/eval-data {:namespaces {'sty {'step step 'case case 'state state}}} matcher)
+                                      (stresty.sci/eval-data {:namespaces {'sty {'env env 'step step 'case case 'state state}}} matcher)
                                       result)]
                 (if-not (empty? errors)
                   (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher))

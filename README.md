@@ -59,8 +59,10 @@ mytest.edn
 
 ```
 
+Run tests:
+
 ```sh
-> sty mytest
+> sty --ns=mytest tests
 ```
 
 

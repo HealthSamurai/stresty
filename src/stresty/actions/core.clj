@@ -2,6 +2,7 @@
   (:require [clj-http.lite.client :as http]
             [stresty.format.core :as fmt]
             [zen.core :as zen]
+            [stresty.sci]
             [cheshire.core])
   (:import java.net.ConnectException))
 
@@ -23,7 +24,12 @@
 
 (defmethod run-action 'sty/print
   [ztx {env :env case :case state :state} args]
-  {:result {:tbd args}})
+  (if-let [pth (:path args)]
+    {:result {:path pth
+              :value (get-in state pth)}}
+    (if (:expression args)
+      {:result args}
+      {:result nil})))
 
 (defmethod run-action 'sty/http
   [ztx {env :env case :case state :state} args]
