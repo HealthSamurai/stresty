@@ -102,14 +102,11 @@ jobs:
         if: matrix.os == 'windows-latest' 
         shell: powershell
 
-      - name: Build native
-        run: make build-native
-
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: sty 
           asset_name: sty-${{ matrix.config.os }}
-          tag: 0.0.1-RC 
+          tag: latest 
           overwrite: true
