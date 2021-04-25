@@ -107,6 +107,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: sty 
-          asset_name: sty-${{ matrix.config.os }}
+          asset_name: sty-${{ matrix.os }}
           tag: latest 
           overwrite: true
