@@ -102,11 +102,14 @@ jobs:
         if: matrix.os == 'windows-latest' 
         shell: powershell
 
+      - name: Compress binary 
+        run: zip sty.zip sty 
+
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: sty 
-          asset_name: sty-${{ matrix.os }}
+          file: sty.zip
+          asset_name: sty-${{ matrix.os }}.zip
           tag: 0.0.1-RC
           overwrite: true
