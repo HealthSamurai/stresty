@@ -1,5 +1,6 @@
 (ns stresty.format.core
-  (:require [cheshire.core]
+  (:require [zen.core :as zen]
+            [cheshire.core]
             [zprint.core :as zprint]
             [clojure.string :as str]))
 
@@ -11,6 +12,22 @@
   (let [ev (assoc event :ts (System/currentTimeMillis))]
     (doseq [[fmt state] (get @ztx :formatters)]
       (do-format ztx fmt state ev))))
+
+(defn summary [ztx]
+  (let [cases (zen/get-tag ztx 'sty/case)
+        steps (reduce (fn [acc c] (+ acc (count (:steps (zen/get-symbol ztx c))))) 0 cases)
+        res (reduce-kv
+             (fn [acc _ steps]
+               (->> steps vals (group-by :status)
+                    (merge-with concat acc)))
+             {} (:result @ztx))]
+
+    (println "\nSummary:"
+             (count cases) "cases,"
+             steps "steps,"
+             (count (:error res)) "error,"
+             (count (:fail res)) "fail,"
+             (count (:success res)) "success")))
 
 (defmethod do-format
   'sty/ndjson-fmt
@@ -37,17 +54,19 @@
                                     (str msg " in " res " at " pth)))))))
 
       (= tp 'sty/on-env-start)
-      (do 
+      (do
         (swap! state assoc :ident "  ")
-        (println "env" (get-in event [:env :zen/name]) (get-in event [:env :base-url])))
+        (println "Env:" (get-in event [:env :zen/name]) (get-in event [:env :base-url])))
 
       (= tp 'sty/on-env-end)
       (swap! state assoc :ident " ")
 
+
       (= tp 'sty/on-case-start)
       (do
         (swap! state assoc :ident "    ")
-        (println " case:" (get-in event [:case :zen/name])))
+        (println " Case:" (or (get-in event [:case :title])
+                              (get-in event [:case :zen/name]))))
 
       (= tp 'sty/on-case-end)
       (swap! state assoc :ident "  ")
@@ -58,7 +77,7 @@
         (println " -" (get-in event [:step :id]) (get-in event [:step :desc] "")))
 
       (= tp 'sty/on-match-ok)
-      (println ident "success")
+      (println ident "Success")
 
       (= tp 'sty/on-match-fail)
       (do
@@ -87,7 +106,11 @@
               lines (str/split s #"\n")]
           (println (->> (mapv (fn [x] (str ident "  " x)) lines)
                         (str/join "\n")))))
-      
+
+
+      (= tp 'sty/tests-summary)
+      (summary ztx)
+
 
       (= tp 'sty.http/request)
       (println ident tp (:method event) (:url event) (dissoc event :method :url :type :ts))
@@ -126,11 +149,14 @@
     (= tp 'sty/on-step-start)
     :nop
 
-    (= tp 'sty/on-step-success)
+    (tp (set ['sty/on-step-success 'sty/on-match-ok]))
     (print ".")
 
-    (= tp 'sty/on-step-fail)
+    (tp (set ['sty/on-step-fail 'sty/on-match-fail]))
     (print "x")
+
+    (= tp 'sty/tests-summary)
+    (summary ztx)
 
     (= tp 'sty/on-step-exception)
     (print "!")
@@ -147,8 +173,10 @@
 
 (comment
 
-  (zprint/czprint-str
-   {:body {:a 1}
-    :header {:xxxx 3}})
+  (->>
+   (zprint/czprint-str
+    {:body {:a 1}
+     :header {:xxxx 3}})
+   println)
 
   )

@@ -1,6 +1,5 @@
 (ns stresty.server.core
-  (:require
-   [zen.core :as zen]
+  (:require [zen.core :as zen]
    [stresty.actions.core]
    [stresty.matchers.core]
    [stresty.server.core]

@@ -9,5 +9,6 @@
 
 (defmethod match 'sty/matcho
   [ztx matcher sample]
-  (stresty.matchers.matcho/match ztx {} sample (dissoc matcher :by)))
-
+  (let [result  (stresty.matchers.matcho/match ztx {} sample (dissoc matcher :by))]
+    (when (seq result)
+      {:errors result})))
