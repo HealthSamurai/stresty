@@ -105,7 +105,12 @@ jobs:
       - name: Compress binary 
         run: zip sty.zip sty 
 
-      - name: Upload binaries to release
+      - name: Delete last release
+        uses: ame-yu/action-delete-latest-release@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release and upload binaries
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
