@@ -38,5 +38,7 @@
 
   (def res (-main "--path=examples" "--ns=aidbox" "--format=debug" "tests"))
 
+  (-main "--path=.tmp" "gen" "--project=my.super.project")
+
   )
 

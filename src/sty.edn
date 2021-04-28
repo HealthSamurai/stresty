@@ -193,6 +193,12 @@
                   :tags   {:type zen/set :every {:type zen/string}}
                   :steps  {:type zen/vector :every {:type zen/keyword}}}}}
 
+ gen
+ {:zen/tags #{op}
+  :zen/desc "Generates"
+  :params {:type zen/map
+           :keys {:project {:type zen/string}}}}
+
  rest-op  {:zen/tags #{zen/tag}}
  index-op {:zen/tags #{rest-op}}
 

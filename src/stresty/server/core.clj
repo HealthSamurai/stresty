@@ -24,6 +24,11 @@
   (stresty.operations.core/op ztx {:method 'sty/run-tests
                                    :params (or (:params cmd) {})}))
 
+(defmethod command "gen"
+  [ztx cmd]
+  (stresty.operations.core/op ztx {:method 'sty/gen
+                                   :params (or (:params cmd) {})}))
+
 (defmethod command :default
   [ztx cmd]
   (println "

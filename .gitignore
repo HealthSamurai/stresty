@@ -13,3 +13,4 @@ resources/public/assets/js/monaco
 /config.edn
 sty
 .lsp
+.tmp

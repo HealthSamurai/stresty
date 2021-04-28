@@ -4,6 +4,7 @@
             [stresty.matchers.core :as match]
             [stresty.sci]
             [stresty.format.core :as fmt]
+            [stresty.operations.gen]
             [clojure.string :as str]))
 
 (defmulti call-op (fn [ztx op args] (:zen/name op)))
@@ -12,11 +13,14 @@
   (if-let [op (when-let [m (:method args)]
                 (zen/get-symbol ztx (symbol m)))]
     (call-op ztx op args)
-    {:error {:message (str "Operation " (:method args) " is not defined.")}}))
+    (do
+      (println (str "Operation " (:method args) " is not defined."))
+      {:error {:message (str "Operation " (:method args) " is not defined.")}})))
 
 
 (defmethod call-op :default
   [ztx op args]
+  (println (str "Op " (:zen/name op) " is not implemented!"))
   {:error {:message (str "Op " (:zen/name op) " is not implemented!")}})
 
 (defmethod call-op 'sty/echo
@@ -91,3 +95,8 @@
     (let [env (zen/get-symbol ztx env-ref)]
       (run-env ztx env)))
   {:result params})
+
+(defmethod call-op 'sty/gen
+  [ztx op {params :params}]
+  (println "Generate" params)
+  (stresty.operations.gen/generate ztx params))
