@@ -19,6 +19,7 @@
   (t/is (.exists (io/file ".tmp/wdir/testproj/case.edn")))
 
 
+  (sut/generate ztx {:project "testproj"})
 
   )
 

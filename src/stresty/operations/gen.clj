@@ -26,14 +26,18 @@
 (defn path [home pth]
   (Paths/get home (into-array String (into [] pth))))
 
+(defn exists? [pth]
+  (Files/exists pth (into-array LinkOption [])))
+
 (defn write [^Path pth content]
-  (spit (.toString (.toAbsolutePath pth)) content))
+  (let [file (.toString (.toAbsolutePath pth))]
+    (if (exists? pth)
+      (println "Skip generation! File" file "already exists.")
+      (spit file content))))
 
 (defn mkdirs [^Path pth]
   (Files/createDirectories  pth (into-array FileAttribute [])))
 
-(defn exists? [pth]
-  (Files/exists pth (into-array LinkOption [])))
 
 (defn walk [^Path pth]
   (when (exists? pth)
@@ -47,6 +51,57 @@
     (.delete ^File (.toFile p))))
 
 
+(defn gen-case [ns]
+  (format "{ns %s
+import #{sty}
+
+case
+ {:zen/tags #{sty/case}
+  :steps [
+  {:id :first-step
+   :desc \"Crate Patient\"
+   :do {:act 'sty/http 
+        :method :post
+        :url \"/Patient\"
+        :body {:resourceType \"Patient\"
+               :name [{:family \"Doe\", :given [\"John\"]}]}}
+   :match {:act 'sty/matcho
+           :status sty/ok?
+           :body {:id sty/string?}}}
+
+  {:id :second-step
+   :do {:act 'sty/print
+        :path [:first-step :body]}}
+
+  {:id :third-step
+   :do {:act 'sty/http 
+        :method :get
+        :url (str \"/Patient/\" (get-in sty/state [:first-step :body :id]))}
+   :match {:act 'sty/matcho
+           :status sty/ok?
+           :body {:name (get-in sty/state [:first-step :body :name])}}}
+
+  ;; add more steps
+  ]}}" ns))
+
+(defn gen-env [ns]
+  (format "
+{ns envs
+ import #{
+   sty
+   %s
+ }
+
+ env {
+  :zen/tags #{sty/env}
+  :base-url \"http://localhost:8080\"
+  ;; :basic-auth {:user \"user?\" :password \"password?\"}
+  ;; :auth-token  \"????\"
+ }
+
+}
+" ns))
+
 (defn generate [ztx opts]
   (println "Generate " opts)
   (let [home (get-in @ztx [:paths 0])
@@ -58,6 +113,6 @@
     (println "mkdirs" dir-path)
     (mkdirs dir-path)
     (println "create" (str (.toAbsolutePath ^Path case-path)))
-    (write case-path "{}")
+    (write case-path (gen-case proj))
     (println "create" (str (.toAbsolutePath ^Path env-path)))
-    (write env-path "{}")))
+    (write env-path (gen-env proj))))
