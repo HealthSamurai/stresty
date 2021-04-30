@@ -104,15 +104,16 @@ case
 
 (defn generate [ztx opts]
   (println "Generate " opts)
-  (let [home (get-in @ztx [:paths 0])
-        proj (:project opts)
-        proj-path (get-path proj)
-        dir-path  (path home proj-path)
-        env-path  (path home ["envs.edn"])
-        case-path (path home (conj proj-path "case.edn"))]
-    (println "mkdirs" dir-path)
-    (mkdirs dir-path)
-    (println "create" (str (.toAbsolutePath ^Path case-path)))
-    (write case-path (gen-case proj))
-    (println "create" (str (.toAbsolutePath ^Path env-path)))
-    (write env-path (gen-env proj))))
+  (if-let [proj (:project opts)]
+    (let [home (get-in @ztx [:paths 0])
+          proj-path (get-path proj)
+          dir-path  (path home proj-path)
+          env-path  (path home ["envs.edn"])
+          case-path (path home (conj proj-path "case.edn"))]
+      (println "mkdirs" dir-path)
+      (mkdirs dir-path)
+      (println "create" (str (.toAbsolutePath ^Path case-path)))
+      (write case-path (gen-case proj))
+      (println "create" (str (.toAbsolutePath ^Path env-path)))
+      (write env-path (gen-env proj)))
+    (println "Parameter --project is required")))
