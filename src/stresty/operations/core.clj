@@ -102,7 +102,8 @@
   (fmt/emit ztx {:type 'sty/on-env-end :env env}))
 
 (defmethod call-op 'sty/run-tests
-  [ztx op {params :params}]
+  [ztx op {params :params :as p}]
+  (fmt/emit ztx {:type 'sty/on-tests-start})
   (doseq [env-ref (zen/get-tag ztx 'sty/env)]
     (let [env (zen/get-symbol ztx env-ref)]
       (run-env ztx env)))
