@@ -168,7 +168,7 @@
            :zen/desc "get stresty case to run on UI"
            :params {:type zen/map
                     :keys {:case {:type zen/string}}}}
- 
+
  run-tests
  {:zen/tags #{op}
   :zen/desc "Run selected tests"
@@ -215,5 +215,65 @@
            "rpc" {:post rpc-op
                   :get  get-rpc-op}}}
  cli
- {:zen/desc "CLI interface"}}
- 
+ {:zen/desc "CLI interface"}
+
+ cli-cmd
+ {:zen/tags #{zen/tag zen/schema}
+  :type zen/map
+  :keys {:cli/name {:type zen/string :zen/desc "Command name"}
+         :params {:confirms #{zen/schema}
+                  :type zen/map
+                  :keys {:keys {:type zen/map
+                                :values {:type zen/map
+                                         :keys {:cli/name  {:type zen/string :zen/desc "Command name"}
+                                                :cli/alias {:type zen/string}}}}}
+                  }}}
+
+ cli-gen
+ {:zen/tags #{cli-cmd}
+  :cli/name "gen"
+  :params {:type zen/map
+           :require #{:project}
+           :keys {:project {:type zen/string
+                            :zen/desc "name of project"
+                            :cli/alias "pr"}}}}
+
+ cli-check
+ {:zen/tags #{cli-cmd}
+  :cli/name "check"
+  :params {:type zen/map
+           :require #{:project}
+           :keys {:ns {:type zen/vector
+                       :zen/desc "Namespaces to check"
+                       :every {:type zen/string}}}}}
+
+ cli-server
+ {:zen/tags #{cli-cmd}
+  :cli/name "server"
+  :params {:type zen/map
+           :require #{:project}
+           :keys {:port {:type zen/integer
+                         :zen/desc "Port to start server"
+                         :cli/alias "p"}}}}
+
+ cli-test
+ {:zen/tags #{cli-cmd}
+  :cli/name "test"
+  :params {:type zen/map
+           :require #{:project}
+           :keys {:tag {:type zen/vector
+                        :zen/desc "tags list, run only cases and envs with this tags"
+                        :cli/alias "tg"
+                        :every {:type zen/string}}
+                  :case {:type zen/vector
+                         :zen/desc "cases list, run only listed cases"
+                         :cli/alias "cs"
+                         :every {:type zen/string}}
+                  :env {:type zen/vector
+                        :zen/desc "envs list, run specific enviroments"
+                        :cli/alias "e"
+                        :every {:type zen/string}}}}}
+
+
+
+ }
