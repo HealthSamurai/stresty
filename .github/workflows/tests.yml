@@ -116,5 +116,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: sty.zip
           asset_name: sty-${{ matrix.os }}.zip
-          tag: 0.0.1-RC
+          tag: 0.0.1-RC1
           overwrite: true
