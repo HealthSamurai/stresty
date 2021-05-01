@@ -7,6 +7,7 @@
    [stresty.server.cli]
    [stresty.operations.core]
    [stresty.format.core :as fmt]
+   [stresty.format.report]
    [stresty.sci]
    [clojure.string :as str]))
 
@@ -64,6 +65,7 @@ sty => help
   (swap! ztx assoc :opts opts :formatters
          (let [fmt (get {"ndjson" 'sty/ndjson-fmt
                          "stdout" 'sty/stdout-fmt
+                         "report" 'sty/report-fmt ;; html report
                          "debug"  'sty/debug-fmt}
                         (:format opts)
                         'sty/debug-fmt)]

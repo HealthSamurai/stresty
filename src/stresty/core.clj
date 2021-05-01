@@ -32,10 +32,12 @@
 
   (def marata-test
     (do
-      (prn "---------------------------------------------")
+      ;;(prn "---------------------------------------------")
       ;;(-main "--path=/Users/aitem/Work/HS/ssty/t" "--ns=rmis" "tests")
       (prn "---------------------------------------------")
       (-main "--path=/Users/aitem/Work/HS/ssty/t" "--format=stdout" "--ns=rmis" "tests")
+      (prn "---------------------------------------------")
+      (def p (-main "--path=/Users/aitem/Work/HS/ssty/t" "--format=report" "--ns=rmis" "tests"))
       ))
 
   (def ctx (-main "server" "--port=8888"))

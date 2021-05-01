@@ -107,6 +107,7 @@
     (let [env (zen/get-symbol ztx env-ref)]
       (run-env ztx env)))
   (fmt/emit ztx {:type 'sty/tests-summary})
+  (fmt/emit ztx {:type 'sty/tests-done})
   {:result params})
 
 (defmethod call-op 'sty/gen
