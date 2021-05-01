@@ -60,24 +60,24 @@ case
   :steps [
   {:id :first-step
    :desc \"Crate Patient\"
-   :do {:act 'sty/http 
+   :do {:act sty/http
         :method :post
         :url \"/Patient\"
         :body {:resourceType \"Patient\"
                :name [{:family \"Doe\", :given [\"John\"]}]}}
-   :match {:act 'sty/matcho
+   :match {:act sty/matcho
            :status sty/ok?
            :body {:id sty/string?}}}
 
   {:id :second-step
-   :do {:act 'sty/print
+   :do {:act sty/print
         :path [:first-step :body]}}
 
   {:id :third-step
-   :do {:act 'sty/http 
+   :do {:act sty/http
         :method :get
         :url (str \"/Patient/\" (get-in sty/state [:first-step :body :id]))}
-   :match {:act 'sty/matcho
+   :match {:act sty/matcho
            :status sty/ok?
            :body {:name (get-in sty/state [:first-step :body :name])}}}
 
