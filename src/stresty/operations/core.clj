@@ -52,6 +52,9 @@
   (str "/" (str/join  "/" args)))
 
 (defn run-step [ztx {enm :zen/name :as env} {cnm :zen/name :as case} {id :id idx :_index action :do :as step}]
+
+  (fmt/emit ztx (assoc step :type 'sty/on-run-step))
+
   (let [state (get-case-state ztx enm cnm)
         action (stresty.sci/eval-data {:namespaces {'sty {'env env 'step step 'case case 'state state 'url sty-url}}} action)
         ev-base {:type 'sty/on-step-start :env env :case case
@@ -83,7 +86,9 @@
                    (save-step-result ztx cnm step {:status :error :error error :result result})
                    (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher)))
                   ))
-              :skip #_(fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result))))))
+              :skip #_(fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result)))
+
+            (fmt/emit ztx (assoc ev-base :type 'sty/on-step-end)))))
       (catch Exception e
         (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error {:message (.getMessage e)}))))))
 
