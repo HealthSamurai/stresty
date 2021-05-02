@@ -128,7 +128,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Release Asset macOS
-        id: upload-release-asset
+        id: upload-release-asset-mac
         uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -138,7 +138,7 @@ jobs:
           asset_name: sty-macOS-latest.zip
           asset_content_type: application/zip
       - name: Upload Release Asset ubuntu
-        id: upload-release-asset
+        id: upload-release-asset-ubuntu
         uses: actions/upload-release-asset@v1.0.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
