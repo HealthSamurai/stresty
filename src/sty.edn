@@ -226,52 +226,70 @@
                   :keys {:keys {:type zen/map
                                 :values {:type zen/map
                                          :keys {:cli/name  {:type zen/string :zen/desc "Command name"}
-                                                :cli/alias {:type zen/string}}}}}
-                  }}}
+                                                :cli/example {:type zen/string}
+                                                :cli/default {:type zen/string}
+                                                :cli/alias {:type zen/string}}}}}}}}
 
  cli-gen
  {:zen/tags #{cli-cmd}
   :cli/name "gen"
+  :zen/desc "generate project and cases"
   :params {:type zen/map
            :require #{:project}
            :keys {:project {:type zen/string
                             :zen/desc "name of project"
+                            :cli/example "my.project"
                             :cli/alias "pr"}}}}
+
+ cli-help
+ {:zen/tags #{cli-cmd}
+  :cli/name "help"
+  :zen/desc "stresty help"
+  :params {:type zen/map
+           :keys {}}}
 
  cli-check
  {:zen/tags #{cli-cmd}
   :cli/name "check"
+  :zen/desc "check syntax of test project"
   :params {:type zen/map
-           :require #{:project}
            :keys {:ns {:type zen/vector
+                       :cli/example "us-core.patient,us-core,encounter"
                        :zen/desc "Namespaces to check"
                        :every {:type zen/string}}}}}
 
  cli-server
  {:zen/tags #{cli-cmd}
   :cli/name "server"
+  :zen/desc "run server with ui"
   :params {:type zen/map
-           :require #{:project}
            :keys {:port {:type zen/integer
                          :zen/desc "Port to start server"
+                         :cli/example "8080"
+                         :cli/default "8080"
                          :cli/alias "p"}}}}
 
  cli-test
  {:zen/tags #{cli-cmd}
   :cli/name "test"
+  :zen/desc "run tests"
   :params {:type zen/map
-           :require #{:project}
-           :keys {:tag {:type zen/vector
+           :keys {:tag {:cli/alias "tg"
                         :zen/desc "tags list, run only cases and envs with this tags"
-                        :cli/alias "tg"
+                        :type zen/vector
                         :every {:type zen/string}}
-                  :case {:type zen/vector
-                         :zen/desc "cases list, run only listed cases"
+                  :case {:zen/desc "cases list, run only listed cases"
                          :cli/alias "cs"
+                         :type zen/vector
                          :every {:type zen/string}}
+                  :ns {:type zen/vector
+                       :zen/desc "namespaces list, run tests from this list"
+                       :cli/example "us-core.patient,us-core.encounter"
+                       :every {:type zen/string}}
                   :env {:type zen/vector
                         :zen/desc "envs list, run specific enviroments"
                         :cli/alias "e"
+                        :cli/example "servers/aidbox"
                         :every {:type zen/string}}}}}
 
 

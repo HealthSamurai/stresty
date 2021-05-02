@@ -32,16 +32,22 @@
   (matcho/match
    (sut/resolve-cmd ztx {:name "ups"})
    {:error
-    {:message
-     "Command <ups> is not found. Available commands test, gen, server, check"}})
+    {:message #"Command <ups> is not found. Available commands .*"}})
 
   (matcho/match
    (sut/resolve-cmd ztx (:command (sut/parse-args ["test"
+                                                   "e:aidbox"
                                                    "ns:mynamespace"
                                                    "tg:aidbox,grahame"
                                                    "cs:my.case-1,my.case-2"])))
 
-   {:result {:params {} :cmd 'sty/cli-test}})
+   {:result {:name 'sty/cli-test
+             :params {:tag ["aidbox" "grahame"]
+                      :case ["my.case-1" "my.case-2"]
+                      :env ["aidbox"]
+                      :ns ["mynamespace"]}}})
 
+
+  (println (sut/usage ztx))
 
   )

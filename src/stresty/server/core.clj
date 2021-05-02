@@ -4,7 +4,7 @@
    [stresty.matchers.core]
    [stresty.server.core]
    [stresty.server.http]
-   [stresty.server.cli]
+   [stresty.server.cli :as cli]
    [stresty.operations.core]
    [stresty.format.core :as fmt]
    [stresty.sci]
@@ -14,36 +14,31 @@
 (defmulti command
   (fn [ztx cmd] (:name cmd)))
 
-(defmethod command "server"
+(defmethod command 'sty/cli-server
   [ztx cmd]
   (stresty.server.http/start-server ztx (update (:params cmd) :port (fn [x] (when x (Integer/parseInt x))))))
 
-(defmethod command "tests"
+(defmethod command 'sty/cli-test
   [ztx cmd]
   (stresty.operations.core/op ztx {:method 'sty/run-tests
                                    :params (or (:params cmd) {})}))
 
-(defmethod command "gen"
+(defmethod command 'sty/cli-gen
   [ztx cmd]
   (stresty.operations.core/op ztx {:method 'sty/gen
                                    :params (or (:params cmd) {})}))
 
+(defmethod command 'sty/cli-check
+  [ztx cmd])
+
+(defmethod command 'sty/cli-help
+  [ztx cmd]
+  (println (cli/usage ztx)))
+
 (defmethod command :default
   [ztx cmd]
-  (println "
-Usage:
-
-sty --path=PATH <command> <subcommand>
-
-sty server -p PORT
-
-sty tests --envs=ENV1,ENV2 --cases=CS,CS  --steps=STEP,STEP --tags=TAG,TAG
-
-sty watch --paths=PATH1,PATH2
-
-sty => help
-
-"))
+  (println "ERROR: command "  (:name cmd) " is not implemented.")
+  {:error {:message (str "ERROR: command "  (:name cmd) " is not implemented.")}})
 
 (defn current-dir []
   (System/getProperty "user.dir"))
@@ -70,10 +65,12 @@ sty => help
            {fmt (atom {})})))
 
 (defn start-server [{opts :params}]
-  (let [ztx (zen/new-context {:opts opts :paths (calculate-paths (:path opts))})]
+  (let [paths (calculate-paths (:path opts))
+        ztx (zen/new-context {:opts opts :paths paths})]
     (zen/read-ns ztx 'sty)
-    (when-let [ns (:ns opts)]
-      (zen/read-ns ztx (symbol ns)))
+    (if-let [ns (:ns opts)]
+      (zen/read-ns ztx (symbol ns))
+      (println "WARN: No entry point provided."))
     (configure-format ztx opts)
     (report-zen-errors ztx)
     ztx))
@@ -81,10 +78,25 @@ sty => help
 (defn stop-server [ztx]
   (stresty.server.http/stop-server ztx))
 
-(defn exec [{cmd :command :as args}]
+(defn exec [{cmd-params :command :as args}]
   (let [ztx (start-server args)]
-    (command ztx cmd)
-    ztx))
+    (if-not cmd-params
+      (do
+        (println "WARN: No command provided")
+        (println (cli/usage ztx))
+        {:error {:message "No command provided"}})
+      (let [{err :error cmd :result :as resp} (cli/resolve-cmd ztx cmd-params)]
+        (if err
+          (do
+            (println (or (:message err) "Error"))
+            (println (str/join "\n * " (:errors err)))
+            resp)
+          (do
+            (println "cmd:" (:name cmd))
+            (command ztx cmd)))))))
+
+(defn main [args]
+  (exec (cli/parse-args args)))
 
 (comment
   (def ztx (start-server {}))
