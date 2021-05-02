@@ -137,10 +137,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: type-your-release-name
+          name: 0.0.1-RC
           tag_name: 0.0.1-RC1
           
-      - id: fetch-latest-release
+      - name: Fetch latest release
+        id: fetch-latest-release
         uses: thebritican/fetch-latest-release@v2.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}       
