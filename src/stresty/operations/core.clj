@@ -103,14 +103,16 @@
 
 (defmethod call-op 'sty/run-tests
   [ztx op {params :params}]
-  (println "Run tests")
+  (fmt/emit ztx {:type 'sty/on-tests-start})
   (let [envs (when (:env params) (into #{} (mapv symbol (:env params))))]
     (doseq [env-ref (zen/get-tag ztx 'sty/env)]
       (let [env (zen/get-symbol ztx env-ref)]
         (if (or (nil? envs) (contains? envs (:zen/name env)))
           (run-env ztx env)
           (fmt/emit ztx {:type 'sty/skip-env :name (:zen/name env)})))))
+
   (fmt/emit ztx {:type 'sty/tests-summary})
+  (fmt/emit ztx {:type 'sty/tests-done})
   {:result params})
 
 (defmethod call-op 'sty/gen

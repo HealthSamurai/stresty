@@ -14,6 +14,6 @@
 
   (t/is (= 1 1))
 
-  ;; (sut/main ["format:stdout" "path:../fhir-stresty" "ns:servers" "test" "env:servers/aidbox"])
+  (sut/main ["format:stdout" "path:../fhir-stresty" "ns:servers" "test" "env:servers/aidbox"])
 
   )

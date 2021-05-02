@@ -1,30 +1,13 @@
-# name: GitHub Actions Demo
-# on: [push]
-# jobs:
-#   Explore-GitHub-Actions:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-#       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-#       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-#       - name: Check out repository code
-#         uses: actions/checkout@v2
-#       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-#       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-#       - name: List files in the repository
-#         run: |
-#           ls ${{ github.workspace }}
-#       - run: echo "🍏 This job's status is ${{ job.status }}."
-name: stresty ci
+name: Stresty CI
 
 on: [push]
 
 jobs:
-  clojure:
+  build:
     strategy:
       matrix:
         # os: [ubuntu-latest, macOS-latest, windows-latest]
-        os: [ubuntu-latest, macOS-latest]
+        os: [macOS-latest, ubuntu-latest]
         gu-binary: [gu, gu.cmd]
         exclude:
           - os: ubuntu-latest
@@ -52,11 +35,11 @@ jobs:
           cli: 1.10.3.822
 
       - name: install rlwrap
-        if: matrix.os == 'ubuntu-latest' 
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get install -y rlwrap
 
       - name: install rlwrap
-        if: matrix.os == 'macos-latest' 
+        if: matrix.os == 'macos-latest'
         run: brew install rlwrap
 
         #run: sudo apt-get install -y rlwrap
@@ -70,12 +53,12 @@ jobs:
 
       - name: run tests on Unix based OS
         run: make test
-        if: matrix.os != 'windows-latest' 
+        if: matrix.os != 'windows-latest'
 
       # - name: run tests on Windows
       #   run: clojure -M:ui:test:nrepl:kaocha
       #   shell: powershell
-      #   if: matrix.os == 'windows-latest' 
+      #   if: matrix.os == 'windows-latest'
 
       - name: Setup Graalvm
         id: setup-graalvm
@@ -92,29 +75,75 @@ jobs:
 
       - name: Install native-image component
         run: ${{ matrix.gu-binary }} install native-image
-         
+
       - name: build native on Unix like OS
         run: make build-native || cat /tmp/clojure-*.edn
-        if: matrix.os != 'windows-latest' 
+        if: matrix.os != 'windows-latest'
 
       - name: build native on Windows
         run: cp VERSION resources/VERSION; clojure -M:native-image;
-        if: matrix.os == 'windows-latest' 
+        if: matrix.os == 'windows-latest'
         shell: powershell
 
-      - name: Compress binary 
-        run: zip sty.zip sty 
+      - name: Compress binary
+        run: zip sty-${{ matrix.os }}.zip sty
 
-      - name: Delete last release
+      - name: Upload result of build
+        uses: actions/upload-artifact@v2
+        with:
+          name: sty-${{ matrix.os }}
+          path: sty-${{ matrix.os }}.zip
+
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download sty  mac os
+        uses: actions/download-artifact@v2
+        with:
+          name: sty-macOS-latest
+      - name: Download sty ubuntu
+        uses: actions/download-artifact@v2
+        with:
+          name: sty-ubuntu-latest
+
+      - name: Delete
         uses: ame-yu/action-delete-latest-release@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create release and upload binaries
-        uses: svenstaro/upload-release-action@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: sty.zip
-          asset_name: sty-${{ matrix.os }}.zip
-          tag: 0.0.1-RC
-          overwrite: true
+          name: 0.0.1-RC
+          tag_name: 0.0.1-RC1
+
+      - name: Fetch latest release
+        id: fetch-latest-release
+        uses: thebritican/fetch-latest-release@v2.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Asset macOS
+        id: upload-release-asset-mac
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.fetch-latest-release.outputs.upload_url }}
+          asset_path: ./sty-macOS-latest.zip
+          asset_name: sty-macOS-latest.zip
+          asset_content_type: application/zip
+      - name: Upload Release Asset ubuntu
+        id: upload-release-asset-ubuntu
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.fetch-latest-release.outputs.upload_url }}
+          asset_path: ./sty-ubuntu-latest.zip
+          asset_name: sty-ubuntu-latest.zip
+          asset_content_type: application/zip

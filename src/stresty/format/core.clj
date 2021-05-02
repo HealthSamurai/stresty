@@ -22,7 +22,7 @@
                     (merge-with concat acc)))
              {} (:result @ztx))]
 
-    (println "\nSummary:"
+    (str "\nSummary:"
              (count cases) "cases,"
              steps "steps,"
              (count (:error res)) "error,"
@@ -109,7 +109,7 @@
 
 
       (= tp 'sty/tests-summary)
-      (summary ztx)
+      (println (summary ztx))
 
 
       (= tp 'sty.http/request)

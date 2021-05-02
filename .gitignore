@@ -1,5 +1,6 @@
 target
 .cpcache
+output/*
 core
 classes
 pom.xml
