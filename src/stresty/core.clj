@@ -35,7 +35,7 @@
       ;;(prn "---------------------------------------------")
       ;;(-main "--path=/Users/aitem/Work/HS/ssty/t" "--ns=rmis" "tests")
       (prn "---------------------------------------------")
-      (-main "--path=/Users/aitem/Work/HS/ssty/t" "--format=stdout" "--ns=rmis" "tests")
+      (def p (-main "--path=/Users/aitem/Work/HS/ssty/t" "--env=rmis/main" "--format=report" "--ns=rmis" "tests"))
       (prn "---------------------------------------------")
       (def p (-main "--path=/Users/aitem/Work/HS/ssty/t" "--format=report" "--output=output" "--ns=rmis" "tests"))
       ))

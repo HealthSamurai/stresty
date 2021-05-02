@@ -13,7 +13,7 @@
 
 
 (defmulti command
-  (fn [ztx cmd] (:name cmd)))
+  (fn [ztx cmd] (get-in cmd [:command :name])))
 
 (defmethod command "server"
   [ztx cmd]
@@ -85,7 +85,7 @@ sty => help
 
 (defn exec [{cmd :command :as args}]
   (let [ztx (start-server args)]
-    (command ztx cmd)
+    (command ztx args)
     ztx))
 
 (comment

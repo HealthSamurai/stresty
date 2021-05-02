@@ -19,7 +19,7 @@
   [ztx _ state {tp :type ts :ts :as event}]
   (let [b #(swap! state update :body conj  %)]
     (when-not (:body @state)
-      (swap! state assoc :body [:div.content]))
+      (swap! state assoc :body [:div.container.mx-auto]))
     (cond
       (= tp 'sty/on-tests-start)
       (do (swap! state assoc :start ts)
@@ -38,26 +38,29 @@
       (print (get-in event [:env :zen/name]) "{")
 
       (= tp 'sty/on-case-start)
-      (b [:div [:h2 (or (get-in event [:case :title])
-                        (get-in event [:case :zen/name]))]] )
+      (b  [:h2.text-xl (or (get-in event [:case :title])
+                           (get-in event [:case :zen/name]))] )
 
 
 
       (= tp 'sty.http/request)
-      (b [:div [:b (str tp (:method event) (:url event) (dissoc event :method :url :type :ts))]])
+      (b [:div  (str tp
+                     " " (:method event)
+                     " " (:url event)
+                     " " (dissoc event :method :url :type :ts))])
 
 
       (= tp 'sty/on-step-start)
       :nop
 
       (tp (set ['sty/on-step-success 'sty/on-match-ok]))
-      (print ".")
+      (b [:div [:span.bg-green-500  "success"]])
 
       (tp (set ['sty/on-step-fail 'sty/on-match-fail]))
-      (print "x")
+      (b [:div [:span.bg-red-500  "fail"]])
 
       (= tp 'sty/tests-summary)
-      [:div  (fmt/summary ztx)]
+      (b [:div  (fmt/summary ztx)])
 
       (= tp 'sty/on-step-exception)
       (print "!")
@@ -70,9 +73,5 @@
 
 
       (= tp 'sty/tests-done)
-      (do (b  [:div [:b "End"]])
-          (spit "output/index.html" (hiccup/html  (report-layout (:body @state)))))
-
-      ))
-
-  )
+      (do (b [:div [:b "End"]])
+          (spit "output/index.html" (hiccup/html  (report-layout (:body @state))))))))

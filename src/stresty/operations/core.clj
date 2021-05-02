@@ -106,7 +106,10 @@
   (fmt/emit ztx {:type 'sty/on-tests-start})
   (doseq [env-ref (zen/get-tag ztx 'sty/env)]
     (let [env (zen/get-symbol ztx env-ref)]
-      (run-env ztx env)))
+      (if (:env params)
+        (when (= (:env params) (str (:zen/name env)))
+          (run-env ztx env))
+        (run-env ztx env))))
   (fmt/emit ztx {:type 'sty/tests-summary})
   (fmt/emit ztx {:type 'sty/tests-done})
   {:result params})
