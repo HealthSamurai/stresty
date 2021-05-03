@@ -14,10 +14,10 @@
     (swap! state assoc :start ts)
 
     (= tp 'sty/on-env-start)
-    (println "#env:" (get-in event [:env :zen/name]) (get-in event [:env :base-url]))
+    (println "env:" (get-in event [:env :zen/name]) (get-in event [:env :base-url]))
 
     (= tp 'sty/on-case-start)
-    (println " case:" (get-in event [:case :zen/name]) (get-in event [:case :desc] ""))
+    (println " case:" (get-in event [:case :zen/name]) (get-in event [:case :title] ""))
 
     (= tp 'sty/on-case-end)
     (println "")
@@ -27,6 +27,7 @@
          (str
           " * " (let [id (get-in event [:step :id])]
                  (if (keyword? id) (name id) (str "#1")))
+          " "
           (get-in event [:step :desc] "")
           ": "))
         (flush))
