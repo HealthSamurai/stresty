@@ -2,16 +2,38 @@
   (:require [zen.core :as zen]
             [cheshire.core]
             [zprint.core :as zprint]
+            [stresty.format.compact :as compact]
             [clojure.string :as str]))
 
 (set! *warn-on-reflection* true)
 
 (defmulti do-format (fn [ztx fmt state event] fmt))
 
+(def formats {"compact"  'sty/compact-fmt
+              "normal"   'sty/normal-fmt
+              "detailed" 'sty/detailed-fmt
+              "html"     'sty/html-fmt
+              "ndjson"   'sty/ndjson-fmt
+              "json"     'sty/json-fmt})
+
+(defn set-formatters [ztx fmt-names]
+  (let [fmts (->> fmt-names
+                 (mapv (fn [x] (get formats x)))
+                 (filter identity)
+                 (reduce (fn [acc fmt] (assoc acc fmt (atom {}))) {}))
+        fmts (if (empty? fmts) {'sty/normal-fmt (atom {})} fmts)]
+    (swap! ztx assoc :formatters fmts)))
+
 (defn emit [ztx event]
   (let [ev (assoc event :ts (System/currentTimeMillis))]
     (doseq [[fmt state] (get @ztx :formatters)]
+
       (do-format ztx fmt state ev))))
+
+(defmethod do-format
+  'sty/compact-fmt
+  [ztx _ state event]
+  (#'compact/do-format ztx state event))
 
 (defn summary [ztx]
   (let [cases (zen/get-tag ztx 'sty/case)
@@ -44,15 +66,6 @@
     (cond
       (= tp 'sty/on-tests-start)
       (swap! state assoc :start ts)
-      (= tp 'sty/on-zen-errors)
-      (do
-        (println "Syntax errors:")
-        (println (str/join "\n"
-                           (->>
-                            (:errors event)
-                            (mapv (fn [{msg :message res :resource pth :path}]
-                                    (str msg " in " res " at " pth)))))))
-
       (= tp 'sty/on-env-start)
       (do
         (swap! state assoc :ident "  ")
@@ -118,9 +131,7 @@
       :else
       (println ident tp (dissoc event :type))
 
-
-      ))
-  )
+      )))
 
 (defmethod do-format
   'sty/stdout-fmt

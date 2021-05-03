@@ -6,6 +6,7 @@
   :type zen/map
   :keys {:base-url {:type zen/string}
          :tags {:type zen/set :every {:type zen/string}}
+         :headers {:type zen/map :values {:type zen/any}}
          :basic-auth {:type zen/map
                       :keys {:user {:type zen/string}
                              :password {:type zen/string}}}}}
@@ -56,6 +57,12 @@
          ;; :post {:type zen/string}
          ;; :put {:type zen/string}
          }}
+
+ ex!
+ {:zen/tags #{is-action zen/schema}
+  :type zen/map
+  :zen/desc "Action which trhow exception"
+  :keys {:message {:type zen/string}}}
 
  print
  {:zen/tags #{is-action zen/schema}

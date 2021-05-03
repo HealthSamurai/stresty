@@ -28,4 +28,13 @@
                   :body {:method 'sty/echo :params {:hello "ok"}}} )
    {:status 200
     :body {:result {:hello "ok"}}})
+
+  ;; (matcho/match
+  ;;  (sut/dispatch ztx
+  ;;                {:uri "/do-patch"
+  ;;                 :request-method :patch
+  ;;                 :body {:attr "val"}} )
+  ;;  {:status 200
+  ;;   :body {:attr "val"}})
+
   )

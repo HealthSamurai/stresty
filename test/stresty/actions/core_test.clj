@@ -46,9 +46,20 @@
    (sut/action ztx ctx
                {:act 'sty/http
                 :method :get
+                :headers {:if-not-match "ups"}
                 :url "/echo"})
    {:result {:status 200
              :body {:uri "/echo"}}})
-  
+
+  (matcho/match
+   (sut/action ztx ctx
+               {:act 'sty/http
+                :url "/do-patch"
+                :method :patch
+                :body {:message "patch ok"}})
+
+   {:result {:status 200
+             :body {:message "patch ok"}}})
+
 
   )

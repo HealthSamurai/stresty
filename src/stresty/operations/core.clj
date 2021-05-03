@@ -27,7 +27,6 @@
   [ztx op {params :params}]
   {:result params})
 
-
 (defmethod call-op 'sty/get-namespaces
   [ztx op _]
   (let [cases (zen/get-tag ztx 'sty/case)]
@@ -57,7 +56,9 @@
 
   (let [state (get-case-state ztx enm cnm)
         action (stresty.sci/eval-data {:namespaces {'sty {'env env 'step step 'case case 'state state 'url sty-url}}} action)
-        ev-base {:type 'sty/on-step-start :env env :case case
+        ev-base {:type 'sty/on-step-start
+                 :env env
+                 :case case
                  :step (assoc step :id (or id idx))
                  :verbose (get-in @ztx [:opts :verbose])
                  :do action}]
@@ -105,6 +106,7 @@
 
 (defmethod call-op 'sty/run-tests
   [ztx op {params :params}]
+  (fmt/set-formatters ztx (:format params))
   (fmt/emit ztx {:type 'sty/on-tests-start})
   (let [envs (when (:env params) (into #{} (mapv symbol (:env params))))]
     (doseq [env-ref (zen/get-tag ztx 'sty/env)]

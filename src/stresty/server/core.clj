@@ -54,7 +54,11 @@
 (defn report-zen-errors [ztx]
   (let [errs (:errors @ztx)]
     (when-not (empty? errs)
-      (fmt/emit ztx {:type 'sty/on-zen-errors :errors errs}))))
+      (println "Syntax errors:")
+      (println (str/join "\n"
+                         (->> errs
+                              (mapv (fn [{msg :message res :resource pth :path}]
+                                      (str msg " in " res " at " pth)))))))))
 
 (defn configure-format [ztx opts]
   (swap! ztx assoc :opts opts :formatters
@@ -73,7 +77,6 @@
     (if-let [ns (:ns opts)]
       (zen/read-ns ztx (symbol ns))
       (println "WARN: No entry point provided."))
-    (configure-format ztx opts)
     (report-zen-errors ztx)
     ztx))
 

@@ -2,5 +2,6 @@
  import #{sty}
 
  echo-op {:zen/tags #{sty/rest-op}}
+ patch-op {:zen/tags #{sty/rest-op}}
 
  }

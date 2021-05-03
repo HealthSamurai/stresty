@@ -34,13 +34,20 @@
 (defmethod run-action 'sty/http
   [ztx {env :env case :case state :state} args]
   (let [url (str (:base-url env) (:url args))
+        meth (:method args)
         {{user :user pass :password} :basic-auth} env]
     (try
       (let [req (cond->
-                    {:method (:method args)
+                    {:method (if (= :patch meth) :post meth)
                      :url url
                      :throw-exceptions false
-                     :headers (merge (:headers args) {"content-type" "application/json"} )}
+                     :headers (merge (->> (:headers args)
+                                          (reduce (fn [acc [k v]]
+                                                    (if (keyword? k)
+                                                      (assoc acc (name k) (str v))
+                                                      (assoc acc k (str v))))
+                                                  (cond-> {"content-type" "application/json"}
+                                                    (= :patch meth) (assoc "X-HTTP-Method-Override" "PATCH")))))}
                   (:body args)
                   (assoc :body (cheshire.core/generate-string (:body args)))
                   (and user pass) (assoc :basic-auth [user pass]))

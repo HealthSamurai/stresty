@@ -5,10 +5,84 @@
       :base-url "http://localhost:7777"
       :basic-auth {:user "user" :password "pwd"}}
 
+ env-2 {:zen/tags #{sty/env}
+        :base-url "http://localhost:7777"
+        :headers {:authorize "?????"}}
+
  case-1
  {:zen/tags #{sty/case}
   :steps
   [{:id :echo
+    :do {:act sty/http :method :get :url "/echo"}
+    :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
+
+   {:id :error
+    :do {:act sty/http :method :get :url "/ups"}
+    :match {:by sty/matcho :status 200}}
+
+   {:id :exception
+    :do {:act sty/http :method :patch :url "/ups"}
+    :match {:by sty/matcho :status 200}}
+
+   {:id :echo-2
+    :do {:act sty/http :method :get :url "/echo"}
+    :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
+
+   {:id :echo-3
+    :do {:act sty/http :method :get :url "/echo"}
+    :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
+
+   {:id :wrong-action
+    :do {:act sty/ups}
+    :match {:by sty/matcho :status 200}}
+
+   {:id :wrong-match
+    :do {:act sty/http :method :get :url "/echo"}
+    :match {:by sty/ups :status 200}}
+
+   {:id :exception
+    :do {:act sty/ex! :message "Ups"}
+    :match {:by sty/matcho :status 200}}
+
+
+   {:do {:act sty/http
+         :method :get
+         :url (get-in sty/state [:echo :body :uri])
+         :params {:param "value"}}
+    :match {:by sty/matcho
+            :status 200
+            :body {:uri sty/string?}}}
+
+   {:id :print
+    :do {:act sty/print
+         :path [:echo :body]}}
+
+   {:id :print-2
+    :do {:act sty/print
+         :expression (get-in sty/state [:echo :body])}}
+
+   ]}
+
+ case-2
+ {:zen/tags #{sty/case}
+  :steps
+  [{:id :echo
+    :do {:act sty/http :method :get :url "/echo"}
+    :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
+
+   {:id :error
+    :do {:act sty/http :method :get :url "/ups"}
+    :match {:by sty/matcho :status 200}}
+
+   {:id :exception
+    :do {:act sty/http :method :putch :url "/ups"}
+    :match {:by sty/matcho :status 200}}
+
+   {:id :echo-2
+    :do {:act sty/http :method :get :url "/echo"}
+    :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
+
+   {:id :echo-3
     :do {:act sty/http :method :get :url "/echo"}
     :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
 
@@ -26,12 +100,7 @@
 
    {:id :print-2
     :do {:act sty/print
-         :expression {
-                      ;; :case (get-in sty/case [])
-                      :state (get-in sty/state [])
-                      :env  (get-in sty/env [])
-                      :data (get-in sty/state [:echo :body])}}}
+         :expression (get-in sty/state [:echo :body])}}
 
    ]}
-
  }

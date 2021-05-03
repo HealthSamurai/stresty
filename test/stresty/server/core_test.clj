@@ -10,10 +10,11 @@
   ;; (sut/main ["format:debug" "path:test" "ns:stresty.testcase" "test"])
 
   ;; (sut/main ["test"])
-  (sut/main [])
+  ;; (sut/main [])
 
   (t/is (= 1 1))
 
-  (sut/main ["path:../fhir-stresty" "ns:servers" "test" "env:servers/aidbox" "fmt:compact"])
+  ;; (sut/main ["path:../fhir-stresty" "ns:servers" "test" "env:servers/aidbox" "fmt:compact"])
+  (sut/main ["path:test" "ns:stresty.testcase" "test" "fmt:compact"])
 
   )
