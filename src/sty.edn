@@ -290,7 +290,16 @@
                         :zen/desc "envs list, run specific enviroments"
                         :cli/alias "e"
                         :cli/example "servers/aidbox"
-                        :every {:type zen/string}}}}}
+                        :every {:type zen/string}}
+                  :format {:type zen/vector
+                           :zen/desc "tests output format"
+                           :cli/alias "fmt"
+                           :cli/example "pretty"
+                           :every {:type zen/string
+                                   :enum [{:value "compact"   :zen/desc ""}
+                                          {:value "normal"    :zen/desc ""}
+                                          {:value "detailed"  :zen/desc ""}
+                                          {:value "html"      :zen/desc ""}]}}}}}
 
 
 

@@ -70,10 +70,8 @@
           (do
             (when id (save-case-state ztx enm cnm id result))
             (if-let [matcher (:match step)]
-              (let [{errors :errors :as mr} (stresty.matchers.core/match
-                                      ztx
-                                      (stresty.sci/eval-data {:namespaces {'sty {'env env 'step step 'case case 'state state}}} matcher)
-                                      result)]
+              (let [*matcher (stresty.sci/eval-data {:namespaces {'sty {'env env 'step step 'case case 'state state}}} matcher)
+                    {errors :errors :as mr} (stresty.matchers.core/match ztx *matcher result)]
                 (if (empty? errors)
                   (do
                     (save-step-result ztx cnm step {:status :success})
@@ -81,8 +79,8 @@
 
                   (do
                    (save-step-result ztx cnm step {:status :error :error error :result result})
-                   (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher)))
-                  ))
+                   (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher)))))
+
               :skip #_(fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result))))))
       (catch Exception e
         (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error {:message (.getMessage e)}))))))
