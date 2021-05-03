@@ -44,7 +44,7 @@
                   (:body args)
                   (assoc :body (cheshire.core/generate-string (:body args)))
                   (and user pass) (assoc :basic-auth [user pass]))
-            _ (fmt/emit ztx {:type 'sty.http/request :method (:method args) :url url :basic-auth (and user pass true)})
+            _ (fmt/emit ztx {:type 'sty.http/request :source args :method (:method args) :url url :basic-auth (and user pass true)})
             resp (-> (http/request req)
                      (update :body (fn [x] (when x (cheshire.core/parse-string x keyword)))))]
         {:result (dissoc resp :headers)}) ;; TBD: support headers option;; too noisy

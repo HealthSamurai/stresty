@@ -104,4 +104,7 @@
   (def ztx (start-server {}))
   (stop-server ztx)
 
+  (def p (main [ "--path=/Users/aitem/Work/HS/ssty/t" "--format=report" "--output=output" "--ns=rmis" "test"]))
+  (def p (main [ "--path=/Users/aitem/Work/HS/stresty-fhir" "--format=report" "--output=output" "--ns=servers" "test"]))
+
   )
