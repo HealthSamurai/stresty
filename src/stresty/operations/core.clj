@@ -84,7 +84,7 @@
                   (do
                    (save-step-result ztx cnm step {:status :error :error error :result result})
                    (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher)))))
-              :skip #_(fmt/emit ztx (assoc ev-base :type 'sty/on-step-result :result result)))
+              (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok)))
 
             (fmt/emit ztx (assoc ev-base :type 'sty/on-step-end)))))
       (catch Exception e

@@ -304,9 +304,11 @@
                            :cli/example "pretty"
                            :every {:type zen/string
                                    :enum [{:value "compact"   :zen/desc ""}
-                                          {:value "normal"    :zen/desc ""}
+                                          {:value "default"    :zen/desc ""}
                                           {:value "detailed"  :zen/desc ""}
-                                          {:value "html"      :zen/desc ""}]}}}}}
+                                          {:value "html"      :zen/desc ""}
+                                          {:value "json"      :zen/desc ""}
+                                          {:value "ndjson"      :zen/desc ""}]}}}}}
 
 
 

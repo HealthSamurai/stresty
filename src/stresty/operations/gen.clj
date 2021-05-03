@@ -65,7 +65,7 @@ case
         :url \"/Patient\"
         :body {:resourceType \"Patient\"
                :name [{:family \"Doe\", :given [\"John\"]}]}}
-   :match {:act sty/matcho
+   :match {:by sty/matcho
            :status sty/ok?
            :body {:id sty/string?}}}
 
@@ -77,7 +77,7 @@ case
    :do {:act sty/http
         :method :get
         :url (str \"/Patient/\" (get-in sty/state [:first-step :body :id]))}
-   :match {:act sty/matcho
+   :match {:by sty/matcho
            :status sty/ok?
            :body {:name (get-in sty/state [:first-step :body :name])}}}
 
