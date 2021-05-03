@@ -61,7 +61,7 @@
  ex!
  {:zen/tags #{is-action zen/schema}
   :type zen/map
-  :zen/desc "Action which trhow exception"
+  :zen/desc "Action which always throws exception"
   :keys {:message {:type zen/string}}}
 
  print
@@ -105,63 +105,6 @@
  ok? {:zen/tags #{predicate}}
 
  any? {:zen/tags #{predicate}}
-
- is-event {:zen/tags #{zen/tag}}
-
- event
- {:zen/tags #{zen/schema}
-  :type zen/map
-  :keys {:type {:type zen/symbol
-                :tags #{is-event}
-                :zen/desc "Event type, i.e. sty/on-tests-start"}
-         :ts {:type zen/integer :zen/desc "Number of milliseconds from start"}}}
-
- on-tests-start
- {:zen/tags #{is-event zen/schema}
-  :zen/desc "Event emited on tests starts"
-  :confirms #{event}
-  :type zen/map
-  :keys {}}
-
- on-tests-end
- {:zen/tags #{is-event zen/schema}
-  :zen/desc "Event emited on tests end"
-  :confirms #{event}
-  :type zen/map
-  :keys {}}
-
- on-case-start
- {:zen/tags #{is-event zen/schema}
-  :zen/desc "Event emited on tests finish"
-  :confirms #{event}
-  :type zen/map
-  :keys {:env {:confirms #{env}}
-         :case {:confirms #{case}}}}
-
- on-case-end
- {:zen/tags #{is-event zen/schema}
-  :zen/desc "Event emited on tests finish"
-  :confirms #{event on-step-start}
-  :type zen/map
-  :keys {:result {:type zen/any}
-         :errors {:type zen/any}}}
-
- on-step-start
- {:zen/tags #{is-event zen/schema}
-  :zen/desc "Event emited on tests finish"
-  :confirms #{event}
-  :type zen/map
-  :keys {:env {:confirms #{env}}
-         :case {:confirms #{case}}
-         :step {:confirms #{step}}}}
-
- on-step-end
- {:zen/tags #{is-event zen/schema}
-  :zen/desc "Event emited on tests finish"
-  :confirms #{event on-step-start}
-  :type zen/map
-  :keys {:result {:type zen/any}
-         :errors {:type zen/any}}}
 
  op  {:zen/tags #{zen/tag zen/schema}
       :type zen/map
@@ -301,6 +244,7 @@
                         :every {:type zen/string}}
                   :report {:type zen/string
                            :cli/alias "r"
+                           :zen/desc "report format (html, json)"
                            :enum [{:value "html"}
                                   {:value  "json"}]}
                   :output {:type zen/string
