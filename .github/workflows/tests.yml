@@ -79,6 +79,37 @@ jobs:
       - name: build native on Unix like OS
         run: make build-native || cat /tmp/clojure-*.edn
         if: matrix.os != 'windows-latest'
+        
+      - name: Codesign executable
+        env: 
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          IDENTITY_ID: ${{ secrets.IDENTITY_ID }}
+        run: |
+          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+          security create-keychain -p OhziH1Ee sty.keychain 
+          security default-keychain -s sty.keychain
+          security unlock-keychain -p OhziH1Ee sty.keychain
+          security import certificate.p12 -k sty.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k OhziH1Ee sty.keychain
+          /usr/bin/codesign --force --options runtime -s $IDENTITY_ID ./sty -v
+        if: matrix.os == 'macOS-latest'
+        
+      - name: "Notarize Release Build"
+        uses: devbotsxyz/xcode-notarize@v1
+        with:
+          product-path: ./sty
+          appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
+          appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
+          primary-bundle-id: sty
+        if: matrix.os == 'macOS-latest'
+        
+      #- name: "Staple Release Build"
+      #  uses: devbotsxyz/xcode-staple@v1
+      #  with:
+      #    product-path: ./sty
+      #    verbose: "true"
+      #  if: matrix.os == 'macOS-latest'
 
       - name: build native on Windows
         run: cp VERSION resources/VERSION; clojure -M:native-image;
