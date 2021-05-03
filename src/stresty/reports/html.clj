@@ -1,8 +1,5 @@
-(ns stresty.format.report
-  (:require [stresty.format.core :as fmt]
-            [zen.core :as zen]
-            [clojure.java.io :as io]
-            [clojure.pprint :as pp]
+(ns stresty.reports.html
+  (:require [clojure.pprint :as pp]
             [hiccup.core :as hiccup]
             [clojure.string :as str]))
 
@@ -21,7 +18,7 @@
   [:div.mt-3.rounded-l.overflow-hidden.bg-gray-800
    [:pre.p-2.text-white (with-out-str (pp/pprint cnt))]])
 
-(defn summary [ztx state ts]
+#_(defn summary [ztx state ts]
   (let [cases (zen/get-tag ztx 'sty/case)
         steps (reduce (fn [acc c] (+ acc (count (:steps (zen/get-symbol ztx c))))) 0 cases)
         res (reduce-kv
@@ -38,7 +35,7 @@
           (count (:success res)) " success "
           "(Total " (- ts (:start @state) ) " ms)")]))
 
-(defmethod fmt/do-format
+#_(defmethod fmt/do-format
   'sty/report-fmt
   [ztx _ state {tp :type ts :ts :as event}]
   (let [b #(swap! state update :body conj  %)
@@ -122,7 +119,7 @@
               [:div.mt-3 [:b "Response"]
                (code-block (if (:result event) (:result event) event))]]))
 
-      (= tp 'sty/tests-summary)
+      (= tp 'sty/on-tests-done)
       (b [:div.my-6.p-3.rounded.bg-gray-100  (summary ztx state ts)])
 
       (= tp 'sty/on-step-exception)
@@ -134,8 +131,12 @@
       (println "DONE ENV")
 
 
-      (= tp 'sty/tests-done)
+      (= tp 'sty/on-tests-done)
       (let [file "output/index.html"]
         (io/make-parents file)
         (spit file (hiccup/html  (report-layout (:body @state))))
         (println "DONE TEST")))))
+
+(defn do-report [ztx opts data]
+  (hiccup/html (report-layout [:h1 "Report"])))
+

@@ -65,12 +65,4 @@
                         (mapv (fn [e] (str "  * " e)))
                         (str/join "\n")))))
       (println "\n\n")
-      (swap! state dissoc :passed :failed))
-
-
-    ;; (= tp 'sty/tests-summary)
-    ;; (let [st @state]
-    ;;   (println "Passed:" (:passed st)
-    ;;            "Failed:" (count (:failed st))))
-    )
-  )
+      (swap! state dissoc :passed :failed))))

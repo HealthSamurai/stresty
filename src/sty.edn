@@ -299,17 +299,21 @@
                         :cli/alias "e"
                         :cli/example "servers/aidbox"
                         :every {:type zen/string}}
-                  :format {:type zen/vector
-                           :zen/desc "tests output format"
+                  :report {:type zen/string
+                           :cli/alias "r"
+                           :enum [{:value "html"}
+                                  {:value  "json"}]}
+                  :output {:type zen/string
+                           :zen/desc "File to output report"
+                           :cli/alias "o"
+                           :cli/example "logs/report.html"}
+                  :format {:type zen/string
+                           :zen/desc "tests output format (compact, default, detailed)"
                            :cli/alias "fmt"
-                           :cli/example "pretty"
-                           :every {:type zen/string
-                                   :enum [{:value "compact"   :zen/desc ""}
-                                          {:value "default"    :zen/desc ""}
-                                          {:value "detailed"  :zen/desc ""}
-                                          {:value "html"      :zen/desc ""}
-                                          {:value "json"      :zen/desc ""}
-                                          {:value "ndjson"      :zen/desc ""}]}}}}}
+                           :cli/default "default"
+                           :enum [{:value "compact"   :zen/desc ""}
+                                  {:value "default"   :zen/desc ""}
+                                  {:value "detailed"  :zen/desc ""}]}}}}
 
 
 

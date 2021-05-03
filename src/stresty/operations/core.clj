@@ -5,6 +5,7 @@
             [stresty.sci]
             [stresty.format.core :as fmt]
             [stresty.operations.gen]
+            [stresty.reports.core]
             [clojure.string :as str]))
 
 (defmulti call-op (fn [ztx op args] (:zen/name op)))
@@ -68,56 +69,67 @@
         (fmt/emit ztx (assoc ev-base :type 'sty/on-action-result :result result :error error))
         (if error
           (do
-            ;; TODO: what is FAIL step?
-            (save-step-result ztx cnm step {:status :fail :error error :result result})
-            (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error error)))
+            (save-step-result ztx cnm step {:status :error :error error})
+            (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error error))
+            (assoc step :status :error :error error))
           (do
             (when id (save-case-state ztx enm cnm id result))
             (if-let [matcher (:match step)]
               (let [*matcher (stresty.sci/eval-data {:namespaces {'sty {'env env 'step step 'case case 'state state}}} matcher)
-                    {errors :errors :as mr} (stresty.matchers.core/match ztx *matcher result)]
+                    {errors :errors} (stresty.matchers.core/match ztx *matcher result)]
                 (if (empty? errors)
                   (do
                     (save-step-result ztx cnm step {:status :success})
-                    (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok   :result result :matcher matcher)))
+                    (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok :result result :matcher matcher))
+                    (assoc step :status :ok :result result))
 
                   (do
                    (save-step-result ztx cnm step {:status :error :error error :result result})
-                   (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher)))))
-              (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok)))
-
-            (fmt/emit ztx (assoc ev-base :type 'sty/on-step-end)))))
+                   (fmt/emit ztx (assoc ev-base :type 'sty/on-match-fail :errors errors :result result :matcher matcher))
+                   (assoc step :status :fail :match-errors errors :result result))))
+              (do (fmt/emit ztx (assoc ev-base :type 'sty/on-match-ok))
+                  (assoc step :status :ok :result result))))))
       (catch Exception e
-        (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error {:message (.getMessage e)}))))))
+        (fmt/emit ztx (assoc ev-base :type 'sty/on-step-error :error {:message (.getMessage e)}))
+        (assoc step :status :error :error {:message (.getMessage e)})))))
 
 (defn run-case [ztx env case]
   (fmt/emit ztx {:type 'sty/on-case-start :env env :case case})
-  (doseq [step (->> (:steps case)
-                   (map-indexed (fn [idx x] (assoc x :_index idx))))]
-    (run-step ztx env case step))
-  (fmt/emit ztx {:type 'sty/on-case-end :env env :case case}))
+  (let [res (->> (:steps case)
+                 (map-indexed (fn [idx step]
+                                (let [step (assoc step :_index idx)]
+                                  (run-step ztx env case step))))
+                 (into []))]
+    (fmt/emit ztx {:type 'sty/on-case-end :env env :case case :result res})
+    res))
 
 (defn run-env [ztx env]
   (fmt/emit ztx {:type 'sty/on-env-start :env env})
-  (doseq [case-ref (zen/get-tag ztx 'sty/case)]
-    (let [case (zen/get-symbol ztx case-ref)]
-      (run-case ztx env case)))
-  (fmt/emit ztx {:type 'sty/on-env-end :env env}))
+  (let [cases (->> (zen/get-tag ztx 'sty/case)
+                   (mapv (fn [case-ref] (zen/get-symbol ztx case-ref))))
+        result (->> cases
+                    (reduce (fn [res case]
+                              (assoc res (:zen/name case) (run-case ztx env case)))
+                            {}))]
+    (fmt/emit ztx {:type 'sty/on-env-end :env env :result result})
+    {:cases result :env env}))
 
 (defmethod call-op 'sty/run-tests
   [ztx op {params :params}]
-  (fmt/set-formatters ztx (:format params))
+  (fmt/set-formatter ztx (:format params))
   (fmt/emit ztx {:type 'sty/on-tests-start})
-  (let [envs (when (:env params) (into #{} (mapv symbol (:env params))))]
-    (doseq [env-ref (zen/get-tag ztx 'sty/env)]
-      (let [env (zen/get-symbol ztx env-ref)]
-        (if (or (nil? envs) (contains? envs (:zen/name env)))
-          (run-env ztx env)
-          (fmt/emit ztx {:type 'sty/skip-env :name (:zen/name env)})))))
-
-  (fmt/emit ztx {:type 'sty/tests-summary})
-  (fmt/emit ztx {:type 'sty/tests-done})
-  {:result params})
+  (let [envs-filter (when (:env params) (into #{} (mapv symbol (:env params))))
+        envs (->> (zen/get-tag ztx 'sty/env)
+                  (filter (fn [env-ref] (or (nil? envs-filter) (contains? envs-filter env-ref))))
+                  (map (fn [env-ref]
+                         (zen/get-symbol ztx env-ref))))
+        result (->> envs
+                    (reduce (fn [report env]
+                              (let [res (run-env ztx env)]
+                                (assoc report (:zen/name env) res))) {}))]
+    (stresty.reports.core/build-report ztx params result)
+    (fmt/emit ztx {:type 'sty/on-tests-done :result result})
+    result))
 
 (defmethod call-op 'sty/gen
   [ztx op {params :params}]

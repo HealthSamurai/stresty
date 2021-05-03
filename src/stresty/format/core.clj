@@ -1,6 +1,5 @@
 (ns stresty.format.core
-  (:require [zen.core :as zen]
-            [cheshire.core]
+  (:require [cheshire.core]
             [zprint.core :as zprint]
             [stresty.format.compact :as compact]
             [stresty.format.default :as default]
@@ -14,22 +13,25 @@
 (def formats {"compact"  'sty/compact-fmt
               "default"  'sty/default-fmt
               "detailed" 'sty/detailed-fmt
-              "html"     'sty/html-fmt
-              "ndjson"   'sty/ndjson-fmt
-              "json"     'sty/json-fmt})
+              "ndjson"   'sty/ndjson-fmt})
 
-(defn set-formatters [ztx fmt-names]
-  (let [fmts (->> fmt-names
-                 (mapv (fn [x] (get formats x)))
-                 (filter identity)
-                 (reduce (fn [acc fmt] (assoc acc fmt (atom {}))) {}))
-        fmts (if (empty? fmts) {'sty/default-fmt (atom {})} fmts)]
-    (swap! ztx assoc :formatters fmts)))
+(defn stderr [& args]
+  (let [^String s (str/join " " args)]
+    (.println ^java.io.PrintWriter *err* s)))
+
+(defn set-formatter [ztx fmt-name]
+  (swap! ztx assoc :formatter 
+         (if (nil? fmt-name)
+           {'sty/default-fmt (atom {})}
+           (if-let [fmt (get formats fmt-name)]
+             {fmt (atom {})}
+             (do
+               (stderr "Unknown format: " fmt-name)
+               {'sty/default-fmt (atom {})})))))
 
 (defn emit [ztx event]
   (let [ev (assoc event :ts (System/currentTimeMillis))]
-    (doseq [[fmt state] (get @ztx :formatters)]
-
+    (when-let [[fmt state] (first (get @ztx :formatter))]
       (do-format ztx fmt state ev))))
 
 (defmethod do-format

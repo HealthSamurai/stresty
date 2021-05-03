@@ -35,83 +35,76 @@
 
 (defn do-format
   [ztx state {tp :type ts :ts :as event}]
-  #_(let [start (:start @state)
-          epoch (- ts start)]
-      (println epoch (:type event)))
-  (let [ident (get @state :ident)]
-    (cond
-      (= tp 'sty/on-tests-start)
-      (swap! state assoc :start ts)
+  (cond
+    (= tp 'sty/on-tests-start)
+    (swap! state assoc :start ts)
 
-      (= tp 'sty/on-env-start)
-      (do
-        (swap! state assoc :ident "  ")
-        (println "env:" (get-in event [:env :zen/name]) (get-in event [:env :base-url])))
-
-      (= tp 'sty/on-env-end)
-      (swap! state assoc :ident " ")
-
-
-      (= tp 'sty/on-case-start)
-      (do
-        (swap! state assoc :ident "    ")
-        (println "case:" (get-in event [:case :zen/name]) (get-in event [:case :title] "")))
-
-      (= tp 'sty/on-case-end)
+    (= tp 'sty/on-env-start)
+    (do
       (swap! state assoc :ident "  ")
+      (println "env:" (get-in event [:env :zen/name]) (get-in event [:env :base-url])))
 
-      (= tp 'sty/on-step-start)
-      
-      (println
-       (str
-        "* " (let [id (get-in event [:step :id])]
-                (if (keyword? id) (name id) (str "#1")))
-        " "
-        (get-in event [:step :desc] "")))
-
-      (= tp 'sty/on-step-end)
-      :nop
-
-      (= tp 'sty/on-run-step)
-      :nop
-
-      (= tp 'sty/on-match-ok)
-      (println  (green "  Success!"))
-
-      (= tp 'sty/on-match-fail)
-      (do
-        (println  (red "  Fail:"))
-        (when-let [err (:errors event)]
-          (println 
-           (->> err
-                (mapv #(str "  - " %))
-                (str/join "\n")))))
+    (= tp 'sty/on-env-end)
+    (swap! state assoc :ident " ")
 
 
-      (= tp 'sty/on-step-error)
-      (do
-        (println  (red "  Error:") (get-in event [:error :message])))
+    (= tp 'sty/on-case-start)
+    (do
+      (swap! state assoc :ident "    ")
+      (println "case:" (get-in event [:case :zen/name]) (get-in event [:case :title] "")))
 
-      (= tp 'sty/on-action-result)
+    (= tp 'sty/on-case-end)
+    (swap! state assoc :ident "  ")
 
-      (when (:result event)
-        (println "  Response:")
-        (pretty  "  " (:result event)))
+    (= tp 'sty/on-step-start)
+    
+    (println
+     (str
+      "* " (let [id (get-in event [:step :id])]
+             (if (keyword? id) (name id) (str "#1")))
+      " "
+      (get-in event [:step :desc] "")))
+
+    (= tp 'sty/on-run-step)
+    :nop
+
+    (= tp 'sty/on-match-ok)
+    (println  (green "  Success!"))
+
+    (= tp 'sty/on-match-fail)
+    (do
+      (println  (red "  Fail:"))
+      (when-let [err (:errors event)]
+        (println 
+         (->> err
+              (mapv #(str "  - " %))
+              (str/join "\n")))))
 
 
-      (= tp 'sty/tests-summary)
-      (println (summary ztx))
+    (= tp 'sty/on-step-error)
+    (do
+      (println  (red "  Error:") (get-in event [:error :message])))
+
+    (= tp 'sty/on-action-result)
+
+    (when (:result event)
+      (println "  Response:")
+      (pretty  "  " (:result event)))
 
 
-      (= tp 'sty.http/request)
-      (do 
-        (println " " (when-let [m (:method event)] (str/upper-case (name m))) (:url event))
-        (when-let [b (get-in event [:source :body])]
-          (pretty "  " b)
-          ))
+    (= tp 'sty/on-tests-done)
+    (println (summary ztx))
 
-      ;; :else
-      ;; (println ident tp (dissoc event :type))
 
-      ))
+    (= tp 'sty.http/request)
+    (do 
+      (println " " (when-let [m (:method event)] (str/upper-case (name m))) (:url event))
+      (when-let [b (get-in event [:source :body])]
+        (pretty "  " b)
+        ))
+
+    ;; :else
+    ;; (println ident tp (dissoc event :type))
+
+    )
   )

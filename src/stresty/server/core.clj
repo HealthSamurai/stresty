@@ -1,5 +1,6 @@
 (ns stresty.server.core
-  (:require [zen.core :as zen]
+  (:require
+   [zen.core :as zen]
    [stresty.actions.core]
    [stresty.matchers.core]
    [stresty.server.core]
@@ -7,7 +8,6 @@
    [stresty.server.cli :as cli]
    [stresty.operations.core]
    [stresty.format.core :as fmt]
-   [stresty.format.report]
    [stresty.sci]
    [clojure.string :as str]))
 
@@ -51,24 +51,20 @@
        (str (System/getProperty "user.dir") "/" pth))
      (System/getProperty "user.dir"))])
 
+
+(defn stderr [& args]
+  (let [^String s (str/join " " args)]
+    (.println ^java.io.PrintWriter *err* s)))
+
 (defn report-zen-errors [ztx]
   (let [errs (:errors @ztx)]
     (when-not (empty? errs)
-      (println "Syntax errors:")
-      (println (str/join "\n"
+      (stderr "Syntax errors:")
+      (stderr (str/join "\n"
                          (->> errs
                               (mapv (fn [{msg :message res :resource pth :path}]
-                                      (str msg " in " res " at " pth)))))))))
+                                      (str "* " msg " in " res " at " pth)))))))))
 
-(defn configure-format [ztx opts]
-  (swap! ztx assoc :opts opts :formatters
-         (let [fmt (get {"ndjson" 'sty/ndjson-fmt
-                         "stdout" 'sty/stdout-fmt
-                         "report" 'sty/report-fmt ;; html report
-                         "debug"  'sty/debug-fmt}
-                        (:format opts)
-                        'sty/debug-fmt)]
-           {fmt (atom {})})))
 
 (defn start-server [{opts :params}]
   (let [paths (calculate-paths (:path opts))
@@ -87,17 +83,16 @@
   (let [ztx (start-server args)]
     (if-not cmd-params
       (do
-        (println "WARN: No command provided")
+        (stderr "WARN: No command provided")
         (println (cli/usage ztx))
         {:error {:message "No command provided"}})
       (let [{err :error cmd :result :as resp} (cli/resolve-cmd ztx cmd-params)]
         (if err
           (do
-            (println (or (:message err) "Error"))
-            (println (str/join "\n * " (:errors err)))
+            (stderr (or (:message err) "Error"))
+            (stderr (str/join "\n * " (:errors err)))
             resp)
           (do
-            (println "cmd:" (:name cmd))
             (command ztx cmd)))))))
 
 (defn main [args]
