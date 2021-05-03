@@ -104,11 +104,12 @@ jobs:
           primary-bundle-id: sty
         if: matrix.os == 'macOS-latest'
         
-      - name: "Staple Release Build"
-        uses: devbotsxyz/xcode-staple@v1
-        with:
-          product-path: ./sty
-        if: matrix.os == 'macOS-latest'
+      #- name: "Staple Release Build"
+      #  uses: devbotsxyz/xcode-staple@v1
+      #  with:
+      #    product-path: ./sty
+      #    verbose: "true"
+      #  if: matrix.os == 'macOS-latest'
 
       - name: build native on Windows
         run: cp VERSION resources/VERSION; clojure -M:native-image;
