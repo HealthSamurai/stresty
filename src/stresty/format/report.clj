@@ -21,6 +21,23 @@
   [:div.mt-3.rounded-l.overflow-hidden.bg-gray-800
    [:pre.p-2.text-white (with-out-str (pp/pprint cnt))]])
 
+(defn summary [ztx state ts]
+  (let [cases (zen/get-tag ztx 'sty/case)
+        steps (reduce (fn [acc c] (+ acc (count (:steps (zen/get-symbol ztx c))))) 0 cases)
+        res (reduce-kv
+             (fn [acc _ steps]
+               (->> steps vals (group-by :status)
+                    (merge-with concat acc)))
+             {} (:result @ztx))]
+
+    [:div [:b "Summary: "]
+     (str (count cases) " cases, "
+          steps " steps, "
+          (count (:error res)) " errors, "
+          (count (:fail res)) " fails, "
+          (count (:success res)) " success "
+          "(Total " (- ts (:start @state) ) " ms)")]))
+
 (defmethod fmt/do-format
   'sty/report-fmt
   [ztx _ state {tp :type ts :ts :as event}]
@@ -31,8 +48,7 @@
       (swap! state assoc :body [:div.container.mx-auto]))
     (cond
       (= tp 'sty/on-tests-start)
-      (do (swap! state assoc :start ts)
-          #_(b  [:div [:b "Start test run at " ts]]))
+      (do (swap! state assoc :start ts))
 
       (= tp 'sty/on-zen-errors)
       (do
@@ -46,7 +62,7 @@
       (= tp 'sty/on-env-start)
       (b [:div.my-6.p-3.rounded.bg-gray-100
           [:dl.grid {:style "grid-template-columns: 140px 1fr"}
-           [:dt.text-right.mr-2 "Run tests in env:"]
+           [:dt.text-right.mr-2 "Environment:"]
            [:dd (get-in event [:env :zen/name])]
 
            [:dt.text-right.mr-2 [:img.w-4.mx-2.inline-block
@@ -73,22 +89,25 @@
 
       (= tp 'sty/on-step-start)
       (do (swap! state assoc :step [:div.bg-green-200.p-2.mb-4.roun-l])
+          (swap! state assoc :step-ts ts)
           (c [:div.text-xl
               (or (get-in event [:step :desc])
                   (str "ID: "(get-in event [:step :id])))]))
 
       (= tp 'sty/on-step-end)
-      (c (:step @state))
+      (do (swap! state update-in [:step 1 1] conj [:div.float-right ( str  (- ts (:step-ts @state)) " ms")])
+        (c (:step @state)))
 
       (= tp 'sty.http/request)
       (let [source-event (:source event)]
         (s [:div
-            [:img.w-4.mr-2.inline-block
-             {:src "https://cdn.jsdelivr.net/npm/heroicons@1.0.1/outline/globe-alt.svg"}]
+            [:div.req
+             [:img.w-4.mr-2.inline-block
+              {:src "https://cdn.jsdelivr.net/npm/heroicons@1.0.1/outline/globe-alt.svg"}]
 
-            [:div.inline-block.uppercase.bg-white.w-20.rounded.text-center
-             (:method event)]
-            [:span.ml-2 [:a.text-blue-500 {:href (:url event) :target "_blank"} (:url source-event)]]
+             [:div.inline-block.uppercase.bg-white.w-20.rounded.text-center
+              (:method event)]
+             [:span.ml-2 [:a.text-blue-500 {:href (:url event) :target "_blank"} (:url source-event)]]]
             (when (:body source-event)
               (code-block (:body source-event)))]))
 
@@ -96,7 +115,7 @@
       ;;(b [:div [:span.bg-green-500  "success"]])
 
       (tp (set ['sty/on-step-fail 'sty/on-match-fail]))
-      (do (swap! state assoc-in [:step 0] :div.bg-red-200.p-2.mt-1.rounded-l)
+      (do (swap! state assoc-in [:step 0] :div.bg-red-200.p-2.mt-1.rounded-l.mb-4)
           (s [:div
               [:div.mt-3 [:b "Fail: assertion fail"]
                (code-block (if (:errors event) (:errors event) event))]
@@ -104,7 +123,7 @@
                (code-block (if (:result event) (:result event) event))]]))
 
       (= tp 'sty/tests-summary)
-      (b [:div  (fmt/summary ztx)])
+      (b [:div.my-6.p-3.rounded.bg-gray-100  (summary ztx state ts)])
 
       (= tp 'sty/on-step-exception)
       (b [:div [:span.bg-red-500  "STEP fail"]])
