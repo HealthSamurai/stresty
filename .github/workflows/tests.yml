@@ -92,7 +92,7 @@ jobs:
           security unlock-keychain -p OhziH1Ee sty.keychain
           security import certificate.p12 -k sty.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k OhziH1Ee sty.keychain
-          /usr/bin/codesign --force -s $IDENTITY_ID ./sty -v
+          /usr/bin/codesign --force --options runtime -s $IDENTITY_ID ./sty -v
         if: matrix.os == 'macOS-latest'
         
       - name: "Notarize Release Build"
