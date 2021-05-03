@@ -92,7 +92,7 @@ jobs:
           security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k OhziH1Ee build.keychain
           /usr/bin/codesign --force -s $IDENTITY_ID ./sty -v
-        if: matrix.os == 'macOS-lates'
+        if: matrix.os == 'macOS-latest'
 
       - name: build native on Windows
         run: cp VERSION resources/VERSION; clojure -M:native-image;
