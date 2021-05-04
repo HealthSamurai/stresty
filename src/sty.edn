@@ -213,8 +213,8 @@
 
  cli-help
  {:zen/tags #{cli-cmd}
-  :cli/name "show help"
-  :zen/desc "stresty help"
+  :cli/name "help"
+  :zen/desc "print help page"
   :params {:type zen/map
            :keys {}}}
 
@@ -264,6 +264,7 @@
                         :every {:type zen/string}}
                   :report {:type zen/string
                            :cli/alias "r"
+                           :cli/example "html"
                            :zen/desc "report format (html, json)"
                            :enum [{:value "html"} {:value  "json"}]}
                   :output {:type zen/string

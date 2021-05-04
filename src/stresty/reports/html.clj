@@ -126,10 +126,12 @@
     [:div.text-xs.bg-gray-100.uppercase.border.rounded.text-center.p-1 [:b (:method act)]]
     [:div.ml-1 (:url act)]]
    (when-let [b (:body act)]
-     (code-block b))])
+     [:details
+      [:summary "Body"]
+      (code-block b)])])
 
 (defn render-step [step]
-  [:div.mt-1.border-solid.border-l-4.pb-4
+  [:details.border-solid.border-l-4
    {:class (cond
              (= :ok (:status step))
              "border-green-300"
@@ -138,30 +140,42 @@
              (= :fail (:status step))
              "border-red-300"
              :else
-             "border-gray-300")}
-   [:div.flex.align-baseline.space-x-2.border-b.px-4.py-1.mb-2
+             "border-gray-300")
+    :open (contains? #{:error :fail} (:status step))}
+   [:summary.flex.align-baseline.space-x-2.border-b.px-4.py-1.mb-2
+    {:class (cond
+              (= :ok (:status step))
+              "bg-green-50"
+              (= :error (:status step))
+              "bg-red-50"
+              (= :fail (:status step))
+              "bg-red-50")}
     [:div.text-xl (or (when-let [id (:id step)] (name id)) (str "#" (:_index step)))]
     [:div (:title step)]]
-   [:div.pl-4.space-y-2
+   [:div.pl-4.space-y-2.mb-4
     (when (:do step)
       (render-action (:do step)))
     (when (:result step)
-      [:div [:b.text-xs.text-gray-500 "Result:"] (code-block (:result step))])
+      [:details [:summary.text-xs.text-gray-500 "Result:"] (code-block (:result step))])
     (when (:error step)
-      [:div [:b.text-xs.text-gray-500 "Error:"] (code-block (:error step))])
+      [:div.text-red-500.space-x-2 [:b "Error:"] (get-in step [:error :message])])
     (when (:match step)
-      [:div [:b.text-xs.text-gray-500 "Match:"] (code-block (:match step))])
+      [:details [:summary.text-xs.text-gray-500 "Match:"] (code-block (:match step))])
     (when (:match-errors step)
-      [:div [:b.text-xs.text-gray-500 "Fails:"] (code-block (:match-errors step))])
+      [:div.text-red-500
+       [:div [:b "Fails:"]]
+       [:ul.list-disc.px-4
+        (for [e (get-in step [:match-errors])]
+          [:li (pr-str e)])]])
     ]
    ])
 
 (defn render-case [case]
-  [:div
-   [:div.text-xl.p-2.mt-1.border-solid.border-l-4.border-blue-500.bg-gray-50
+  [:details
+   [:summary.text-xl.p-2.mt-1.border-solid.border-l-4.border-blue-500.bg-gray-50
     [:span.font-medium (get-in case [:case :zen/name])]
     [:span.text-l.ml-3 (get-in case [:case :title])]]
-   [:div
+   [:div.space-y-1
     (for [step (:steps case)]
       (render-step step))]
    ])
@@ -169,9 +183,9 @@
 (defn report [data]
   [:div.p-10.px-20
    (for [[env-nm env] data]
-     [:div.my-3
-      [:div.flex.border-b.align-middle.py-2.space-x-2
-       [:div.text-xl (or (:title env) (str env-nm))]
+     [:details.my-3 {:open true}
+      [:summary.flex.border-b.align-baseline.py-2.space-x-2.cursor-pointer
+       [:div.text-2xl (or (:title env) (str env-nm))]
        [:a.text-blue-500 {:href (get-in env [:env :base-url])} (get-in env [:env :base-url])]]
       [:div
        (for [[case-nm case] (:cases env)]
