@@ -50,7 +50,7 @@
               (= :fail (:status step))
               "bg-red-50")}
     [:div.text-l (or (when-let [id (:id step)] (name id)) (str "#" (:_index step)))]
-    [:div (:title step)]
+    [:div (:desc step)]
     [:div.flex-1]
     [:div.text-xs
      {:class
