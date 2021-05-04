@@ -99,9 +99,17 @@
                  (map-indexed (fn [idx step]
                                 (let [step (assoc step :_index idx)]
                                   (run-step ztx env case step))))
-                 (into []))]
-    (fmt/emit ztx {:type 'sty/on-case-end :env env :case case :result res})
-    {:case case :steps res}))
+                 (into []))
+        stats (->> res (reduce (fn [acc {st :status}]
+                                 (cond
+                                   (= :ok st) (update acc :passed inc)
+                                   (= :error st) (update acc :errored inc)
+                                   (= :fail st) (update acc :failed inc)
+                                   :else acc))
+                               {:passed 0 :errored 0 :failed 0}))]
+    (fmt/emit ztx {:type 'sty/on-case-end :env env :case case :result res :stats stats})
+    {:case case :stats stats :steps res
+     :status (if (or (> (:errored stats) 0) (> (:passed stats) 0)) :fail :ok)}))
 
 (defn run-env [ztx env]
   (fmt/emit ztx {:type 'sty/on-env-start :env env})
@@ -110,9 +118,17 @@
         result (->> cases
                     (reduce (fn [res case]
                               (assoc res (:zen/name case) (run-case ztx env case)))
-                            {}))]
-    (fmt/emit ztx {:type 'sty/on-env-end :env env :result result})
-    {:cases result :env env}))
+                            {}))
+        stats (->> result
+                   (reduce 
+                    (fn [acc [_ {stats :stats}]]
+                      (-> acc
+                          (update :passed + (or (:passed stats) 0))
+                          (update :failed + (or (:failed stats) 0))
+                          (update :errored + (or (:errored stats) 0))))
+                    {:passed 0 :errored 0 :failed 0}))]
+    (fmt/emit ztx {:type 'sty/on-env-end :env env :result result :stats stats})
+    {:cases result :env env :stats stats}))
 
 (defmethod call-op 'sty/run-tests
   [ztx op {params :params}]

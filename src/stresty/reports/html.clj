@@ -19,107 +19,6 @@
   [:div.rounded-l.overflow-hidden.bg-gray-600
    [:pre.p-2.text-white (with-out-str (zprint/zprint cnt))]])
 
-#_(defn summary [ztx state ts]
-  (let [cases (zen/get-tag ztx 'sty/case)
-        steps (reduce (fn [acc c] (+ acc (count (:steps (zen/get-symbol ztx c))))) 0 cases)
-        res (reduce-kv
-             (fn [acc _ steps]
-               (->> steps vals (group-by :status)
-                    (merge-with concat acc)))
-             {} (:result @ztx))]
-
-    [:div [:b "Summary: "]
-     (str (count cases) " cases, "
-          steps " steps, "
-          (count (:error res)) " errors, "
-          (count (:fail res)) " fails, "
-          (count (:success res)) " success "
-          "(Total " (- ts (:start @state) ) " ms)")]))
-
-#_(defmethod fmt/do-format
-  'sty/report-fmt
-  [ztx _ state {tp :type ts :ts :as event}]
-  (let [b #(swap! state update :body conj  %)
-        c #(swap! state update :case conj  %)
-        s #(swap! state update :step conj  %)]
-    (when-not (:body @state)
-      (swap! state assoc :body [:div.container.mx-auto]))
-    (cond
-      (= tp 'sty/on-tests-start)
-      (do (swap! state assoc :start ts))
-
-      (= tp 'sty/on-zen-errors)
-      (do
-        (println "Syntax errors:")
-        (println (str/join "\n"
-                           (->>
-                            (:errors event)
-                            (mapv (fn [{msg :message res :resource pth :path}]
-                                    (str ">> " msg " in " res " at " pth)))))))
-
-      (= tp 'sty/on-env-start)
-      
-
-      (= tp 'sty/on-case-start)
-      (do (swap! state assoc :case [:div.bg-gray-50.border-solid.border-l-4.border-light-blue-500.p-3.mt-2])
-          (b  [:div.mt-6.text-xl
-               [:span.font-medium (or (get-in event [:case :title]) (get-in event [:case :zen/name]))]
-               [:span.text-l.ml-3 (:zen/file (zen/get-symbol ztx (get-in event [:case :zen/name]) ))]] ))
-
-      (= tp 'sty/on-case-end)
-      (b (:case @state))
-
-      (= tp 'sty/on-step-start)
-      (do (swap! state assoc :step [:div.bg-green-200.p-2.mb-4.roun-l])
-          (swap! state assoc :step-ts ts)
-          (c ))
-
-      (= tp 'sty/on-step-end)
-      (do (swap! state update-in [:step 1 1] conj [:div.float-right ( str  (- ts (:step-ts @state)) " ms")])
-        (c (:step @state)))
-
-      (= tp 'sty.http/request)
-      (let [source-event (:source event)]
-        (s [:div
-            [:div.req
-             [:img.w-4.mr-2.inline-block
-              {:src "https://cdn.jsdelivr.net/npm/heroicons@1.0.1/outline/globe-alt.svg"}]
-
-             [:div.inline-block.uppercase.bg-white.w-20.rounded.text-center
-              (:method event)]
-             [:span.ml-2 [:a.text-blue-500 {:href (:url event) :target "_blank"} (:url source-event)]]]
-            (when (:body source-event)
-              (code-block (:body source-event)))]))
-
-      ;;(tp (set ['sty/on-step-success 'sty/on-match-ok]))
-      ;;(b [:div [:span.bg-green-500  "success"]])
-
-      (tp (set ['sty/on-step-fail 'sty/on-match-fail]))
-      (do (swap! state assoc-in [:step 0] :div.bg-red-200.p-2.mt-1.rounded-l.mb-4)
-          (s [:div
-              [:div.mt-3 [:b "Fail: assertion fail"]
-               (code-block (if (:errors event) (:errors event) event))]
-              [:div.mt-3 [:b "Response"]
-               (code-block (if (:result event) (:result event) event))]]))
-
-      (= tp 'sty/on-tests-done)
-      (b [:div.my-6.p-3.rounded.bg-gray-100  (summary ztx state ts)])
-
-      (= tp 'sty/on-step-exception)
-      (b [:div [:span.bg-red-500  "STEP fail"]])
-
-
-
-      (= tp 'sty/on-env-end)
-      (println "DONE ENV")
-
-
-      (= tp 'sty/on-tests-done)
-      (let [file "output/index.html"]
-        (io/make-parents file)
-        (spit file (hiccup/html  (report-layout (:body @state))))
-        (println "DONE TEST")))))
-
 (defn render-action [act]
   [:div
    [:div.flex.space-x-2.items-baseline 
@@ -127,7 +26,7 @@
     [:div.ml-1 (:url act)]]
    (when-let [b (:body act)]
      [:details
-      [:summary "Body"]
+      [:summary.cursor-pointer "Body:"]
       (code-block b)])])
 
 (defn render-step [step]
@@ -142,7 +41,7 @@
              :else
              "border-gray-300")
     :open (contains? #{:error :fail} (:status step))}
-   [:summary.flex.align-baseline.space-x-2.border-b.px-4.py-1.mb-2
+   [:summary.cursor-pointer.flex.items-baseline.space-x-2.px-4.py-1.mb-2
     {:class (cond
               (= :ok (:status step))
               "bg-green-50"
@@ -150,43 +49,65 @@
               "bg-red-50"
               (= :fail (:status step))
               "bg-red-50")}
-    [:div.text-xl (or (when-let [id (:id step)] (name id)) (str "#" (:_index step)))]
-    [:div (:title step)]]
+    [:div.text-l (or (when-let [id (:id step)] (name id)) (str "#" (:_index step)))]
+    [:div (:title step)]
+    [:div.flex-1]
+    [:div.text-xs
+     {:class
+      (cond
+        (= :ok (:status step))
+        "text-green-500"
+        (contains? #{:error :fail} (:status step))
+        "text-red-500")}
+     (:status step)]]
    [:div.pl-4.space-y-2.mb-4
     (when (:do step)
       (render-action (:do step)))
     (when (:result step)
-      [:details [:summary.text-xs.text-gray-500 "Result:"] (code-block (:result step))])
+      [:details [:summary.cursor-pointer.text-xs.text-gray-500 "Result:"] (code-block (:result step))])
     (when (:error step)
       [:div.text-red-500.space-x-2 [:b "Error:"] (get-in step [:error :message])])
     (when (:match step)
-      [:details [:summary.text-xs.text-gray-500 "Match:"] (code-block (:match step))])
+      [:details [:summary.cursor-pointer.text-xs.text-gray-500 "Match:"] (code-block (:match step))])
     (when (:match-errors step)
       [:div.text-red-500
        [:div [:b "Fails:"]]
        [:ul.list-disc.px-4
         (for [e (get-in step [:match-errors])]
-          [:li (pr-str e)])]])
-    ]
-   ])
+          [:li (pr-str e)])]])]])
+
+(defn render-stats [stats]
+  [:div.flex.space-x-2.text-xs.text-gray-600
+   [:div "Passed: " [:span.text-green-700 (:passed stats)]]
+   [:div "Failed: " [:span.text-red-700 (:failed stats)]]
+   [:div "Errors: " [:span.text-red-700 (:errored stats)]]])
 
 (defn render-case [case]
   [:details
-   [:summary.text-xl.p-2.mt-1.border-solid.border-l-4.border-blue-500.bg-gray-50
-    [:span.font-medium (get-in case [:case :zen/name])]
-    [:span.text-l.ml-3 (get-in case [:case :title])]]
-   [:div.space-y-1
+   [:summary.cursor-pointer.flex.items-baseline.space-x-2.p-2.mt-1.border-solid.border-l-4.bg-gray-50
+    {:class
+     (if (= :fail (:status case))
+       "border-red-500"
+       "border-green-500")}
+    [:div.text-xl (get-in case [:case :title])]
+    [:div.font-xl.text-gray-700 (get-in case [:case :zen/name])]
+    [:div.flex-1]
+    (render-stats (:stats case))]
+   [:div.space-y-1.pt-1.pb-4.ml-4
     (for [step (:steps case)]
       (render-step step))]
    ])
 
+
 (defn report [data]
-  [:div.p-10.px-20
+  [:div.p-10.px-20 {:style "width:1200px;margin:0 auto;"}
    (for [[env-nm env] data]
      [:details.my-3 {:open true}
-      [:summary.flex.border-b.align-baseline.py-2.space-x-2.cursor-pointer
+      [:summary.flex.items-baseline.border-b.align-baseline.py-2.space-x-2.cursor-pointer
        [:div.text-2xl (or (:title env) (str env-nm))]
-       [:a.text-blue-500 {:href (get-in env [:env :base-url])} (get-in env [:env :base-url])]]
+       [:a.text-blue-500 {:href (get-in env [:env :base-url])} (get-in env [:env :base-url])]
+       [:div.flex-1]
+       (render-stats (:stats env))]
       [:div
        (for [[case-nm case] (:cases env)]
          (render-case case))]])])
