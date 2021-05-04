@@ -109,7 +109,7 @@
                                {:passed 0 :errored 0 :failed 0}))]
     (fmt/emit ztx {:type 'sty/on-case-end :env env :case case :result res :stats stats})
     {:case case :stats stats :steps res
-     :status (if (or (> (:errored stats) 0) (> (:passed stats) 0)) :fail :ok)}))
+     :status (if (or (> (:errored stats) 0) (> (:failed stats) 0)) :fail :ok)}))
 
 (defn run-env [ztx env]
   (fmt/emit ztx {:type 'sty/on-env-start :env env})

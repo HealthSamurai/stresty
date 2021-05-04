@@ -70,37 +70,5 @@
     :do {:act sty/http :method :get :url "/echo"}
     :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
 
-   {:id :error
-    :do {:act sty/http :method :get :url "/ups"}
-    :match {:by sty/matcho :status 200}}
-
-   {:id :exception
-    :do {:act sty/http :method :putch :url "/ups"}
-    :match {:by sty/matcho :status 200}}
-
-   {:id :echo-2
-    :do {:act sty/http :method :get :url "/echo"}
-    :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
-
-   {:id :echo-3
-    :do {:act sty/http :method :get :url "/echo"}
-    :match {:by sty/matcho :status 200 :body {:uri "/echo"}}}
-
-   {:do {:act sty/http
-         :method :get
-         :url (get-in sty/state [:echo :body :uri])
-         :params {:param "value"}}
-    :match {:by sty/matcho
-            :status 200
-            :body {:uri sty/string?}}}
-
-   {:id :print
-    :do {:act sty/print
-         :path [:echo :body]}}
-
-   {:id :print-2
-    :do {:act sty/print
-         :expression (get-in sty/state [:echo :body])}}
-
    ]}
  }
