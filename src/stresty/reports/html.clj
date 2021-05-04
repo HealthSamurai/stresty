@@ -123,13 +123,13 @@
 (defn render-action [act]
   [:div
    [:div.flex.space-x-2.items-baseline 
-    [:div.text-xs.uppercase.border.rounded.text-center.p-1 [:b (:method act)]]
+    [:div.text-xs.bg-gray-100.uppercase.border.rounded.text-center.p-1 [:b (:method act)]]
     [:div.ml-1 (:url act)]]
    (when-let [b (:body act)]
      (code-block b))])
 
 (defn render-step [step]
-  [:div.mt-4.border-solid.border-l-4.pb-4
+  [:div.mt-1.border-solid.border-l-4.pb-4
    {:class (cond
              (= :ok (:status step))
              "border-green-300"
@@ -158,11 +158,10 @@
 
 (defn render-case [case]
   [:div
-   [:div.text-xl.p-3.mt-2.border-solid.border-l-4.border-blue-500.bg-gray-100
-    [:span.font-medium (or (get-in case [:case :title]) (get-in case [:case :zen/name]))]
-    [:span.text-l.ml-3 "???"]]
-   [:div.bg-gray-50
-    ;; .border-solid.border-l-4.border-light-blue-500
+   [:div.text-xl.p-2.mt-1.border-solid.border-l-4.border-blue-500.bg-gray-50
+    [:span.font-medium (get-in case [:case :zen/name])]
+    [:span.text-l.ml-3 (get-in case [:case :title])]]
+   [:div
     (for [step (:steps case)]
       (render-step step))]
    ])
@@ -171,7 +170,7 @@
   [:div.p-10.px-20
    (for [[env-nm env] data]
      [:div.my-3
-      [:div.p-3.border-solid.border-l-4.border-gray-500.bg-gray-200
+      [:div.flex.border-b.align-middle.py-2.space-x-2
        [:div.text-xl (or (:title env) (str env-nm))]
        [:a.text-blue-500 {:href (get-in env [:env :base-url])} (get-in env [:env :base-url])]]
       [:div
