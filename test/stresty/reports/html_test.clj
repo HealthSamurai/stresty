@@ -13,6 +13,5 @@
 
   (def res (slurp ".tmp/report.html"))
   (t/is (not (nil? res)))
-  
 
   )

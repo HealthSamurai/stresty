@@ -101,7 +101,7 @@
                                   (run-step ztx env case step))))
                  (into []))]
     (fmt/emit ztx {:type 'sty/on-case-end :env env :case case :result res})
-    res))
+    {:case case :steps res}))
 
 (defn run-env [ztx env]
   (fmt/emit ztx {:type 'sty/on-env-start :env env})

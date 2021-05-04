@@ -1,4 +1,5 @@
 {ns sty
+ ;; schemas and models for stresty (sty)
 
  env
  {:zen/tags #{zen/schema zen/tag}
@@ -12,20 +13,24 @@
                              :password {:type zen/string}}}}}
 
  is-action
- {:zen/tags #{zen/tag}}
+ {:zen/tags #{zen/tag}
+  :zen/desc "tag for actions"}
 
  action
  {:zen/tags #{zen/schema}
+  :zen/desc "common schema for all actions"
   :schema-key {:key :act}
   :require #{:act}
   :type zen/map
   :keys {:act {:type zen/symbol :tags #{is-action}}}}
 
  is-matcher
- {:zen/tags #{zen/tag}}
+ {:zen/tags #{zen/tag}
+  :zen/desc "tag for matchers"}
 
  matcher
  {:zen/tags #{zen/schema}
+  :zen/desc "common schema for all mathers"
   :schema-key {:key :by}
   :type zen/map
   :require #{:by}
@@ -34,50 +39,44 @@
 
  xstring
  {:zen/tags #{zen/schema}
+  :zen/desc "string or code"
   :type zen/case
   :case [{:when {:type zen/string}}
          {:when {:type zen/list}}]}
 
  http
  {:zen/tags #{is-action zen/schema}
+  :zen/desc "action to run http requests"
   :type zen/map
-  :require #{:method :url} ;;#{:get :put :post :patch :delete}
-  :keys {:method {:type zen/keyword :enum [{:value :post}
-                                           {:value :put}
-                                           {:value :get}
-                                           {:value :delete}
-                                           {:value :option}
-                                           {:value :patch}]}
-         :url    {:confirms #{xstring}}
-         :params {:type zen/map :values {:confirms #{xstring}}}
+  :require #{:method :url}
+  :keys {:method  {:type zen/keyword :enum [{:value :post}
+                                            {:value :put}
+                                            {:value :get}
+                                            {:value :delete}
+                                            {:value :option}
+                                            {:value :patch}]}
+         :url     {:confirms #{xstring}}
+         :params  {:type zen/map :values {:confirms #{xstring}}}
          :headers {:type zen/map :values {:confirms #{xstring}}}
-         :body {:type zen/any}
-
-         ;; :get {:type zen/string}
-         ;; :post {:type zen/string}
-         ;; :put {:type zen/string}
-         }}
+         :body    {:type zen/any}}}
 
  ex!
  {:zen/tags #{is-action zen/schema}
+  :zen/desc "action for tests, which always throws exception"
   :type zen/map
-  :zen/desc "Action which always throws exception"
   :keys {:message {:type zen/string}}}
 
  print
  {:zen/tags #{is-action zen/schema}
+  :zen/desc "action to debug case state"
   :type zen/map
   :keys {:expression {:type zen/list}
          :path {:type zen/vector}}}
 
- matcho
- {:zen/tags #{is-matcher zen/schema}
-  :zen/desc "Matcho engine"
-  :type zen/map
-  :values {:type zen/any}}
 
  step
  {:zen/tags #{zen/schema}
+  :zen/desc "step schema"
   :type zen/map
   :keys {:id      {:type zen/keyword}
          :desc    {:type zen/string}
@@ -87,6 +86,7 @@
 
  case
  {:zen/tags #{zen/schema zen/tag}
+  :zen/desc "case schema"
   :type zen/map
   :keys {:title {:type zen/string}
          :desc  {:type zen/string}
@@ -94,31 +94,46 @@
          :steps {:type zen/vector
                  :every {:confirms #{step}}}}}
 
- predicate {:zen/tags #{zen/tag}}
+ matcho
+ {:zen/tags #{is-matcher zen/schema}
+  :zen/desc "matcho mather"
+  :type zen/map
+  :values {:type zen/any}}
 
- string? {:zen/tags #{predicate}}
+ predicate {:zen/tags #{zen/tag}
+            :zen/desc "tag for matcho predicates"}
 
- number? {:zen/tags #{predicate}}
+ string?    {:zen/tags #{predicate}}
+ number?    {:zen/tags #{predicate}}
+ integer?   {:zen/tags #{predicate}}
+ empty?     {:zen/tags #{predicate}}
+ not-empty? {:zen/tags #{predicate}}
+ any?       {:zen/tags #{predicate}}
 
- integer? {:zen/tags #{predicate}}
+ ok? {:zen/tags #{predicate}
+      :zen/desc "tests that number (http status) is between 200-300"}
 
- ok? {:zen/tags #{predicate}}
 
- any? {:zen/tags #{predicate}}
-
+ ;; sty rpc
  op  {:zen/tags #{zen/tag zen/schema}
+      :zen/desc "rpc operation base"
       :type zen/map
       :keys {:params {:confirms #{zen/schema}}
              :result {:confirms #{zen/schema}}}}
 
- echo {:zen/tags #{op} :zen/desc "echo operation to test rpc api"}
+ echo
+ {:zen/tags #{op}
+  :zen/desc "echo operation to test rpc api"}
 
- get-namespaces {:zen/tags #{op} :zen/desc "get namespaces with cases to run on UI"}
+ get-namespaces
+ {:zen/tags #{op}
+  :zen/desc "get namespaces with cases to run on UI"}
 
- get-case {:zen/tags #{op}
-           :zen/desc "get stresty case to run on UI"
-           :params {:type zen/map
-                    :keys {:case {:type zen/string}}}}
+ get-case
+ {:zen/tags #{op}
+  :zen/desc "get stresty case to run on UI"
+  :params {:type zen/map
+           :keys {:case {:type zen/string}}}}
 
  run-tests
  {:zen/tags #{op}
@@ -146,10 +161,11 @@
 
  gen
  {:zen/tags #{op}
-  :zen/desc "Generates"
+  :zen/desc "generate project and cases"
   :params {:type zen/map
            :keys {:project {:type zen/string}}}}
 
+ ;; sty server
  rest-op  {:zen/tags #{zen/tag}}
  index-op {:zen/tags #{rest-op}}
 
@@ -165,11 +181,14 @@
   :routes {:get index-op
            "rpc" {:post rpc-op
                   :get  get-rpc-op}}}
+
+ ;; sty cli
  cli
  {:zen/desc "CLI interface"}
 
  cli-cmd
  {:zen/tags #{zen/tag zen/schema}
+  :zen/desc "schema for cli commands"
   :type zen/map
   :keys {:cli/name {:type zen/string :zen/desc "Command name"}
          :params {:confirms #{zen/schema}
@@ -194,7 +213,7 @@
 
  cli-help
  {:zen/tags #{cli-cmd}
-  :cli/name "help"
+  :cli/name "show help"
   :zen/desc "stresty help"
   :params {:type zen/map
            :keys {}}}
@@ -215,7 +234,7 @@
   :zen/desc "run server with ui"
   :params {:type zen/map
            :keys {:port {:type zen/integer
-                         :zen/desc "Port to start server"
+                         :zen/desc "port to listen"
                          :cli/example "8080"
                          :cli/default "8080"
                          :cli/alias "p"}}}}
@@ -232,6 +251,7 @@
                   :case {:zen/desc "cases list, run only listed cases"
                          :cli/alias "cs"
                          :type zen/vector
+                         :cli/example "us-core.patient/crud"
                          :every {:type zen/string}}
                   :ns {:type zen/vector
                        :zen/desc "namespaces list, run tests from this list"
@@ -245,8 +265,7 @@
                   :report {:type zen/string
                            :cli/alias "r"
                            :zen/desc "report format (html, json)"
-                           :enum [{:value "html"}
-                                  {:value  "json"}]}
+                           :enum [{:value "html"} {:value  "json"}]}
                   :output {:type zen/string
                            :zen/desc "File to output report"
                            :cli/alias "o"
@@ -255,10 +274,6 @@
                            :zen/desc "tests output format (compact, default, detailed)"
                            :cli/alias "fmt"
                            :cli/default "default"
-                           :enum [{:value "compact"   :zen/desc ""}
-                                  {:value "default"   :zen/desc ""}
-                                  {:value "detailed"  :zen/desc ""}]}}}}
-
-
-
- }
+                           :enum [{:value "compact"}
+                                  {:value "default"}
+                                  {:value "detailed"}]}}}}}

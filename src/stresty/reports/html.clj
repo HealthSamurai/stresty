@@ -1,6 +1,7 @@
 (ns stresty.reports.html
   (:require [clojure.pprint :as pp]
             [hiccup.core :as hiccup]
+            [zprint.core :as zprint]
             [clojure.string :as str]))
 
 (defn report-layout [body]
@@ -15,8 +16,8 @@
    [:body body]])
 
 (defn code-block [cnt]
-  [:div.mt-3.rounded-l.overflow-hidden.bg-gray-800
-   [:pre.p-2.text-white (with-out-str (pp/pprint cnt))]])
+  [:div.rounded-l.overflow-hidden.bg-gray-600
+   [:pre.p-2.text-white (with-out-str (zprint/zprint cnt))]])
 
 #_(defn summary [ztx state ts]
   (let [cases (zen/get-tag ztx 'sty/case)
@@ -57,23 +58,7 @@
                                     (str ">> " msg " in " res " at " pth)))))))
 
       (= tp 'sty/on-env-start)
-      (b [:div.my-6.p-3.rounded.bg-gray-100
-          [:dl.grid {:style "grid-template-columns: 140px 1fr"}
-           [:dt.text-right.mr-2 "Environment:"]
-           [:dd (get-in event [:env :zen/name])]
-
-           [:dt.text-right.mr-2 [:img.w-4.mx-2.inline-block
-                 {:src "https://cdn.jsdelivr.net/npm/heroicons@1.0.1/outline/globe-alt.svg"}]]
-           [:dd [:a.text-blue-500 {:href (get-in event [:env :base-url])} (get-in event [:env :base-url])]]
-
-           [:dt.text-right.mr-2 "Authorization:"]
-           [:dd "Basic Auth"]
-
-           [:dt.text-right.mr-2 "ClientID:"]
-           [:dd (get-in event [:env :basic-auth :user])]
-
-           [:dt.text-right.mr-2 "Passoword:"]
-           [:dd "*********"]]])
+      
 
       (= tp 'sty/on-case-start)
       (do (swap! state assoc :case [:div.bg-gray-50.border-solid.border-l-4.border-light-blue-500.p-3.mt-2])
@@ -87,9 +72,7 @@
       (= tp 'sty/on-step-start)
       (do (swap! state assoc :step [:div.bg-green-200.p-2.mb-4.roun-l])
           (swap! state assoc :step-ts ts)
-          (c [:div.text-xl
-              (or (get-in event [:step :desc])
-                  (str "ID: "(get-in event [:step :id])))]))
+          (c ))
 
       (= tp 'sty/on-step-end)
       (do (swap! state update-in [:step 1 1] conj [:div.float-right ( str  (- ts (:step-ts @state)) " ms")])
@@ -137,6 +120,65 @@
         (spit file (hiccup/html  (report-layout (:body @state))))
         (println "DONE TEST")))))
 
+(defn render-action [act]
+  [:div
+   [:div.flex.space-x-2.items-baseline 
+    [:div.text-xs.uppercase.border.rounded.text-center.p-1 [:b (:method act)]]
+    [:div.ml-1 (:url act)]]
+   (when-let [b (:body act)]
+     (code-block b))])
+
+(defn render-step [step]
+  [:div.mt-4.border-solid.border-l-4.pb-4
+   {:class (cond
+             (= :ok (:status step))
+             "border-green-300"
+             (= :error (:status step))
+             "border-red-300"
+             (= :fail (:status step))
+             "border-red-300"
+             :else
+             "border-gray-300")}
+   [:div.flex.align-baseline.space-x-2.border-b.px-4.py-1.mb-2
+    [:div.text-xl (or (when-let [id (:id step)] (name id)) (str "#" (:_index step)))]
+    [:div (:title step)]]
+   [:div.pl-4.space-y-2
+    (when (:do step)
+      (render-action (:do step)))
+    (when (:result step)
+      [:div [:b.text-xs.text-gray-500 "Result:"] (code-block (:result step))])
+    (when (:error step)
+      [:div [:b.text-xs.text-gray-500 "Error:"] (code-block (:error step))])
+    (when (:match step)
+      [:div [:b.text-xs.text-gray-500 "Match:"] (code-block (:match step))])
+    (when (:match-errors step)
+      [:div [:b.text-xs.text-gray-500 "Fails:"] (code-block (:match-errors step))])
+    ]
+   ])
+
+(defn render-case [case]
+  [:div
+   [:div.text-xl.p-3.mt-2.border-solid.border-l-4.border-blue-500.bg-gray-100
+    [:span.font-medium (or (get-in case [:case :title]) (get-in case [:case :zen/name]))]
+    [:span.text-l.ml-3 "???"]]
+   [:div.bg-gray-50
+    ;; .border-solid.border-l-4.border-light-blue-500
+    (for [step (:steps case)]
+      (render-step step))]
+   ])
+
+(defn report [data]
+  [:div.p-10.px-20
+   (for [[env-nm env] data]
+     [:div.my-3
+      [:div.p-3.border-solid.border-l-4.border-gray-500.bg-gray-200
+       [:div.text-xl (or (:title env) (str env-nm))]
+       [:a.text-blue-500 {:href (get-in env [:env :base-url])} (get-in env [:env :base-url])]]
+      [:div
+       (for [[case-nm case] (:cases env)]
+         (render-case case))]])])
+
 (defn do-report [ztx opts data]
-  (hiccup/html (report-layout [:h1 "Report"])))
+  (hiccup/html (report-layout
+                (report data))))
 
