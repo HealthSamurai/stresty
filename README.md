@@ -4,9 +4,6 @@ Stresty (sty) is zen data DSL to test your API in a declarative way!
 
 ![hog](hog.jpeg)
 
-## Motivation
-
-
 ## Getting started
 
 mytest.edn
