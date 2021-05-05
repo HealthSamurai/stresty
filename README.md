@@ -6,6 +6,8 @@ Stresty (sty) is zen data DSL to test your API in a declarative way!
 
 ## Getting started
 
+[![asciicast](https://asciinema.org/a/20Vi3UBLcHr8e93mvJU3Vz32P.svg)](https://asciinema.org/a/20Vi3UBLcHr8e93mvJU3Vz32P)
+
 mytest.edn
 ```edn
 {ns mytest

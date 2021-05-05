@@ -56,9 +56,9 @@
 import #{sty}
 
 case
- {:zen/tags #{sty/case}
-  :steps [
-  {:id :first-step
+{:zen/tags #{sty/case}
+ :steps
+ [{:id :first-step
    :desc \"Crate Patient\"
    :do {:act sty/http
         :method :post
@@ -81,7 +81,6 @@ case
            :status sty/ok?
            :body {:name (get-in sty/state [:first-step :body :name])}}}
 
-  ;; add more steps
   ]}}" ns))
 
 (defn gen-env [ns]
@@ -92,8 +91,8 @@ case
    %s
  }
 
- env {
-  :zen/tags #{sty/env}
+ env
+ {:zen/tags #{sty/env}
   :base-url \"http://localhost:8080\"
   ;; :basic-auth {:user \"user?\" :password \"password?\"}
   ;; :auth-token  \"????\"
@@ -113,7 +112,7 @@ case
       (println "mkdirs" dir-path)
       (mkdirs dir-path)
       (println "create" (str (.toAbsolutePath ^Path case-path)))
-      (write case-path (gen-case proj))
+      (write case-path (gen-case (str proj ".case")))
       (println "create" (str (.toAbsolutePath ^Path env-path)))
-      (write env-path (gen-env proj)))
+      (write env-path (gen-env (str proj ".case"))))
     (println "Parameter --project is required")))

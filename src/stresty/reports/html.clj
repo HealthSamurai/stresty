@@ -21,12 +21,12 @@
 
 (defn render-action [act]
   [:div
-   [:div.flex.space-x-2.items-baseline 
+   [:div.flex.space-x-2.items-baseline
     [:div.text-xs.bg-gray-100.uppercase.border.rounded.text-center.p-1 [:b (:method act)]]
     [:div.ml-1 (:url act)]]
    (when-let [b (:body act)]
      [:details
-      [:summary.cursor-pointer "Body:"]
+      [:summary.cursor-pointer.text-xs.text-gray-500 "Body:"]
       (code-block b)])])
 
 (defn render-step [step]
