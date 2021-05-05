@@ -6,8 +6,8 @@ jobs:
   build:
     strategy:
       matrix:
-        # os: [ubuntu-latest, macOS-latest, windows-latest]
-        os: [macOS-latest, ubuntu-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        # os: [macOS-latest, ubuntu-latest]
         gu-binary: [gu, gu.cmd]
         exclude:
           - os: ubuntu-latest
