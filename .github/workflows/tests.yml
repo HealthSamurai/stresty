@@ -6,7 +6,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [windows-latest]
+        # os: [ubuntu-latest, macOS-latest, windows-latest]
         # os: [macOS-latest, ubuntu-latest]
         gu-binary: [gu, gu.cmd]
         exclude:
@@ -14,8 +15,8 @@ jobs:
             gu-binary: gu.cmd
           - os: macos-latest
             gu-binary: gu.cmd
-          # - os: windows-latest
-          #   gu-binary: gu
+          - os: windows-latest
+            gu-binary: gu
 
     runs-on: ${{ matrix.os }}
 
