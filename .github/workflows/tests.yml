@@ -6,17 +6,17 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest]
         # os: [ubuntu-latest, macOS-latest, windows-latest]
-        # os: [macOS-latest, ubuntu-latest]
+        # See https://github.com/HealthSamurai/stresty/issues/22 for more detail on windows build issue
+        os: [macOS-latest, ubuntu-latest]
         gu-binary: [gu, gu.cmd]
         exclude:
           - os: ubuntu-latest
             gu-binary: gu.cmd
           - os: macos-latest
             gu-binary: gu.cmd
-          - os: windows-latest
-            gu-binary: gu
+          #- os: windows-latest
+          #  gu-binary: gu
 
     runs-on: ${{ matrix.os }}
 
